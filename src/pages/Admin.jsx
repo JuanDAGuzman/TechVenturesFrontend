@@ -97,6 +97,13 @@ export default function AdminPage() {
   const [ranges, setRanges] = useState([{ start: "08:00", end: "11:00" }]);
   const [savedRanges, setSavedRanges] = useState([]);
 
+  // NUEVO: ventanas manuales L–V (o cualquier día puntual)
+  const [wDate, setWDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [wType, setWType] = useState("TRYOUT");
+  const [wStart, setWStart] = useState("20:00");
+  const [wEnd, setWEnd] = useState("20:15");
+  const [wSaved, setWSaved] = useState([]);
+
   // Modal
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState("");
@@ -341,6 +348,67 @@ export default function AdminPage() {
     }
   }
 
+  /* ===== NUEVO: weekday windows (manual) ===== */
+  useEffect(() => {
+    if (!token || !wDate || !wType) return;
+    fetchWeekdayWindows();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token, wDate, wType]);
+
+  async function fetchWeekdayWindows() {
+    try {
+      const r = await fetch(
+        `${API}/admin/weekday-windows?date=${wDate}&type=${wType}`,
+        { headers }
+      );
+      const j = await safeJson(r);
+      if (!r.ok || j?.ok === false) throw new Error(j?.error || "HTTP_ERROR");
+      setWSaved(j.items || []);
+    } catch (e) {
+      console.error("[weekday-windows][GET]", e);
+      setWSaved([]);
+    }
+  }
+
+  async function addWeekdayWindow() {
+    try {
+      const payload = {
+        date: wDate,
+        type: wType,
+        ranges: [{ start: wStart, end: wEnd }],
+      };
+      const r = await fetch(`${API}/admin/weekday-windows`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+      });
+      const j = await safeJson(r);
+      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
+      setToast("Horario abierto.");
+      await fetchWeekdayWindows();
+    } catch (e) {
+      console.error("[weekday-windows][POST]", e);
+      setToast("No se pudo abrir el horario.");
+    }
+  }
+
+  async function delWeekdayWindow(id) {
+    if (!confirm("¿Eliminar esta ventana manual?")) return;
+    try {
+      const r = await fetch(`${API}/admin/weekday-windows/${id}`, {
+        method: "DELETE",
+        headers,
+      });
+      const j = await safeJson(r);
+      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
+      setToast("Ventana eliminada.");
+      await fetchWeekdayWindows();
+    } catch (e) {
+      console.error("[weekday-windows][DELETE]", e);
+      setToast("No se pudo eliminar la ventana.");
+    }
+  }
+
   /* ===== Modal ===== */
   async function openEditor(id) {
     try {
@@ -428,7 +496,7 @@ export default function AdminPage() {
           Admin — <span className="text-[var(--brand)]">TechVenturesCO</span>
         </h1>
         <p className="text-slate-500 mt-1">
-          Gestión de citas y disponibilidad de sábados.
+          Gestión de citas y disponibilidad de sábados / huecos manuales.
         </p>
       </div>
 
@@ -696,6 +764,97 @@ export default function AdminPage() {
           >
             Eliminar todo
           </button>
+        </div>
+      </section>
+
+      {/* NUEVO: Weekday manual windows */}
+      <section className="card">
+        <h2 className="font-bold text-lg mb-3">Abrir horario manual (L–V)</h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <label className="lbl">Fecha</label>
+            <input
+              type="date"
+              value={wDate}
+              onChange={(e) => setWDate(e.target.value)}
+              className="w-full px-3 py-3 rounded-xl border border-slate-300"
+            />
+          </div>
+          <div>
+            <label className="lbl">Tipo</label>
+            <select
+              value={wType}
+              onChange={(e) => setWType(e.target.value)}
+              className="w-full px-3 py-3 rounded-xl border border-slate-300"
+            >
+              <option value="TRYOUT">Ensayar (TRYOUT)</option>
+              <option value="PICKUP">Sin ensayar (PICKUP)</option>
+            </select>
+          </div>
+          <div>
+            <label className="lbl">Desde</label>
+            <input
+              type="time"
+              value={wStart}
+              onChange={(e) => setWStart(e.target.value)}
+              className="w-full px-3 py-3 rounded-xl border border-slate-300"
+            />
+          </div>
+          <div>
+            <label className="lbl">Hasta</label>
+            <input
+              type="time"
+              value={wEnd}
+              onChange={(e) => setWEnd(e.target.value)}
+              className="w-full px-3 py-3 rounded-xl border border-slate-300"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-3 mt-4">
+          <button
+            onClick={addWeekdayWindow}
+            className="px-4 py-2 rounded-xl text-white bg-[var(--brand)] hover:bg-[var(--brand-hover)]"
+          >
+            Abrir horario
+          </button>
+          <button
+            onClick={fetchWeekdayWindows}
+            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200"
+          >
+            Actualizar
+          </button>
+        </div>
+
+        <div className="mt-4">
+          <div className="text-sm text-slate-600 mb-1">
+            Abiertos para <b>{dayjs(wDate).format("DD/MM/YYYY")}</b> — {wType}
+          </div>
+          {wSaved.length === 0 ? (
+            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-sm">
+              Sin ventanas manuales
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {wSaved.map((r) => (
+                <div
+                  key={r.id}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 text-sm w-fit"
+                >
+                  <span className="font-medium">
+                    {r.start}–{r.end}
+                  </span>
+                  <button
+                    className="px-2 py-0.5 rounded-md text-white bg-rose-600 hover:bg-rose-700"
+                    onClick={() => delWeekdayWindow(r.id)}
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
