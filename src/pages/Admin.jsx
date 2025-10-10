@@ -425,6 +425,7 @@ export default function AdminPage() {
         customer_email: item.customer_email || "",
         customer_phone: item.customer_phone || "",
         product: item.product || "",
+        notes: item.notes || "",
 
         // campos de shipping ya guardados
         shipping_address: item.shipping_address || "",
@@ -461,6 +462,7 @@ export default function AdminPage() {
         customer_email: form.customer_email,
         customer_phone: form.customer_phone,
         product: form.product,
+        notes: form.notes,
         status: form.status,
         delivery_method: form.delivery_method,
       };
@@ -878,7 +880,6 @@ export default function AdminPage() {
                   ×
                 </button>
               </div>
-
               {/* Contenido con scroll */}
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto">
                 <div>
@@ -931,6 +932,23 @@ export default function AdminPage() {
                       setForm({ ...form, product: e.target.value })
                     }
                   />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="lbl">Notas</label>
+                  <textarea
+                    rows={3}
+                    className="w-full px-3 py-3 rounded-xl border border-slate-300"
+                    placeholder="Observaciones que dejó el cliente o notas internas…"
+                    value={form.notes || ""}
+                    onChange={(e) =>
+                      setForm({ ...form, notes: e.target.value })
+                    }
+                  />
+                  <p className="muted mt-1">
+                    Se guarda en la cita y aparece en los correos internos si
+                    existe.
+                  </p>
                 </div>
 
                 <div>
