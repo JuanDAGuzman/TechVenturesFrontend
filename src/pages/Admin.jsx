@@ -2,8 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { getAdminToken } from "../lib/adminSession.js";
 
-const [showToken, setShowToken] = useState(false);
-
 /* =======================
    API base robusta
    ======================= */
@@ -89,6 +87,7 @@ export default function AdminPage() {
   const [rows, setRows] = useState([]);
   const [selected, setSelected] = useState({});
   const [toast, setToast] = useState("");
+  const [showToken, setShowToken] = useState(false);
 
   // Sábado
   const [satDate, setSatDate] = useState(() => {
