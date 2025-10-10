@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { getAdminToken } from "../lib/adminSession.js";
 
+const [showToken, setShowToken] = useState(false);
+
 /* =======================
    API base robusta
    ======================= */
@@ -506,12 +508,25 @@ export default function AdminPage() {
       <section className="card grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <label className="lbl">Token admin</label>
-          <input
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            placeholder="x-admin-token"
-            className="w-full px-3 py-3 rounded-xl border border-slate-300"
-          />
+          <div className="flex gap-2">
+            <input
+              type={showToken ? "text" : "password"}
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="x-admin-token"
+              autoComplete="new-password"
+              spellCheck={false}
+              className="w-full flex-1 px-3 py-3 rounded-xl border border-slate-300"
+            />
+            <button
+              type="button"
+              onClick={() => setShowToken((s) => !s)}
+              className="px-3 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 whitespace-nowrap"
+              title={showToken ? "Ocultar token" : "Mostrar token"}
+            >
+              {showToken ? "Ocultar" : "Mostrar"}
+            </button>
+          </div>
           <p className="muted mt-1">
             Se guarda en tu navegador. Debe coincidir con{" "}
             <code>ADMIN_TOKEN</code> del backend.
