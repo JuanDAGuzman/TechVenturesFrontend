@@ -1,0 +1,143 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =================== Brand theming (variables) =================== */
+:root {
+  /* Default: morado (TRYOUT) */
+  --brand: #6d28d9; /* indigo-700 */
+  --brand-hover: #5b21b6; /* indigo-800 */
+  --brand-ring: rgba(99, 102, 241, 0.35); /* indigo-500 a 35% */
+}
+
+/* Azul (PICKUP) */
+.theme-pickup {
+  --brand: #2563eb; /* blue-600 */
+  --brand-hover: #1d4ed8; /* blue-700 */
+  --brand-ring: rgba(59, 130, 246, 0.35);
+}
+
+/* Verde (SHIPPING) */
+.theme-shipping {
+  --brand: #059669; /* emerald-600 */
+  --brand-hover: #047857; /* emerald-700 */
+  --brand-ring: rgba(16, 185, 129, 0.35);
+}
+
+/* =================== Base =================== */
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+  }
+}
+
+/* =================== Contenedores =================== */
+@layer components {
+  .container-page {
+    @apply max-w-5xl mx-auto p-6 sm:p-8;
+  }
+  .card {
+    @apply bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow;
+  }
+  .lbl {
+    @apply block font-semibold mb-2 text-slate-800;
+  }
+  .muted {
+    @apply text-slate-500 text-sm;
+  }
+  .err {
+    @apply text-rose-600 text-sm;
+  }
+}
+
+/* =================== Pills =================== */
+@layer components {
+  .pill {
+    @apply w-full sm:w-auto px-4 py-3 rounded-full border border-slate-200 bg-white text-slate-800 font-semibold hover:shadow transition;
+  }
+
+  /* Las "on" ahora usan el color de marca dinámico */
+  .pill-on-i {
+    background: var(--brand);
+    color: #fff;
+    border-color: transparent;
+  }
+  .pill-on-b {
+    background: var(--brand);
+    color: #fff;
+    border-color: transparent;
+  }
+  .pill-on-g {
+    background: var(--brand);
+    color: #fff;
+    border-color: transparent;
+  }
+}
+
+/* =================== Slots =================== */
+@layer components {
+  .slot {
+    @apply inline-flex items-center justify-center 
+         w-full px-3 py-2 rounded-xl border border-slate-200 bg-white 
+         text-sm font-semibold text-slate-800 
+         whitespace-nowrap leading-5 hover:shadow transition;
+  }
+  .slot:hover {
+    border-color: var(--brand);
+  }
+  .slot-active {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 0.25rem var(--brand-ring);
+  }
+  .slot-dis {
+    @apply bg-slate-100 text-slate-400 border-dashed cursor-not-allowed hover:shadow-none;
+    border-color: #e2e8f0 !important;
+  }
+}
+
+/* =================== CTA =================== */
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center w-full px-5 py-3 rounded-xl font-extrabold text-white shadow-lg;
+    background: var(--brand);
+    transition: filter 0.2s ease, transform 0.02s ease;
+  }
+  .btn-primary:hover {
+    background: var(--brand-hover);
+  }
+}
+
+.brand-text {
+  color: var(--brand);
+}
+.callout {
+  background: #f8fafc; /* slate-50 */
+  border: 1px solid #e2e8f0; /* slate-200 */
+  border-left: 6px solid var(--brand);
+  border-radius: 0.75rem; /* rounded-xl */
+  padding: 0.9rem 1rem;
+}
+
+.callout-title {
+  font-weight: 800;
+  color: var(--brand);
+  margin-bottom: 0.35rem;
+}
+
+.callout p,
+.callout li {
+  color: #334155; /* slate-700 */
+  font-size: 0.95rem; /* un poco más grande que body */
+  line-height: 1.45;
+}
+
+.callout ul {
+  margin-top: 0.25rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
