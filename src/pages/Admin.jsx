@@ -257,10 +257,17 @@ export default function AdminPage() {
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "HTTP_ERROR");
       const items = Array.isArray(j.items) ? j.items : [];
       setSavedRanges(
-        items.map((it) => ({ id: it.id, start: it.start, end: it.end }))
+        items.map((it) => ({
+          id: it.id,
+          start: it.start_time,
+          end: it.end_time,
+        }))
       );
+
       if (items.length) {
-        setRanges(items.map((it) => ({ start: it.start, end: it.end })));
+        setRanges(
+          items.map((it) => ({ start: it.start_time, end: it.end_time }))
+        );
         setToast("Disponibilidad cargada.");
       } else {
         setRanges([{ start: "08:00", end: "11:00" }]);
@@ -275,10 +282,28 @@ export default function AdminPage() {
   async function saveSaturday() {
     try {
       setLoading(true);
+      // Normaliza y valida: HH:MM y start < end
+      const clean = (ranges || [])
+        .map((r) => ({
+          start: String(r.start || "").slice(0, 5),
+          end: String(r.end || "").slice(0, 5),
+        }))
+        .filter(
+          (r) =>
+            /^\d{2}:\d{2}$/.test(r.start) &&
+            /^\d{2}:\d{2}$/.test(r.end) &&
+            r.start < r.end
+        );
+      if (!clean.length) {
+        setLoading(false);
+        setToast("Rango inválido. Revisa horas (HH:MM) y que inicio < fin.");
+        return;
+      }
+
       const r = await fetch(`${API}/admin/saturday-windows`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ date: satDate, ranges }),
+        body: JSON.stringify({ date: satDate, ranges: clean }),
       });
       const j = await safeJson(r);
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
@@ -324,6 +349,7 @@ export default function AdminPage() {
   }
   function editSavedRange(item) {
     setRanges(savedRanges.map((r) => ({ start: r.start, end: r.end })));
+
     setToast(`Editando rango ${item.start}–${item.end}. Modifica y guarda.`);
     setTimeout(() => {
       document.getElementById("sat-editor")?.scrollIntoView({
