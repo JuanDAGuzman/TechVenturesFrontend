@@ -115,6 +115,8 @@ export default function AdminPage() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState("");
   const [form, setForm] = useState(null);
+  const [slotSizeSat, setSlotSizeSat] = useState(15);
+  const [slotSizeW, setSlotSizeW] = useState(15);
 
   const headers = useMemo(
     () => ({ "Content-Type": "application/json", "x-admin-token": token }),
@@ -316,7 +318,10 @@ export default function AdminPage() {
       const r = await fetch(`${API}/admin/saturday-windows`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ date: satDate, ranges: clean }),
+        body: JSON.stringify({
+          date: satDate,
+          ranges: clean.map((r) => ({ ...r, slot_minutes: slotSizeSat })),
+        }),
       });
       const j = await safeJson(r);
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
@@ -428,7 +433,7 @@ export default function AdminPage() {
       const payload = {
         date: wDate,
         type: wType,
-        ranges: [{ start: wStart, end: wEnd }],
+        ranges: [{ start: wStart, end: wEnd, slot_minutes: slotSizeW }],
       };
       const r = await fetch(`${API}/admin/weekday-windows`, {
         method: "POST",
@@ -889,19 +894,33 @@ export default function AdminPage() {
           ))}
         </div>
 
-        <div className="flex gap-3 mt-4">
+        <div className="flex flex-wrap items-center gap-3 mt-4">
           <button
             onClick={addRange}
             className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200"
           >
             Agregar rango
           </button>
+
+          {/* NUEVO: tamaño de bloque para los rangos que vas a guardar */}
+          <select
+            value={slotSizeSat}
+            onChange={(e) => setSlotSizeSat(Number(e.target.value))}
+            className="px-3 py-2 rounded-xl border border-slate-300"
+            title="Tamaño de cada bloque (solo afecta a cómo se partirán los turnos presenciales)"
+          >
+            <option value={15}>Bloques de 15 min</option>
+            <option value={20}>Bloques de 20 min</option>
+            <option value={30}>Bloques de 30 min</option>
+          </select>
+
           <button
             onClick={saveSaturday}
             className="px-4 py-2 rounded-xl text-white bg-[var(--brand)] hover:bg-[var(--brand-hover)]"
           >
             Guardar
           </button>
+
           <button
             onClick={deleteSaturday}
             className="px-4 py-2 rounded-xl text-white bg-rose-600 hover:bg-rose-700"
@@ -957,13 +976,26 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="flex gap-3 mt-4">
+        <div className="flex flex-wrap items-center gap-3 mt-4">
           <button
             onClick={addWeekdayWindow}
             className="px-4 py-2 rounded-xl text-white bg-[var(--brand)] hover:bg-[var(--brand-hover)]"
           >
             Abrir horario
           </button>
+
+          {/* NUEVO: tamaño de bloque L–V */}
+          <select
+            value={slotSizeW}
+            onChange={(e) => setSlotSizeW(Number(e.target.value))}
+            className="px-3 py-2 rounded-xl border border-slate-300"
+            title="Tamaño de cada bloque"
+          >
+            <option value={15}>Bloques de 15 min</option>
+            <option value={20}>Bloques de 20 min</option>
+            <option value={30}>Bloques de 30 min</option>
+          </select>
+
           <button
             onClick={fetchWeekdayWindows}
             className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200"
