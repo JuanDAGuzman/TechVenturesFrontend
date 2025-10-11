@@ -295,10 +295,25 @@ export default function AdminPage() {
     setRanges((rs) => rs.filter((_, idx) => idx !== i));
   }
 
+  function toMin(hhmm) {
+    const [h, m] = String(hhmm || "")
+      .split(":")
+      .map(Number);
+    return h * 60 + m;
+  }
+
   // Guarda TODOS los rangos editables del editor de abajo (POST replace-all)
+  function toMin(hhmm) {
+    const [h, m] = String(hhmm || "")
+      .split(":")
+      .map(Number);
+    return h * 60 + m;
+  }
+
   async function saveSaturday() {
     try {
       setLoading(true);
+
       const clean = (ranges || [])
         .map((r) => ({
           start: String(r.start || "").slice(0, 5),
@@ -308,21 +323,24 @@ export default function AdminPage() {
           (r) =>
             /^\d{2}:\d{2}$/.test(r.start) &&
             /^\d{2}:\d{2}$/.test(r.end) &&
-            r.start < r.end
+            toMin(r.start) < toMin(r.end) // <— comparación por minutos
         );
+
       if (!clean.length) {
         setLoading(false);
         setToast("Rango inválido. Revisa horas (HH:MM) y que inicio < fin.");
         return;
       }
+
       const r = await fetch(`${API}/admin/saturday-windows`, {
         method: "POST",
         headers,
         body: JSON.stringify({
           date: satDate,
-          ranges: clean.map((r) => ({ ...r, slot_minutes: slotSizeSat })),
+          ranges: clean.map((rr) => ({ ...rr, slot_minutes: slotSizeSat })),
         }),
       });
+
       const j = await safeJson(r);
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
       setToast("Disponibilidad de sábado guardada.");
@@ -430,11 +448,25 @@ export default function AdminPage() {
 
   async function addWeekdayWindow() {
     try {
+      // Validación robusta (formato y que inicio < fin en minutos)
+      const ok =
+        /^\d{2}:\d{2}$/.test(wStart) &&
+        /^\d{2}:\d{2}$/.test(wEnd) &&
+        toMin(wStart) < toMin(wEnd);
+
+      if (!ok) {
+        setToast(
+          "Rango inválido (L–V). Revisa horas (HH:MM) y que inicio < fin."
+        );
+        return;
+      }
+
       const payload = {
         date: wDate,
         type: wType,
         ranges: [{ start: wStart, end: wEnd, slot_minutes: slotSizeW }],
       };
+
       const r = await fetch(`${API}/admin/weekday-windows`, {
         method: "POST",
         headers,
@@ -442,6 +474,7 @@ export default function AdminPage() {
       });
       const j = await safeJson(r);
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
+
       setToast("Horario abierto.");
       await fetchWeekdayWindows();
     } catch (e) {
@@ -811,6 +844,8 @@ export default function AdminPage() {
                     <>
                       <input
                         type="time"
+                        step={60}
+                        title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
                         value={satEdit.start}
                         onChange={(e) =>
                           setSatEdit((s) => ({ ...s, start: e.target.value }))
@@ -820,6 +855,8 @@ export default function AdminPage() {
                       <span>—</span>
                       <input
                         type="time"
+                        step={60}
+                        title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
                         value={satEdit.end}
                         onChange={(e) =>
                           setSatEdit((s) => ({ ...s, end: e.target.value }))
@@ -872,6 +909,8 @@ export default function AdminPage() {
             <div key={i} className="flex items-center gap-3">
               <input
                 type="time"
+                step={60}
+                title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
                 value={r.start}
                 onChange={(e) => setRange(i, "start", e.target.value)}
                 className="w-full px-3 py-3 rounded-xl border border-slate-300"
@@ -879,6 +918,8 @@ export default function AdminPage() {
               <span className="text-slate-400">—</span>
               <input
                 type="time"
+                step={60}
+                title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
                 value={r.end}
                 onChange={(e) => setRange(i, "end", e.target.value)}
                 className="w-full px-3 py-3 rounded-xl border border-slate-300"
@@ -945,6 +986,7 @@ export default function AdminPage() {
               className="w-full px-3 py-3 rounded-xl border border-slate-300"
             />
           </div>
+
           <div>
             <label className="lbl">Tipo</label>
             <select
@@ -956,19 +998,25 @@ export default function AdminPage() {
               <option value="PICKUP">Sin ensayar (PICKUP)</option>
             </select>
           </div>
+
           <div>
             <label className="lbl">Desde</label>
             <input
               type="time"
+              step={60}
+              title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
               value={wStart}
               onChange={(e) => setWStart(e.target.value)}
               className="w-full px-3 py-3 rounded-xl border border-slate-300"
             />
           </div>
+
           <div>
             <label className="lbl">Hasta</label>
             <input
               type="time"
+              step={60}
+              title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
               value={wEnd}
               onChange={(e) => setWEnd(e.target.value)}
               className="w-full px-3 py-3 rounded-xl border border-slate-300"
@@ -984,7 +1032,7 @@ export default function AdminPage() {
             Abrir horario
           </button>
 
-          {/* NUEVO: tamaño de bloque L–V */}
+          {/* tamaño de bloque L–V */}
           <select
             value={slotSizeW}
             onChange={(e) => setSlotSizeW(Number(e.target.value))}
@@ -1008,6 +1056,7 @@ export default function AdminPage() {
           <div className="text-sm text-slate-600 mb-1">
             Abiertos para <b>{dayjs(wDate).format("DD/MM/YYYY")}</b> — {wType}
           </div>
+
           {wSaved.length === 0 ? (
             <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-sm">
               Sin ventanas manuales
@@ -1023,6 +1072,8 @@ export default function AdminPage() {
                     <>
                       <input
                         type="time"
+                        step={60}
+                        title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
                         value={wEdit.start}
                         onChange={(e) =>
                           setWEdit((s) => ({ ...s, start: e.target.value }))
@@ -1032,6 +1083,8 @@ export default function AdminPage() {
                       <span>—</span>
                       <input
                         type="time"
+                        step={60}
+                        title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
                         value={wEdit.end}
                         onChange={(e) =>
                           setWEdit((s) => ({ ...s, end: e.target.value }))
