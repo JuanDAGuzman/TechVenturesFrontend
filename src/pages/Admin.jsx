@@ -97,15 +97,21 @@ export default function AdminPage() {
   });
   const [ranges, setRanges] = useState([{ start: "08:00", end: "11:00" }]);
   const [savedRanges, setSavedRanges] = useState([]);
+  // edición puntual de sábado
+  const [satEditId, setSatEditId] = useState(null);
+  const [satEdit, setSatEdit] = useState({ start: "", end: "" });
 
-  // NUEVO: ventanas manuales L–V (o cualquier día puntual)
+  // Weekday manual (L–V)
   const [wDate, setWDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [wType, setWType] = useState("TRYOUT");
   const [wStart, setWStart] = useState("20:00");
   const [wEnd, setWEnd] = useState("20:15");
   const [wSaved, setWSaved] = useState([]);
+  // edición puntual de L–V
+  const [wEditId, setWEditId] = useState(null);
+  const [wEdit, setWEdit] = useState({ start: "", end: "" });
 
-  // Modal
+  // Modal cita
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState("");
   const [form, setForm] = useState(null);
@@ -166,7 +172,6 @@ export default function AdminPage() {
             ...(costVal === null ? {} : { shipping_cost: costVal }),
           };
 
-      // Validaciones mínimas
       if (isPicap && !payload.shipping_trip_link) {
         alert("Falta el link del viaje PICAP.");
         return;
@@ -184,7 +189,6 @@ export default function AdminPage() {
       const j = await safeJson(r);
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "HTTP_ERROR");
 
-      // Refleja lo devuelto por el backend
       setForm((prev) => ({
         ...prev,
         status: "SHIPPED",
@@ -241,7 +245,7 @@ export default function AdminPage() {
     }
   }
 
-  /* ===== Sábado ===== */
+  /* ===== SÁBADO ===== */
   useEffect(() => {
     if (!token || !satDate) return;
     fetchSaturdayRanges();
@@ -263,7 +267,6 @@ export default function AdminPage() {
           end: it.end_time,
         }))
       );
-
       if (items.length) {
         setRanges(
           items.map((it) => ({ start: it.start_time, end: it.end_time }))
@@ -273,16 +276,27 @@ export default function AdminPage() {
         setRanges([{ start: "08:00", end: "11:00" }]);
         setToast("No hay disponibilidad guardada para ese sábado.");
       }
+      setSatEditId(null);
     } catch (e) {
       console.error("[fetchSaturdayRanges]", e);
       setToast("No se pudo cargar la disponibilidad de sábado.");
     }
   }
 
+  function addRange() {
+    setRanges((rs) => [...rs, { start: "08:00", end: "11:00" }]);
+  }
+  function setRange(i, k, v) {
+    setRanges((rs) => rs.map((r, idx) => (idx === i ? { ...r, [k]: v } : r)));
+  }
+  function removeRange(i) {
+    setRanges((rs) => rs.filter((_, idx) => idx !== i));
+  }
+
+  // Guarda TODOS los rangos editables del editor de abajo (POST replace-all)
   async function saveSaturday() {
     try {
       setLoading(true);
-      // Normaliza y valida: HH:MM y start < end
       const clean = (ranges || [])
         .map((r) => ({
           start: String(r.start || "").slice(0, 5),
@@ -299,7 +313,6 @@ export default function AdminPage() {
         setToast("Rango inválido. Revisa horas (HH:MM) y que inicio < fin.");
         return;
       }
-
       const r = await fetch(`${API}/admin/saturday-windows`, {
         method: "POST",
         headers,
@@ -314,6 +327,38 @@ export default function AdminPage() {
       setToast("No se pudo guardar la disponibilidad.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  // Edición puntual de un rango guardado (POST replace-all con el rango modificado)
+  async function satSaveEdit() {
+    try {
+      if (
+        !/^\d{2}:\d{2}$/.test(satEdit.start) ||
+        !/^\d{2}:\d{2}$/.test(satEdit.end) ||
+        satEdit.start >= satEdit.end
+      ) {
+        setToast("Hora inválida (usa HH:MM y que inicio < fin).");
+        return;
+      }
+      const newRanges = savedRanges.map((r) =>
+        r.id === satEditId
+          ? { start: satEdit.start, end: satEdit.end }
+          : { start: r.start, end: r.end }
+      );
+      const r = await fetch(`${API}/admin/saturday-windows`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ date: satDate, ranges: newRanges }),
+      });
+      const j = await safeJson(r);
+      if (!r.ok || j?.ok === false) throw new Error("ERROR");
+      setToast("Rango actualizado.");
+      setSatEditId(null);
+      await fetchSaturdayRanges();
+    } catch (e) {
+      console.error("[satSaveEdit]", e);
+      setToast("No se pudo actualizar el rango.");
     }
   }
 
@@ -338,26 +383,6 @@ export default function AdminPage() {
     }
   }
 
-  function addRange() {
-    setRanges((rs) => [...rs, { start: "08:00", end: "11:00" }]);
-  }
-  function setRange(i, k, v) {
-    setRanges((rs) => rs.map((r, idx) => (idx === i ? { ...r, [k]: v } : r)));
-  }
-  function removeRange(i) {
-    setRanges((rs) => rs.filter((_, idx) => idx !== i));
-  }
-  function editSavedRange(item) {
-    setRanges(savedRanges.map((r) => ({ start: r.start, end: r.end })));
-
-    setToast(`Editando rango ${item.start}–${item.end}. Modifica y guarda.`);
-    setTimeout(() => {
-      document.getElementById("sat-editor")?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }, 0);
-  }
   async function deleteSavedRange(id) {
     if (!confirm("¿Eliminar este rango?")) return;
     try {
@@ -375,7 +400,7 @@ export default function AdminPage() {
     }
   }
 
-  /* ===== NUEVO: weekday windows (manual) ===== */
+  /* ===== WEEKDAY (L–V) ===== */
   useEffect(() => {
     if (!token || !wDate || !wType) return;
     fetchWeekdayWindows();
@@ -391,6 +416,7 @@ export default function AdminPage() {
       const j = await safeJson(r);
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "HTTP_ERROR");
       setWSaved(j.items || []);
+      setWEditId(null);
     } catch (e) {
       console.error("[weekday-windows][GET]", e);
       setWSaved([]);
@@ -419,6 +445,46 @@ export default function AdminPage() {
     }
   }
 
+  // Editar una ventana L–V guardada: POST nuevo + DELETE viejo
+  async function wSaveEdit() {
+    try {
+      if (
+        !/^\d{2}:\d{2}$/.test(wEdit.start) ||
+        !/^\d{2}:\d{2}$/.test(wEdit.end) ||
+        wEdit.start >= wEdit.end
+      ) {
+        setToast("Hora inválida (usa HH:MM y que inicio < fin).");
+        return;
+      }
+
+      const add = await fetch(`${API}/admin/weekday-windows`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          date: wDate,
+          type: wType,
+          ranges: [{ start: wEdit.start, end: wEdit.end }],
+        }),
+      });
+      const aj = await safeJson(add);
+      if (!add.ok || aj?.ok === false) throw new Error("ADD_ERROR");
+
+      const del = await fetch(`${API}/admin/weekday-windows/${wEditId}`, {
+        method: "DELETE",
+        headers,
+      });
+      const dj = await safeJson(del);
+      if (!del.ok || dj?.ok === false) throw new Error("DEL_ERROR");
+
+      setToast("Ventana actualizada.");
+      setWEditId(null);
+      await fetchWeekdayWindows();
+    } catch (e) {
+      console.error("[wSaveEdit]", e);
+      setToast("No se pudo actualizar la ventana.");
+    }
+  }
+
   async function delWeekdayWindow(id) {
     if (!confirm("¿Eliminar esta ventana manual?")) return;
     try {
@@ -436,7 +502,7 @@ export default function AdminPage() {
     }
   }
 
-  /* ===== Modal ===== */
+  /* ===== Modal Cita ===== */
   async function openEditor(id) {
     try {
       const r = await fetch(`${API}/admin/appointments/${id}`, { headers });
@@ -454,7 +520,7 @@ export default function AdminPage() {
         product: item.product || "",
         notes: item.notes || "",
 
-        // campos de shipping ya guardados
+        // shipping guardados
         shipping_address: item.shipping_address || "",
         shipping_neighborhood: item.shipping_neighborhood || "",
         shipping_city: item.shipping_city || "",
@@ -465,7 +531,7 @@ export default function AdminPage() {
 
         shipped_at: item.shipped_at || null,
 
-        // campos temporales (inputs)
+        // temporales (inputs)
         _tracking_number_tmp: "",
         _shipping_cost_tmp:
           item.shipping_cost == null ? "" : String(item.shipping_cost),
@@ -736,23 +802,60 @@ export default function AdminPage() {
                   key={r.id}
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-sm w-fit"
                 >
-                  <span className="font-medium">
-                    {fmt(r.start)}–{fmt(r.end)}
-                  </span>
-                  <button
-                    className="px-2 py-0.5 rounded-md bg-emerald-100 hover:bg-emerald-200"
-                    title="Editar este rango"
-                    onClick={() => editSavedRange(r)}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    className="px-2 py-0.5 rounded-md text-white bg-rose-600 hover:bg-rose-700"
-                    title="Eliminar este rango"
-                    onClick={() => deleteSavedRange(r.id)}
-                  >
-                    Eliminar
-                  </button>
+                  {satEditId === r.id ? (
+                    <>
+                      <input
+                        type="time"
+                        value={satEdit.start}
+                        onChange={(e) =>
+                          setSatEdit((s) => ({ ...s, start: e.target.value }))
+                        }
+                        className="px-2 py-1 rounded border border-emerald-300"
+                      />
+                      <span>—</span>
+                      <input
+                        type="time"
+                        value={satEdit.end}
+                        onChange={(e) =>
+                          setSatEdit((s) => ({ ...s, end: e.target.value }))
+                        }
+                        className="px-2 py-1 rounded border border-emerald-300"
+                      />
+                      <button
+                        className="px-2 py-0.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700"
+                        onClick={satSaveEdit}
+                      >
+                        Guardar
+                      </button>
+                      <button
+                        className="px-2 py-0.5 rounded-md bg-emerald-100 hover:bg-emerald-200"
+                        onClick={() => setSatEditId(null)}
+                      >
+                        Cancelar
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-medium">
+                        {fmt(r.start)}–{fmt(r.end)}
+                      </span>
+                      <button
+                        className="px-2 py-0.5 rounded-md bg-emerald-100 hover:bg-emerald-200"
+                        onClick={() => {
+                          setSatEditId(r.id);
+                          setSatEdit({ start: r.start, end: r.end });
+                        }}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="px-2 py-0.5 rounded-md text-white bg-rose-600 hover:bg-rose-700"
+                        onClick={() => deleteSavedRange(r.id)}
+                      >
+                        Eliminar
+                      </button>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -809,7 +912,7 @@ export default function AdminPage() {
         </div>
       </section>
 
-      {/* NUEVO: Weekday manual windows */}
+      {/* Weekday manual (L–V) */}
       <section className="card">
         <h2 className="font-bold text-lg mb-3">Abrir horario manual (L–V)</h2>
 
@@ -884,15 +987,60 @@ export default function AdminPage() {
                   key={r.id}
                   className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 text-sm w-fit"
                 >
-                  <span className="font-medium">
-                    {r.start}–{r.end}
-                  </span>
-                  <button
-                    className="px-2 py-0.5 rounded-md text-white bg-rose-600 hover:bg-rose-700"
-                    onClick={() => delWeekdayWindow(r.id)}
-                  >
-                    Eliminar
-                  </button>
+                  {wEditId === r.id ? (
+                    <>
+                      <input
+                        type="time"
+                        value={wEdit.start}
+                        onChange={(e) =>
+                          setWEdit((s) => ({ ...s, start: e.target.value }))
+                        }
+                        className="px-2 py-1 rounded border border-indigo-300"
+                      />
+                      <span>—</span>
+                      <input
+                        type="time"
+                        value={wEdit.end}
+                        onChange={(e) =>
+                          setWEdit((s) => ({ ...s, end: e.target.value }))
+                        }
+                        className="px-2 py-1 rounded border border-indigo-300"
+                      />
+                      <button
+                        className="px-2 py-0.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
+                        onClick={wSaveEdit}
+                      >
+                        Guardar
+                      </button>
+                      <button
+                        className="px-2 py-0.5 rounded-md bg-indigo-100 hover:bg-indigo-200"
+                        onClick={() => setWEditId(null)}
+                      >
+                        Cancelar
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-medium">
+                        {r.start}–{r.end}
+                      </span>
+                      <button
+                        className="px-2 py-0.5 rounded-md bg-indigo-100 hover:bg-indigo-200"
+                        onClick={() => {
+                          setWEditId(r.id);
+                          setWEdit({ start: r.start, end: r.end });
+                        }}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="px-2 py-0.5 rounded-md text-white bg-rose-600 hover:bg-rose-700"
+                        onClick={() => delWeekdayWindow(r.id)}
+                      >
+                        Eliminar
+                      </button>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
@@ -900,7 +1048,7 @@ export default function AdminPage() {
         </div>
       </section>
 
-      {/* Modal Ver/Editar */}
+      {/* Modal Ver/Editar Cita */}
       {open && form && (
         <div className="fixed inset-0 z-50 bg-black/30 flex items-start justify-center p-4 overflow-y-auto">
           <div className="w-full max-w-2xl my-6">
@@ -920,7 +1068,8 @@ export default function AdminPage() {
                   ×
                 </button>
               </div>
-              {/* Contenido con scroll */}
+
+              {/* Contenido */}
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto">
                 <div>
                   <label className="lbl">Nombre</label>
