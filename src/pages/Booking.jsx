@@ -20,6 +20,13 @@ const initialForm = {
 function onlyDigits(s = "") {
   return (s || "").replace(/\D/g, "");
 }
+
+function minutesBetween(hhmmStart, hhmmEnd) {
+  if (!hhmmStart || !hhmmEnd) return null;
+  const [sh, sm] = hhmmStart.split(":").map(Number);
+  const [eh, em] = hhmmEnd.split(":").map(Number);
+  return eh * 60 + em - (sh * 60 + sm);
+}
 function allowNumericKeys(e) {
   const ok =
     /\d/.test(e.key) ||
@@ -129,15 +136,20 @@ function ModalToast({ open, title, items = [], variant = "error", onClose }) {
 }
 
 /* ───────── Callout contextual ───────── */
-function MethodCallout({ type }) {
+function MethodCallout({ type, mins }) {
   if (type === "TRYOUT") {
     return (
       <div className="callout mt-4">
         <div className="callout-title">Ensayo presencial</div>
         <ul>
           <li>
-            Agenda bloques de <b>15&nbsp;min</b> entre{" "}
-            <b>6:30–7:30 a.&nbsp;m.</b> (L–V). Sábados según disponibilidad.
+            Agenda bloques de <b>{mins ?? 15}&nbsp;min</b> entre{" "}
+            <b>6:30–7:30 a.&nbsp;m.</b> (L–V).
+            <br />
+            <i>
+              Entre semana se habilitan otros horarios según disponibilidad.
+            </i>{" "}
+            Sábados según disponibilidad.
           </li>
           <li>
             Si quieres, trae tu equipo para instalar; de lo contrario, haremos
@@ -151,7 +163,7 @@ function MethodCallout({ type }) {
   if (type === "PICKUP") {
     return (
       <div className="callout mt-4">
-        <div className="callout-title">Sin ensayar (15&nbsp;min)</div>
+        <div className="callout-title">Sin ensayar ({mins ?? 15}&nbsp;min)</div>
         <ul>
           <li>
             También se <b>verifica el funcionamiento</b>, pero{" "}
@@ -159,8 +171,12 @@ function MethodCallout({ type }) {
             <b>videos de prueba</b>.
           </li>
           <li>
-            Agenda un bloque de <b>15&nbsp;min</b> entre <b>8:00–18:00</b> para
-            recoger. Indica la hora exacta al reservar.
+            Agenda un bloque de <b>{mins ?? 15}&nbsp;min</b> entre{" "}
+            <b>8:00–18:00</b> para recoger. Indica la hora exacta al reservar.
+            <br />
+            <i>
+              Entre semana se habilitan otros horarios según disponibilidad.
+            </i>
           </li>
         </ul>
       </div>
@@ -221,6 +237,13 @@ export default function Booking() {
       : type === "SHIPPING"
       ? "theme-shipping"
       : "";
+
+  // minutos del bloque seleccionado (fallback 15)
+  const minsSelected = useMemo(() => {
+    if (type === "SHIPPING") return null;
+    const [s, e] = (timeSel || "").split("-");
+    return minutesBetween(s, e) ?? 15;
+  }, [type, timeSel]);
 
   /* ───────── Popup Bienvenida al entrar ───────── */
   useEffect(() => {
@@ -539,7 +562,7 @@ export default function Booking() {
             📦 Envío (no contraentrega)
           </button>
         </div>
-        <MethodCallout type={type} />
+        <MethodCallout type={type} mins={minsSelected} />
       </section>
 
       {/* Fecha + Horario */}
