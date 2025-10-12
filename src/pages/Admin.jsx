@@ -1,6 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { getAdminToken } from "../lib/adminSession.js";
+import {
+  adminListWindows,
+  adminCreateWindow,
+  adminUpdateWindow,
+  adminDeleteWindow,
+} from "../api.js";
 
 /* =======================
    API base robusta
@@ -295,13 +301,6 @@ export default function AdminPage() {
     setRanges((rs) => rs.filter((_, idx) => idx !== i));
   }
 
-  function toMin(hhmm) {
-    const [h, m] = String(hhmm || "")
-      .split(":")
-      .map(Number);
-    return h * 60 + m;
-  }
-
   // Guarda TODOS los rangos editables del editor de abajo (POST replace-all)
   function toMin(hhmm) {
     const [h, m] = String(hhmm || "")
@@ -432,16 +431,21 @@ export default function AdminPage() {
 
   async function fetchWeekdayWindows() {
     try {
-      const r = await fetch(
-        `${API}/admin/weekday-windows?date=${wDate}&type=${wType}`,
-        { headers }
+      const j = await adminListWindows(wDate, wType, token);
+      // backend devuelve: { ok: true, rows: [...] }
+      const items = Array.isArray(j.rows) ? j.rows : [];
+      // Normaliza para la UI
+      setWSaved(
+        items.map((r) => ({
+          id: r.id,
+          start: String(r.start_time).slice(0, 5),
+          end: String(r.end_time).slice(0, 5),
+          slot: Number(r.slot_minutes) || 15,
+        }))
       );
-      const j = await safeJson(r);
-      if (!r.ok || j?.ok === false) throw new Error(j?.error || "HTTP_ERROR");
-      setWSaved(j.items || []);
       setWEditId(null);
     } catch (e) {
-      console.error("[weekday-windows][GET]", e);
+      console.error("[windows][GET]", e);
       setWSaved([]);
     }
   }
@@ -455,30 +459,25 @@ export default function AdminPage() {
         toMin(wStart) < toMin(wEnd);
 
       if (!ok) {
-        setToast(
-          "Rango inválido (L–V). Revisa horas (HH:MM) y que inicio < fin."
-        );
+        setToast("Rango inválido. Revisa horas (HH:MM) y que inicio < fin.");
         return;
       }
 
       const payload = {
         date: wDate,
-        type: wType,
-        ranges: [{ start: wStart, end: wEnd, slot_minutes: slotSizeW }],
+        type_code: wType, // << OJO: type_code (TRYOUT | PICKUP)
+        start_time: wStart,
+        end_time: wEnd,
+        slot_minutes: Number(slotSizeW) || 15, // 15 | 20 | 30
       };
 
-      const r = await fetch(`${API}/admin/weekday-windows`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(payload),
-      });
-      const j = await safeJson(r);
-      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
+      const j = await adminCreateWindow(payload, token);
+      if (j?.ok === false) throw new Error(j?.error || "CREATE_ERROR");
 
       setToast("Horario abierto.");
       await fetchWeekdayWindows();
     } catch (e) {
-      console.error("[weekday-windows][POST]", e);
+      console.error("[windows][POST]", e);
       setToast("No se pudo abrir el horario.");
     }
   }
@@ -495,30 +494,21 @@ export default function AdminPage() {
         return;
       }
 
-      const add = await fetch(`${API}/admin/weekday-windows`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          date: wDate,
-          type: wType,
-          ranges: [{ start: wEdit.start, end: wEdit.end }],
-        }),
-      });
-      const aj = await safeJson(add);
-      if (!add.ok || aj?.ok === false) throw new Error("ADD_ERROR");
+      const patch = {
+        start_time: wEdit.start,
+        end_time: wEdit.end,
+        // Si quieres, puedes permitir cambiar el tamaño del bloque aquí:
+        // slot_minutes: Number(slotSizeW) || 15,
+      };
 
-      const del = await fetch(`${API}/admin/weekday-windows/${wEditId}`, {
-        method: "DELETE",
-        headers,
-      });
-      const dj = await safeJson(del);
-      if (!del.ok || dj?.ok === false) throw new Error("DEL_ERROR");
+      const j = await adminUpdateWindow(wEditId, patch, token);
+      if (j?.ok === false) throw new Error(j?.error || "PATCH_ERROR");
 
       setToast("Ventana actualizada.");
       setWEditId(null);
       await fetchWeekdayWindows();
     } catch (e) {
-      console.error("[wSaveEdit]", e);
+      console.error("[windows][PATCH]", e);
       setToast("No se pudo actualizar la ventana.");
     }
   }
@@ -526,16 +516,13 @@ export default function AdminPage() {
   async function delWeekdayWindow(id) {
     if (!confirm("¿Eliminar esta ventana manual?")) return;
     try {
-      const r = await fetch(`${API}/admin/weekday-windows/${id}`, {
-        method: "DELETE",
-        headers,
-      });
-      const j = await safeJson(r);
-      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
+      const j = await adminDeleteWindow(id, token);
+      if (j?.ok === false) throw new Error(j?.error || "DELETE_ERROR");
+
       setToast("Ventana eliminada.");
       await fetchWeekdayWindows();
     } catch (e) {
-      console.error("[weekday-windows][DELETE]", e);
+      console.error("[windows][DELETE]", e);
       setToast("No se pudo eliminar la ventana.");
     }
   }
@@ -1114,6 +1101,11 @@ export default function AdminPage() {
                       <span className="font-medium">
                         {r.start}–{r.end}
                       </span>
+                      {typeof r.slot === "number" ? (
+                        <span className="text-xs text-slate-500 ml-2">
+                          · {r.slot} min
+                        </span>
+                      ) : null}
                       <button
                         className="px-2 py-0.5 rounded-md bg-indigo-100 hover:bg-indigo-200"
                         onClick={() => {
