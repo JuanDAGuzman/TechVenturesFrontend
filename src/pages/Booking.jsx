@@ -136,25 +136,23 @@ function ModalToast({ open, title, items = [], variant = "error", onClose }) {
 }
 
 /* ───────── Callout contextual ───────── */
-function MethodCallout({ type, mins }) {
+function MethodCallout({ type }) {
   if (type === "TRYOUT") {
     return (
       <div className="callout mt-4">
         <div className="callout-title">Ensayo presencial</div>
         <ul>
           <li>
-            Agenda bloques de <b>{mins ?? 15}&nbsp;min</b> entre{" "}
-            <b>6:30–7:30 a.&nbsp;m.</b> (L–V).
-            <br />
-            <i>
-              Entre semana se habilitan otros horarios según disponibilidad.
-            </i>{" "}
-            Sábados según disponibilidad.
+            Los horarios se habilitan manualmente en bloques de{" "}
+            <b>15, 20 o 30 min</b> según disponibilidad.
           </li>
           <li>
-            Si quieres, trae tu equipo para instalar; de lo contrario, haremos
-            la prueba en nuestro <b>equipo de test</b>. Si no alcanzas a venir,
-            puedes <b>reprogramar</b> respondiendo al correo de confirmación.
+            Instalamos y probamos; si quieres trae tu equipo o usamos nuestro{" "}
+            <b>equipo de test</b>.
+          </li>
+          <li>
+            Si no alcanzas a venir, puedes <b>reprogramar</b> respondiendo al
+            correo de confirmación.
           </li>
         </ul>
       </div>
@@ -163,20 +161,15 @@ function MethodCallout({ type, mins }) {
   if (type === "PICKUP") {
     return (
       <div className="callout mt-4">
-        <div className="callout-title">Sin ensayar ({mins ?? 15}&nbsp;min)</div>
+        <div className="callout-title">Sin ensayar</div>
         <ul>
           <li>
-            También se <b>verifica el funcionamiento</b>, pero{" "}
-            <b>no presencialmente</b>: antes de la entrega te enviamos{" "}
-            <b>videos de prueba</b>.
+            Verificamos con <b>videos de prueba</b> antes de la entrega (no
+            presencial).
           </li>
           <li>
-            Agenda un bloque de <b>{mins ?? 15}&nbsp;min</b> entre{" "}
-            <b>8:00–18:00</b> para recoger. Indica la hora exacta al reservar.
-            <br />
-            <i>
-              Entre semana se habilitan otros horarios según disponibilidad.
-            </i>
+            Los horarios se habilitan manualmente en bloques de{" "}
+            <b>15, 20 o 30 min</b> según disponibilidad.
           </li>
         </ul>
       </div>
@@ -187,20 +180,15 @@ function MethodCallout({ type, mins }) {
       <div className="callout-title">Envío (no contraentrega)</div>
       <ul>
         <li>
-          <b>No es contraentrega</b>. El valor del artículo se paga <b>antes</b>{" "}
+          <b>No es contraentrega</b>; el valor del artículo se paga <b>antes</b>{" "}
           del despacho.
         </li>
         <li>
-          Al recibir, solo cancelas el <b>costo de envío</b> a la transportadora
-          (si aplica).
+          Al recibir, solo cancelas el <b>costo de envío</b> (si aplica).
         </li>
         <li>
-          En <b>Bogotá</b>: <b>PICAP</b> o <b>INTERRAPIDISIMO</b>. Otras
-          ciudades: <b>INTERRAPIDISIMO</b>.
-        </li>
-        <li>
-          Completa la <b>dirección, barrio, ciudad y transportadora</b> en el
-          formulario.
+          En <b>Bogotá</b>: PICAP o INTERRAPIDISIMO. Otras ciudades:
+          INTERRAPIDISIMO.
         </li>
       </ul>
     </div>
