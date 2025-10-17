@@ -3,7 +3,6 @@ import dayjs from "dayjs";
 import TimeSlotPicker from "../components/TimeSlotPicker.jsx";
 import { getAvailability, createAppointment } from "../api.js";
 
-/* ───────── Helpers ───────── */
 const emailRe = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 const initialForm = {
   name: "",
@@ -43,13 +42,39 @@ function allowNumericKeys(e) {
   if (!ok) e.preventDefault();
 }
 
-/* ───────── Modal alto contraste ───────── */
-function ModalToast({ open, title, items = [], variant = "error", onClose }) {
+function ModalToast({
+  open,
+  title,
+  items = [],
+  variant = "error",
+  onClose,
+  waitSeconds = 0,
+}) {
+  const [remaining, setRemaining] = useState(0);
+
   useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && onClose?.();
+    if (!open) return;
+    setRemaining(waitSeconds || 0);
+    if (!waitSeconds) return;
+
+    const id = setInterval(() => {
+      setRemaining((r) => {
+        if (r <= 1) {
+          clearInterval(id);
+          return 0;
+        }
+        return r - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(id);
+  }, [open, waitSeconds]);
+
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && remaining === 0 && onClose?.();
     if (open) window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose]);
+  }, [open, onClose, remaining]);
 
   if (!open) return null;
 
@@ -79,10 +104,14 @@ function ModalToast({ open, title, items = [], variant = "error", onClose }) {
     </span>
   );
 
+  const tryClose = () => {
+    if (remaining === 0) onClose?.();
+  };
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onMouseDown={onClose}
+      onMouseDown={tryClose}
     >
       <div className="absolute inset-0 bg-black/55" />
       <div
@@ -99,13 +128,15 @@ function ModalToast({ open, title, items = [], variant = "error", onClose }) {
               <div className="flex items-start justify-between">
                 <h3 className="text-xl font-bold text-slate-900">{title}</h3>
                 <button
-                  onClick={onClose}
-                  className="ml-3 rounded-full px-2 py-1 text-slate-700 hover:bg-slate-100"
+                  onClick={tryClose}
+                  className="ml-3 rounded-full px-2 py-1 text-slate-700 hover:bg-slate-100 disabled:opacity-40"
                   aria-label="Cerrar"
+                  disabled={remaining > 0}
                 >
                   ✕
                 </button>
               </div>
+
               {Array.isArray(items) && items.length > 1 ? (
                 <ul className="mt-3 list-disc pl-5 space-y-1 text-slate-800">
                   {items.map((it, idx) => (
@@ -119,12 +150,14 @@ function ModalToast({ open, title, items = [], variant = "error", onClose }) {
                   {items[0]}
                 </p>
               )}
+
               <div className="mt-6 flex justify-end">
                 <button
-                  onClick={onClose}
-                  className="px-4 py-2 rounded-xl font-semibold text-white bg-[var(--brand)] hover:bg-[var(--brand-hover)] focus:outline-none focus:ring-4 focus:ring-[var(--brand-ring)]"
+                  onClick={tryClose}
+                  className="px-4 py-2 rounded-xl font-semibold text-white bg-[var(--brand)] hover:bg-[var(--brand-hover)] focus:outline-none focus:ring-4 focus:ring-[var(--brand-ring)] disabled:opacity-60"
+                  disabled={remaining > 0}
                 >
-                  Entendido
+                  {remaining > 0 ? `Entendido (${remaining})` : "Entendido"}
                 </button>
               </div>
             </div>
@@ -135,7 +168,6 @@ function ModalToast({ open, title, items = [], variant = "error", onClose }) {
   );
 }
 
-/* ───────── Callout contextual ───────── */
 function MethodCallout({ type }) {
   if (type === "TRYOUT") {
     return (
@@ -196,7 +228,6 @@ function MethodCallout({ type }) {
 }
 
 export default function Booking() {
-  // TRYOUT = Ensayar, PICKUP = Sin ensayar (08:00–18:00), SHIPPING = Envío
   const [type, setType] = useState("TRYOUT");
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [slots, setSlots] = useState([]);
@@ -208,7 +239,6 @@ export default function Booking() {
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Errores + modal + foco
   const [errors, setErrors] = useState({});
   const [toast, setToast] = useState({
     open: false,
@@ -218,7 +248,6 @@ export default function Booking() {
   });
   const firstErrorRef = useRef(null);
 
-  /* Tema dinámico */
   const themeClass =
     type === "PICKUP"
       ? "theme-pickup"
@@ -226,14 +255,12 @@ export default function Booking() {
       ? "theme-shipping"
       : "";
 
-  // minutos del bloque seleccionado (fallback 15)
   const minsSelected = useMemo(() => {
     if (type === "SHIPPING") return null;
     const [s, e] = (timeSel || "").split("-");
     return minutesBetween(s, e) ?? 15;
   }, [type, timeSel]);
 
-  /* ───────── Popup Bienvenida al entrar ───────── */
   useEffect(() => {
     setToast({
       open: true,
@@ -246,10 +273,10 @@ export default function Booking() {
         "Si das parte de pago con una gráfica, especifica en 'Notas': gráfica entregada, gráfica deseada y monto a encimar.",
       ],
       variant: "warning",
+      waitSeconds: 6,
     });
   }, []);
 
-  /* Disponibilidad */
   useEffect(() => {
     (async () => {
       setMsg("");
@@ -272,7 +299,6 @@ export default function Booking() {
     }
   }
 
-  /* Carrier por ciudad */
   async function onCityChange(city) {
     setForm((f) => ({ ...f, shipping_city: city, shipping_carrier: "" }));
     try {
@@ -292,10 +318,8 @@ export default function Booking() {
     }
   }
 
-  /* Validaciones */
   function validate() {
     const e = {};
-    // comunes
     if (!form.name.trim()) e.name = "Ingresa tu nombre completo.";
     if (!form.idNumber.trim()) e.idNumber = "Ingresa tu cédula.";
     if (!form.phone.trim()) e.phone = "Ingresa tu número de celular.";
@@ -305,14 +329,12 @@ export default function Booking() {
 
     if (type !== "SHIPPING" && !timeSel) e.time = "Selecciona un horario.";
 
-    // Producto: obligatorio SOLO en envíos
     if (type === "SHIPPING") {
       if (!form.product.trim())
         e.product =
           "Indica el producto completo (ej.: RTX 3070 EVGA XC3 ULTRA).";
     }
 
-    // Envío: TODO obligatorio
     if (type === "SHIPPING") {
       if (!form.shipping_address.trim())
         e.shipping_address = "Dirección requerida.";
@@ -347,7 +369,6 @@ export default function Booking() {
 
   const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors]);
 
-  /* Handlers */
   const onChange = (field) => (e) =>
     setForm({ ...form, [field]: e.target.value });
   const onChangeDigits = (field, maxLen) => (e) =>
@@ -356,7 +377,6 @@ export default function Booking() {
       [field]: onlyDigits(e.target.value).slice(0, maxLen || 30),
     });
 
-  /* -------------- Formato 12h + filtro de pasados (solo hoy) -------------- */
   const displaySlots = useMemo(() => {
     if (type === "SHIPPING") return [];
 
@@ -384,7 +404,6 @@ export default function Booking() {
     });
   }, [slots, date, type]);
 
-  /* Submit */
   async function submit() {
     setMsg("");
     const e = validate();
@@ -504,18 +523,17 @@ export default function Booking() {
 
   return (
     <div className={`container-page ${themeClass}`}>
-      {/* Modal */}
       <ModalToast
         open={toast.open}
         title={toast.title}
         items={toast.items}
         variant={toast.variant}
+        waitSeconds={toast.waitSeconds || 0}
         onClose={() =>
           setToast({ open: false, title: "", items: [], variant: "error" })
         }
       />
 
-      {/* Hero */}
       <div className="card relative overflow-hidden">
         <div className="absolute left-0 right-0 top-0 h-1 bg-[var(--brand)]" />
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
@@ -527,7 +545,6 @@ export default function Booking() {
         </p>
       </div>
 
-      {/* Método */}
       <section className="card">
         <label className="block font-semibold mb-2">Método</label>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -553,7 +570,6 @@ export default function Booking() {
         <MethodCallout type={type} mins={minsSelected} />
       </section>
 
-      {/* Fecha + Horario */}
       <section className="card grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label className="lbl">
@@ -608,7 +624,6 @@ export default function Booking() {
         )}
       </section>
 
-      {/* Datos cliente */}
       <section className="card grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="lbl">
@@ -757,7 +772,6 @@ export default function Booking() {
         />
       </section>
 
-      {/* Envío */}
       {type === "SHIPPING" && (
         <>
           <h2 className="font-bold text-lg">Datos de envío</h2>
@@ -873,7 +887,6 @@ export default function Booking() {
         </>
       )}
 
-      {/* CTA */}
       <div className="mt-3">
         <button className="btn-primary" disabled={loading} onClick={submit}>
           {loading
