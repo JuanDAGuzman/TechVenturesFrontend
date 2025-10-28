@@ -14,8 +14,7 @@ export default function Footer() {
   const links = {
     company: [
       { label: "Agendar cita", href: "/" },
-      { label: "Sobre nosotros", href: "#" },
-      { label: "Contacto", href: "mailto:techventuresco@gmail.com" },
+      { label: "Contacto", href: "https://api.whatsapp.com/send/?phone=573108216274&text&type=phone_number&app_absent=0" },
     ],
     social: [
       { icon: Github, label: "GitHub", href: "https://github.com/JuanDAGuzman" },
