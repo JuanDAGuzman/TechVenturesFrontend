@@ -279,22 +279,38 @@ export default function Booking() {
       return;
     }
 
+    // Calcular start_time y end_time
+    let start_time = "00:00";
+    let end_time = "00:00";
+
+    if (method === "TRYOUT" && selectedSlot) {
+      // Si hay slot seleccionado, viene en formato "HH:MM" (ej: "10:00")
+      start_time = selectedSlot;
+      // Asumimos 30 min de duración por defecto
+      const [hours, minutes] = selectedSlot.split(":").map(Number);
+      const endMinutes = minutes + 30;
+      const endHours = hours + Math.floor(endMinutes / 60);
+      end_time = `${String(endHours).padStart(2, "0")}:${String(
+        endMinutes % 60
+      ).padStart(2, "0")}`;
+    }
+
     const payload = {
-      method,
-      date,
-      slot: selectedSlot,
-      fullName,
-      idNumber,
-      phone,
-      email,
-      product,
+      type_code: method,
+      date: date,
+      start_time: start_time,
+      end_time: end_time,
+      product: product,
+      customer_name: fullName,
+      customer_email: email,
+      customer_phone: phone,
+      customer_id_number: idNumber,
+      delivery_method: method === "SHIPPING" ? "SHIPPING" : "IN_PERSON",
       notes: notes || "",
-      ...(method === "SHIPPING" && {
-        shipping_address: shippingAddress,
-        shipping_neighborhood: shippingNeighborhood,
-        shipping_city: shippingCity,
-        shipping_carrier: shippingCarrier,
-      }),
+      shipping_address: method === "SHIPPING" ? shippingAddress : "",
+      shipping_neighborhood: method === "SHIPPING" ? shippingNeighborhood : "",
+      shipping_city: method === "SHIPPING" ? shippingCity : "",
+      shipping_carrier: method === "SHIPPING" ? shippingCarrier : "",
     };
 
     try {
