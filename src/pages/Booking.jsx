@@ -723,10 +723,16 @@ export default function Booking() {
                         key="slots"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar"
+                        className="
+                          grid
+                          grid-cols-1
+                          sm:grid-cols-2
+                          lg:grid-cols-3
+                          gap-3
+                          overflow-y-visible
+                        "
                       >
                         {slots.map((s) => {
-                          const label = `${s.start} – ${s.end}`;
                           const isActive =
                             selectedSlot &&
                             selectedSlot.start === s.start &&
@@ -743,13 +749,35 @@ export default function Booking() {
                                 });
                                 clearError("slot");
                               }}
-                              whileHover={{ scale: 1.03 }}
-                              whileTap={{ scale: 0.97 }}
-                              className={`slot ${
-                                isActive ? "slot-active" : ""
-                              }`}
+                              whileHover={{ scale: 1.015 }}
+                              whileTap={{ scale: 0.985 }}
+                              className={`
+                                w-full text-center
+                                rounded-xl border-2
+                                px-4 py-3
+                                font-medium
+                                text-slate-800
+                                transition
+                                focus:outline-none
+                                focus:ring-4
+                                ${
+                                  isActive
+                                    ? `
+                                      border-[var(--brand)]
+                                      bg-[var(--brand)]/10
+                                      focus:ring-[var(--brand-ring)]
+                                    `
+                                    : `
+                                      border-slate-200
+                                      bg-white
+                                      hover:border-[var(--brand)]
+                                      hover:bg-[var(--brand)]/5
+                                      focus:ring-[var(--brand-ring)]
+                                    `
+                                }
+                              `}
                             >
-                              {label}
+                              {s.start} – {s.end}
                             </motion.button>
                           );
                         })}
