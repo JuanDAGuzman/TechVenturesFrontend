@@ -247,8 +247,10 @@ export default function Booking() {
       newErrors.product = "El producto es obligatorio";
     }
 
+    // Fecha SIEMPRE obligatoria
     if (!date) newErrors.date = "Selecciona una fecha";
 
+    // Horario solo obligatorio para TRYOUT
     if (method === "TRYOUT" && !selectedSlot) {
       newErrors.slot = "Selecciona un horario";
     }
@@ -507,46 +509,48 @@ export default function Booking() {
           </motion.div>
 
           {/* FECHA Y HORARIO */}
-          {method !== "SHIPPING" && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="card"
-            >
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                  <label className="lbl flex items-center gap-2">
-                    <Calendar className="w-5 h-5 brand-text" />
-                    Fecha <span className="text-rose-500">*</span>
-                  </label>
-                  <motion.input
-                    whileFocus={{ scale: 1.01 }}
-                    type="date"
-                    value={date}
-                    onChange={(e) => {
-                      setDate(e.target.value);
-                      clearError("date");
-                    }}
-                    min={new Date().toISOString().split("T")[0]}
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
-                      errors.date
-                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                        : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
-                    }`}
-                  />
-                  {errors.date && (
-                    <motion.p
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="err mt-1 flex items-center gap-1"
-                    >
-                      <AlertCircle className="w-4 h-4" />
-                      {errors.date}
-                    </motion.p>
-                  )}
-                </div>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="card"
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* FECHA - Siempre visible */}
+              <div>
+                <label className="lbl flex items-center gap-2">
+                  <Calendar className="w-5 h-5 brand-text" />
+                  Fecha <span className="text-rose-500">*</span>
+                </label>
+                <motion.input
+                  whileFocus={{ scale: 1.01 }}
+                  type="date"
+                  value={date}
+                  onChange={(e) => {
+                    setDate(e.target.value);
+                    clearError("date");
+                  }}
+                  min={new Date().toISOString().split("T")[0]}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
+                    errors.date
+                      ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
+                      : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
+                  }`}
+                />
+                {errors.date && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="err mt-1 flex items-center gap-1"
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.date}
+                  </motion.p>
+                )}
+              </div>
 
+              {/* HORARIO - Solo para TRYOUT y PICKUP */}
+              {method !== "SHIPPING" && (
                 <div>
                   <label className="lbl flex items-center gap-2">
                     <Clock className="w-5 h-5 brand-text" />
@@ -646,9 +650,9 @@ export default function Booking() {
                     </motion.p>
                   )}
                 </div>
-              </div>
-            </motion.div>
-          )}
+              )}
+            </div>
+          </motion.div>
 
           {/* DATOS PERSONALES */}
           <motion.div
