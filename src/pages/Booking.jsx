@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
+// IMPORTANTE: dominio backend correcto (sin /api al final)
 const API_BASE = "https://techventuresbackend-production.up.railway.app";
 
 const METHODS = [
@@ -45,6 +46,7 @@ const METHODS = [
   },
 ];
 
+// Modal inicial con reglas anti-spam / anti fake data
 function InfoModal({ open, onClose }) {
   const [countdown, setCountdown] = useState(5);
 
@@ -52,25 +54,25 @@ function InfoModal({ open, onClose }) {
     if (!open) return;
     setCountdown(5);
 
-    const interval = setInterval(() => {
-      setCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
+    const id = setInterval(() => {
+      setCountdown((t) => {
+        if (t <= 1) {
+          clearInterval(id);
           return 0;
         }
-        return prev - 1;
+        return t - 1;
       });
     }, 1000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(id);
   }, [open]);
 
   useEffect(() => {
-    const handleEscape = (e) => {
+    const onKey = (e) => {
       if (e.key === "Escape" && countdown === 0) onClose();
     };
-    if (open) window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
+    if (open) window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [open, countdown, onClose]);
 
   if (!open) return null;
@@ -146,13 +148,16 @@ function InfoModal({ open, onClose }) {
 }
 
 export default function Booking() {
-  const [method, setMethod] = useState("TRYOUT");
-  const [date, setDate] = useState("");
-  const [slots, setSlots] = useState([]);
-  const [selectedSlot, setSelectedSlot] = useState(null);
-  const [loading, setLoading] = useState(false);
+  /* ============ Estado básico del formulario ============ */
+  const [method, setMethod] = useState("TRYOUT"); // TRYOUT | PICKUP | SHIPPING
+  const [date, setDate] = useState(""); // YYYY-MM-DD
+  const [slots, setSlots] = useState([]); // [{start:"06:30", end:"06:45"}, ...]
+  const [selectedSlot, setSelectedSlot] = useState(null); // {start,end} elegido
+  const [loadingSlots, setLoadingSlots] = useState(false);
+
   const [showInfoModal, setShowInfoModal] = useState(true);
 
+  // datos cliente
   const [fullName, setFullName] = useState("");
   const [idNumber, setIdNumber] = useState("");
   const [phone, setPhone] = useState("");
@@ -160,77 +165,90 @@ export default function Booking() {
   const [product, setProduct] = useState("");
   const [notes, setNotes] = useState("");
 
+  // envío
   const [shippingAddress, setShippingAddress] = useState("");
   const [shippingNeighborhood, setShippingNeighborhood] = useState("");
   const [shippingCity, setShippingCity] = useState("");
   const [shippingCarrier, setShippingCarrier] = useState("");
   const [carriers, setCarriers] = useState(["INTERRAPIDISIMO"]);
 
+  // errores UI
   const [errors, setErrors] = useState({});
 
   const currentMethod = METHODS.find((m) => m.key === method);
   const themeClass = currentMethod?.theme || "";
 
+  /* ============ Carrier dinámico según ciudad ============ */
   useEffect(() => {
-    if (shippingCity.toLowerCase().includes("bogot")) {
+    const cityNorm = (shippingCity || "").toLowerCase();
+    if (cityNorm.includes("bogot")) {
       setCarriers(["PICAP", "INTERRAPIDISIMO"]);
     } else {
       setCarriers(["INTERRAPIDISIMO"]);
+      // Si estaba PICAP y ciudad ya no es Bogotá -> limpia
       if (shippingCarrier === "PICAP") {
         setShippingCarrier("");
       }
     }
   }, [shippingCity, shippingCarrier]);
 
+  /* ============ Cargar slots cuando cambian fecha / método ============ */
   useEffect(() => {
+    // reset selección cada vez que cambie fecha o método
+    setSelectedSlot(null);
+
     if (!date) {
       setSlots([]);
-      setSelectedSlot(null);
       return;
     }
-    if (method !== "SHIPPING") {
-      fetchSlots();
+
+    if (method === "SHIPPING") {
+      // Envío no necesita slots presenciales
+      setSlots([]);
+      return;
     }
+
+    fetchSlots();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, method]);
 
   async function fetchSlots() {
-    setLoading(true);
-    setSelectedSlot(null);
-
+    setLoadingSlots(true);
     try {
       const res = await fetch(
         `${API_BASE}/api/availability?date=${date}&type=${method}`
       );
 
-      let payload;
+      let data;
       try {
-        payload = await res.json();
-      } catch (parseErr) {
-        console.warn("Respuesta no JSON en /availability", parseErr);
+        data = await res.json();
+      } catch (err) {
+        console.warn("Respuesta no JSON en /availability:", err);
         toast.error("Error al cargar horarios", {
           description: "Respuesta inesperada del servidor",
-        });
-        setSlots([]);
-        return;
-      }
-
-      if (!res.ok || !payload.ok) {
-        toast.error("No se pudieron cargar los horarios", {
-          description: payload?.error || "Intenta de nuevo",
           icon: <AlertCircle className="w-5 h-5" />,
         });
         setSlots([]);
         return;
       }
 
-      const slotsFromApi =
-        payload?.data?.slots && Array.isArray(payload.data.slots)
-          ? payload.data.slots
-          : [];
+      if (!res.ok || !data?.ok) {
+        toast.error("No se pudieron cargar los horarios", {
+          description: data?.error || "Intenta de nuevo",
+          icon: <AlertCircle className="w-5 h-5" />,
+        });
+        setSlots([]);
+        return;
+      }
 
-      setSlots(slotsFromApi);
+      const apiSlots = Array.isArray(data?.data?.slots) ? data.data.slots : [];
 
-      if (!slotsFromApi.length) {
+      // apiSlots ya son bloques exactos creados por el admin:
+      // [{start:"06:30",end:"06:45"}, ...]
+
+      setSlots(apiSlots);
+
+      if (!apiSlots.length) {
         toast.error("No hay horarios disponibles", {
           description: "Intenta con otra fecha o método",
           icon: <AlertCircle className="w-5 h-5" />,
@@ -243,14 +261,16 @@ export default function Booking() {
       });
       setSlots([]);
     } finally {
-      setLoading(false);
+      setLoadingSlots(false);
     }
   }
 
+  /* ============ Validación del formulario antes de enviar ============ */
   function validateForm() {
     const newErrors = {};
 
     if (!fullName.trim()) newErrors.fullName = "El nombre es obligatorio";
+
     if (!idNumber.trim()) newErrors.idNumber = "La cédula es obligatoria";
 
     if (!phone.trim()) {
@@ -271,10 +291,12 @@ export default function Booking() {
 
     if (!date) newErrors.date = "Selecciona una fecha";
 
-    if (method === "TRYOUT" && !selectedSlot) {
-      newErrors.slot = "Selecciona un horario";
+    // Para TRYOUT y PICKUP el usuario DEBE elegir un bloque
+    if (method !== "SHIPPING" && !selectedSlot) {
+      newErrors.slot = "Selecciona un horario disponible.";
     }
 
+    // Para SHIPPING pedimos datos extra
     if (method === "SHIPPING") {
       if (!shippingAddress.trim())
         newErrors.shippingAddress = "La dirección es obligatoria";
@@ -287,41 +309,37 @@ export default function Booking() {
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+
+    if (Object.keys(newErrors).length) {
+      toast.error("Por favor completa todos los campos obligatorios");
+      return false;
+    }
+    return true;
   }
 
+  /* ============ Enviar reserva ============ */
   async function handleSubmit(e) {
     e.preventDefault();
 
-    if (!validateForm()) {
-      toast.error("Por favor completa todos los campos obligatorios");
-      return;
-    }
+    if (!validateForm()) return;
 
+    // Construimos hora exacta:
+    // - Para SHIPPING usamos 00:00 (no necesita cita física)
+    // - Para TRYOUT / PICKUP usamos EXACTAMENTE el bloque elegido
     let start_time = "00:00";
     let end_time = "00:00";
 
-    if (method === "TRYOUT" && selectedSlot) {
-      start_time = selectedSlot;
-      const slotData = slots.find((s) => s.start === selectedSlot);
-      if (slotData && slotData.end) {
-        end_time = slotData.end;
-      } else {
-        const [hours, minutes] = selectedSlot.split(":").map(Number);
-        const endMinutes = minutes + 30;
-        const endHours = hours + Math.floor(endMinutes / 60);
-        end_time = `${String(endHours).padStart(2, "0")}:${String(
-          endMinutes % 60
-        ).padStart(2, "0")}`;
-      }
+    if (method !== "SHIPPING" && selectedSlot) {
+      start_time = selectedSlot.start;
+      end_time = selectedSlot.end;
     }
 
     const payload = {
-      type_code: method, 
-      date: date, 
-      start_time: start_time,
-      end_time: end_time,
-      product: product,
+      type_code: method, // TRYOUT | PICKUP | SHIPPING
+      date,
+      start_time,
+      end_time,
+      product,
       customer_name: fullName,
       customer_email: email,
       customer_phone: phone,
@@ -359,6 +377,7 @@ export default function Booking() {
           duration: 5000,
         });
 
+        // limpiar formulario después de agendar
         setFullName("");
         setIdNumber("");
         setPhone("");
@@ -377,9 +396,7 @@ export default function Booking() {
         const msg =
           responseBody?.error ||
           "No pudimos crear la reserva. Intenta nuevamente.";
-        toast.error(msg, {
-          icon: <AlertCircle className="w-5 h-5" />,
-        });
+        toast.error(msg, { icon: <AlertCircle className="w-5 h-5" /> });
       }
     } catch (err) {
       console.error(err);
@@ -389,12 +406,14 @@ export default function Booking() {
     }
   }
 
+  // pequeño helper para limpiar mensajes de error al editar inputs
   const clearError = (field) => {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
+  /* ============ Render UI principal ============ */
   return (
     <div className={`min-h-screen ${themeClass}`}>
       <Toaster position="top-center" richColors />
@@ -416,6 +435,7 @@ export default function Booking() {
         </motion.div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* MÉTODO */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -436,7 +456,10 @@ export default function Booking() {
                   <motion.button
                     key={m.key}
                     type="button"
-                    onClick={() => setMethod(m.key)}
+                    onClick={() => {
+                      setMethod(m.key);
+                      clearError("slot");
+                    }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className={`pill relative overflow-hidden ${
@@ -467,6 +490,7 @@ export default function Booking() {
               })}
             </div>
 
+            {/* Callout dinámico debajo */}
             <AnimatePresence>
               {method === "TRYOUT" && (
                 <motion.div
@@ -497,6 +521,7 @@ export default function Booking() {
                   </div>
                 </motion.div>
               )}
+
               {method === "PICKUP" && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
@@ -520,6 +545,7 @@ export default function Booking() {
                   </div>
                 </motion.div>
               )}
+
               {method === "SHIPPING" && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
@@ -552,6 +578,7 @@ export default function Booking() {
             </AnimatePresence>
           </motion.div>
 
+          {/* FECHA + HORARIO */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -559,6 +586,7 @@ export default function Booking() {
             className="card"
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Fecha */}
               <div>
                 <label className="lbl flex items-center gap-2">
                   <Calendar className="w-5 h-5 brand-text" />
@@ -568,11 +596,11 @@ export default function Booking() {
                   whileFocus={{ scale: 1.01 }}
                   type="date"
                   value={date}
+                  min={new Date().toISOString().split("T")[0]}
                   onChange={(e) => {
                     setDate(e.target.value);
                     clearError("date");
                   }}
-                  min={new Date().toISOString().split("T")[0]}
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
                     errors.date
                       ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
@@ -591,6 +619,7 @@ export default function Booking() {
                 )}
               </div>
 
+              {/* Horario (no se muestra en SHIPPING) */}
               {method !== "SHIPPING" && (
                 <div>
                   <label className="lbl flex items-center gap-2">
@@ -600,8 +629,9 @@ export default function Booking() {
 
                   <AnimatePresence mode="wait">
                     {!date ? (
+                      // No hay fecha
                       <motion.div
-                        key="no-date"
+                        key="need-date"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -610,7 +640,8 @@ export default function Booking() {
                         <Info className="w-5 h-5" />
                         Selecciona una fecha primero
                       </motion.div>
-                    ) : loading ? (
+                    ) : loadingSlots ? (
+                      // Cargando slots
                       <motion.div
                         key="loading"
                         initial={{ opacity: 0 }}
@@ -631,6 +662,7 @@ export default function Booking() {
                         Cargando horarios...
                       </motion.div>
                     ) : slots.length === 0 ? (
+                      // Sin disponibilidad
                       <motion.div
                         key="no-slots"
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -652,29 +684,38 @@ export default function Booking() {
                         </div>
                       </motion.div>
                     ) : (
+                      // Mostrar los bloques creados por el admin
                       <motion.div
-                        key="slots"
+                        key="slot-list"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar"
                       >
-                        {slots.map((s) => (
-                          <motion.button
-                            key={`${s.start}-${s.end}`}
-                            type="button"
-                            onClick={() => {
-                              setSelectedSlot(s.start);
-                              clearError("slot");
-                            }}
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            className={`slot ${
-                              selectedSlot === s.start ? "slot-active" : ""
-                            }`}
-                          >
-                            {s.start}
-                          </motion.button>
-                        ))}
+                        {slots.map((s) => {
+                          // s = {start:"06:30", end:"06:45"}
+                          const isActive =
+                            selectedSlot?.start === s.start &&
+                            selectedSlot?.end === s.end;
+                          return (
+                            <motion.button
+                              key={`${s.start}-${s.end}`}
+                              type="button"
+                              whileHover={{ scale: 1.03 }}
+                              whileTap={{ scale: 0.97 }}
+                              onClick={() => {
+                                setSelectedSlot(s); // guardamos TODO el bloque
+                                clearError("slot");
+                              }}
+                              className={`slot ${
+                                isActive ? "slot-active" : ""
+                              }`}
+                            >
+                              {/* puedes decidir si quieres ver solo inicio
+                                 o "inicio–fin". Aquí muestro inicio–fin */}
+                              {s.start} – {s.end}
+                            </motion.button>
+                          );
+                        })}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -694,6 +735,7 @@ export default function Booking() {
             </div>
           </motion.div>
 
+          {/* DATOS PERSONALES */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -706,6 +748,7 @@ export default function Booking() {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+              {/* Nombre */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-slate-700">
                   Nombre completo <span className="text-rose-500">*</span>
@@ -737,6 +780,7 @@ export default function Booking() {
                 )}
               </div>
 
+              {/* Cédula */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-slate-700">
                   Cédula <span className="text-rose-500">*</span>
@@ -791,6 +835,7 @@ export default function Booking() {
                 )}
               </div>
 
+              {/* Celular */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-slate-700">
                   Celular <span className="text-rose-500">*</span>
@@ -846,7 +891,9 @@ export default function Booking() {
               </div>
             </div>
 
+            {/* Correo + Producto */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              {/* Correo */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-slate-700">
                   Correo <span className="text-rose-500">*</span>
@@ -878,6 +925,7 @@ export default function Booking() {
                 )}
               </div>
 
+              {/* Producto */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
                   <Package className="w-4 h-4 brand-text" />
@@ -911,6 +959,7 @@ export default function Booking() {
               </div>
             </div>
 
+            {/* Notas */}
             <div>
               <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
                 <FileText className="w-4 h-4 brand-text" />
@@ -934,6 +983,7 @@ export default function Booking() {
             </div>
           </motion.div>
 
+          {/* DATOS DE ENVÍO (solo SHIPPING) */}
           {method === "SHIPPING" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -1087,6 +1137,7 @@ export default function Booking() {
             </motion.div>
           )}
 
+          {/* BOTÓN SUBMIT */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1097,7 +1148,6 @@ export default function Booking() {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               className="btn-primary flex items-center justify-center gap-2"
-              disabled={loading}
             >
               <CheckCircle2 className="w-5 h-5" />
               {method === "SHIPPING"
@@ -1107,6 +1157,7 @@ export default function Booking() {
           </motion.div>
         </form>
 
+        {/* CONTACTO */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1138,6 +1189,7 @@ export default function Booking() {
         </motion.div>
       </div>
 
+      {/* scrollbar ligera para lista de horas */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
