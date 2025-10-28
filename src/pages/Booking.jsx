@@ -186,8 +186,9 @@ export default function Booking() {
         setShippingCarrier("");
       }
     }
-  }, [shippingCity]);
+  }, [shippingCity, shippingCarrier]);
 
+  // cargar slots cuando cambia fecha o método
   useEffect(() => {
     if (!date) {
       setSlots([]);
@@ -199,17 +200,44 @@ export default function Booking() {
     }
   }, [date, method]);
 
+  // -------- fetchSlots corregido --------
   async function fetchSlots() {
     setLoading(true);
     setSelectedSlot(null);
+
     try {
       const res = await fetch(
-        `https://techventuresback-production.up.railway.app/api/bookings/slots?date=${date}&method=${method}`
+        `https://techventuresback-production.up.railway.app/api/availability?date=${date}&type=${method}`
       );
-      const data = await res.json();
-      setSlots(data.slots || []);
 
-      if (!data.slots || data.slots.length === 0) {
+      // Intentamos leer JSON de forma segura
+      let payload;
+      try {
+        payload = await res.json();
+      } catch (parseErr) {
+        console.warn("Respuesta no JSON en /availability", parseErr);
+        toast.error("Error al cargar horarios", {
+          description: "Respuesta inesperada del servidor",
+        });
+        setSlots([]);
+        return;
+      }
+
+      if (!res.ok || !payload.ok) {
+        toast.error("No se pudieron cargar los horarios", {
+          description: payload?.error || "Intenta de nuevo",
+          icon: <AlertCircle className="w-5 h-5" />,
+        });
+        setSlots([]);
+        return;
+      }
+
+      // payload.data es lo que devuelve getAvailability()
+      const slotsArr = Array.isArray(payload.data) ? payload.data : [];
+
+      setSlots(slotsArr);
+
+      if (slotsArr.length === 0) {
         toast.error("No hay horarios disponibles", {
           description: "Intenta con otra fecha o método",
           icon: <AlertCircle className="w-5 h-5" />,
@@ -271,6 +299,7 @@ export default function Booking() {
     return Object.keys(newErrors).length === 0;
   }
 
+  // -------- handleSubmit corregido --------
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -284,11 +313,11 @@ export default function Booking() {
     let end_time = "00:00";
 
     if (method === "TRYOUT" && selectedSlot) {
-      // Si hay slot seleccionado, viene en formato "HH:MM" (ej: "10:00")
+      // slot tipo "HH:MM"
       start_time = selectedSlot;
-      // Asumimos 30 min de duración por defecto
+
       const [hours, minutes] = selectedSlot.split(":").map(Number);
-      const endMinutes = minutes + 30;
+      const endMinutes = minutes + 30; // asumimos 30 min
       const endHours = hours + Math.floor(endMinutes / 60);
       end_time = `${String(endHours).padStart(2, "0")}:${String(
         endMinutes % 60
@@ -296,8 +325,8 @@ export default function Booking() {
     }
 
     const payload = {
-      type_code: method,
-      date: date,
+      type_code: method, // TRYOUT | PICKUP | SHIPPING
+      date: date, // YYYY-MM-DD
       start_time: start_time,
       end_time: end_time,
       product: product,
@@ -317,7 +346,7 @@ export default function Booking() {
       const loadingToast = toast.loading("Procesando tu reserva...");
 
       const res = await fetch(
-        "https://techventuresback-production.up.railway.app/api/bookings",
+        "https://techventuresback-production.up.railway.app/api/appointments",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -327,7 +356,15 @@ export default function Booking() {
 
       toast.dismiss(loadingToast);
 
-      if (res.ok) {
+      // Intentar leer JSON siempre
+      let responseBody = null;
+      try {
+        responseBody = await res.json();
+      } catch (parseErr) {
+        console.warn("Respuesta no JSON en /appointments", parseErr);
+      }
+
+      if (res.ok && responseBody?.ok) {
         toast.success("¡Reserva confirmada!", {
           description: "Revisa tu correo para más detalles",
           icon: <CheckCircle2 className="w-5 h-5" />,
@@ -350,8 +387,12 @@ export default function Booking() {
         setSlots([]);
         setErrors({});
       } else {
-        const errorData = await res.json();
-        toast.error(errorData.error || "Error al crear la reserva");
+        const msg =
+          responseBody?.error ||
+          "No pudimos crear la reserva. Intenta nuevamente.";
+        toast.error(msg, {
+          icon: <AlertCircle className="w-5 h-5" />,
+        });
       }
     } catch (err) {
       console.error(err);
@@ -913,7 +954,7 @@ export default function Booking() {
             </div>
           </motion.div>
 
-          {/* DATOS DE ENVÍO (solo si method === SHIPPING) */}
+          {/* DATOS DE ENVÍO (solo si method === "SHIPPING") */}
           {method === "SHIPPING" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
