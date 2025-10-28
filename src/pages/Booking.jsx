@@ -19,10 +19,8 @@ import {
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
-// 🔗 Backend correcto en Railway
 const API_BASE = "https://techventuresbackend-production.up.railway.app";
 
-// ========== Configuración de métodos ==========
 const METHODS = [
   {
     key: "TRYOUT",
@@ -47,7 +45,6 @@ const METHODS = [
   },
 ];
 
-// ========== Modal de Información Importante ==========
 function InfoModal({ open, onClose }) {
   const [countdown, setCountdown] = useState(5);
 
@@ -148,7 +145,6 @@ function InfoModal({ open, onClose }) {
   );
 }
 
-// ========== Componente Principal ==========
 export default function Booking() {
   const [method, setMethod] = useState("TRYOUT");
   const [date, setDate] = useState("");
@@ -157,7 +153,6 @@ export default function Booking() {
   const [loading, setLoading] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(true);
 
-  // Form state
   const [fullName, setFullName] = useState("");
   const [idNumber, setIdNumber] = useState("");
   const [phone, setPhone] = useState("");
@@ -165,20 +160,17 @@ export default function Booking() {
   const [product, setProduct] = useState("");
   const [notes, setNotes] = useState("");
 
-  // Shipping fields
   const [shippingAddress, setShippingAddress] = useState("");
   const [shippingNeighborhood, setShippingNeighborhood] = useState("");
   const [shippingCity, setShippingCity] = useState("");
   const [shippingCarrier, setShippingCarrier] = useState("");
   const [carriers, setCarriers] = useState(["INTERRAPIDISIMO"]);
 
-  // Errors
   const [errors, setErrors] = useState({});
 
   const currentMethod = METHODS.find((m) => m.key === method);
   const themeClass = currentMethod?.theme || "";
 
-  // Cambiar carriers según ciudad
   useEffect(() => {
     if (shippingCity.toLowerCase().includes("bogot")) {
       setCarriers(["PICAP", "INTERRAPIDISIMO"]);
@@ -190,7 +182,6 @@ export default function Booking() {
     }
   }, [shippingCity, shippingCarrier]);
 
-  // cargar slots cuando cambia fecha o método (solo TRYOUT / PICKUP)
   useEffect(() => {
     if (!date) {
       setSlots([]);
@@ -200,10 +191,8 @@ export default function Booking() {
     if (method !== "SHIPPING") {
       fetchSlots();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, method]);
 
-  // -------- fetchSlots --------
   async function fetchSlots() {
     setLoading(true);
     setSelectedSlot(null);
@@ -234,11 +223,14 @@ export default function Booking() {
         return;
       }
 
-      // tu backend responde { ok: true, data: [...] }
-      const slotsArr = Array.isArray(payload.data) ? payload.data : [];
-      setSlots(slotsArr);
+      const slotsFromApi =
+        payload?.data?.slots && Array.isArray(payload.data.slots)
+          ? payload.data.slots
+          : [];
 
-      if (slotsArr.length === 0) {
+      setSlots(slotsFromApi);
+
+      if (!slotsFromApi.length) {
         toast.error("No hay horarios disponibles", {
           description: "Intenta con otra fecha o método",
           icon: <AlertCircle className="w-5 h-5" />,
@@ -298,7 +290,6 @@ export default function Booking() {
     return Object.keys(newErrors).length === 0;
   }
 
-  // -------- handleSubmit --------
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -307,24 +298,27 @@ export default function Booking() {
       return;
     }
 
-    // Calcular start_time y end_time
     let start_time = "00:00";
     let end_time = "00:00";
 
     if (method === "TRYOUT" && selectedSlot) {
-      // slot tipo "HH:MM"
       start_time = selectedSlot;
-      const [hours, minutes] = selectedSlot.split(":").map(Number);
-      const endMinutes = minutes + 30; // asumimos cita de 30 min
-      const endHours = hours + Math.floor(endMinutes / 60);
-      end_time = `${String(endHours).padStart(2, "0")}:${String(
-        endMinutes % 60
-      ).padStart(2, "0")}`;
+      const slotData = slots.find((s) => s.start === selectedSlot);
+      if (slotData && slotData.end) {
+        end_time = slotData.end;
+      } else {
+        const [hours, minutes] = selectedSlot.split(":").map(Number);
+        const endMinutes = minutes + 30;
+        const endHours = hours + Math.floor(endMinutes / 60);
+        end_time = `${String(endHours).padStart(2, "0")}:${String(
+          endMinutes % 60
+        ).padStart(2, "0")}`;
+      }
     }
 
     const payload = {
-      type_code: method, // TRYOUT | PICKUP | SHIPPING
-      date: date, // YYYY-MM-DD
+      type_code: method, 
+      date: date, 
       start_time: start_time,
       end_time: end_time,
       product: product,
@@ -365,7 +359,6 @@ export default function Booking() {
           duration: 5000,
         });
 
-        // limpiar formulario
         setFullName("");
         setIdNumber("");
         setPhone("");
@@ -423,7 +416,6 @@ export default function Booking() {
         </motion.div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* MÉTODO */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -560,7 +552,6 @@ export default function Booking() {
             </AnimatePresence>
           </motion.div>
 
-          {/* FECHA Y HORARIO */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -568,7 +559,6 @@ export default function Booking() {
             className="card"
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* FECHA */}
               <div>
                 <label className="lbl flex items-center gap-2">
                   <Calendar className="w-5 h-5 brand-text" />
@@ -601,7 +591,6 @@ export default function Booking() {
                 )}
               </div>
 
-              {/* HORARIO (solo TRYOUT / PICKUP) */}
               {method !== "SHIPPING" && (
                 <div>
                   <label className="lbl flex items-center gap-2">
@@ -671,18 +660,17 @@ export default function Booking() {
                       >
                         {slots.map((s) => (
                           <motion.button
-                            key={s.start}
+                            key={`${s.start}-${s.end}`}
                             type="button"
                             onClick={() => {
                               setSelectedSlot(s.start);
                               clearError("slot");
                             }}
-                            whileHover={{ scale: s.available ? 1.03 : 1 }}
-                            whileTap={{ scale: s.available ? 0.97 : 1 }}
-                            disabled={!s.available}
+                            whileHover={{ scale: 1.03 }}
+                            whileTap={{ scale: 0.97 }}
                             className={`slot ${
                               selectedSlot === s.start ? "slot-active" : ""
-                            } ${!s.available ? "slot-dis" : ""}`}
+                            }`}
                           >
                             {s.start}
                           </motion.button>
@@ -706,7 +694,6 @@ export default function Booking() {
             </div>
           </motion.div>
 
-          {/* DATOS PERSONALES */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -947,7 +934,6 @@ export default function Booking() {
             </div>
           </motion.div>
 
-          {/* DATOS DE ENVÍO (solo SHIPPING) */}
           {method === "SHIPPING" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -1101,7 +1087,6 @@ export default function Booking() {
             </motion.div>
           )}
 
-          {/* SUBMIT */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1122,7 +1107,6 @@ export default function Booking() {
           </motion.div>
         </form>
 
-        {/* Footer */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1154,7 +1138,6 @@ export default function Booking() {
         </motion.div>
       </div>
 
-      {/* Scrollbar custom */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
