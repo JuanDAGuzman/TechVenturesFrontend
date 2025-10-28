@@ -45,64 +45,59 @@ const METHODS = [
   },
 ];
 
-// helper para validar fecha YYYY-MM-DD
-function isValidYMD(str) {
-  return /^\d{4}-\d{2}-\d{2}$/.test(str || "");
-}
-
-/* =========================
-   Popup inicial (InfoModal)
-   ========================= */
+// =============== InfoModal (popup inicial) ===============
 function InfoModal({ open, onClose }) {
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     if (!open) return;
     setCountdown(5);
-
-    const interval = setInterval(() => {
+    const id = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
-          clearInterval(interval);
+          clearInterval(id);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-
-    return () => clearInterval(interval);
+    return () => clearInterval(id);
   }, [open]);
 
   useEffect(() => {
-    const handleEscape = (e) => {
+    const onKey = (e) => {
       if (e.key === "Escape" && countdown === 0) onClose();
     };
-    if (open) window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
+    if (open) window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [open, countdown, onClose]);
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/50 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden mt-10"
       >
+        {/* bar arriba */}
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-1" />
 
         <div className="p-6 sm:p-8">
+          {/* header modal */}
           <div className="flex items-start gap-4 mb-6">
             <div className="flex-shrink-0 w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
               <AlertCircle className="w-6 h-6 text-amber-600" />
             </div>
+
             <div className="flex-1">
               <h2 className="text-2xl font-black text-slate-900 mb-2">
                 Información importante
               </h2>
             </div>
+
             {countdown === 0 && (
               <button
                 onClick={onClose}
@@ -113,6 +108,7 @@ function InfoModal({ open, onClose }) {
             )}
           </div>
 
+          {/* body modal */}
           <div className="space-y-3 mb-6 max-h-[50vh] overflow-y-auto pr-2">
             {[
               "Usa tus datos reales (nombre, cédula, correo y celular). Esto permite validar y hacer trazabilidad correcta.",
@@ -136,6 +132,7 @@ function InfoModal({ open, onClose }) {
             ))}
           </div>
 
+          {/* footer modal */}
           <div className="flex justify-end">
             <motion.button
               whileHover={{ scale: countdown === 0 ? 1.02 : 1 }}
@@ -153,18 +150,27 @@ function InfoModal({ open, onClose }) {
   );
 }
 
-/* =========================
-   Página Booking principal
-   ========================= */
+// =============== Booking Page ===============
 export default function Booking() {
+  // método TRYOUT / PICKUP / SHIPPING
   const [method, setMethod] = useState("TRYOUT");
+
+  // fecha seleccionada
   const [date, setDate] = useState("");
+
+  // slots disponibles [{start,end}]
   const [slots, setSlots] = useState([]);
+
+  // slot seleccionado: { start, end } ó null
   const [selectedSlot, setSelectedSlot] = useState(null);
+
+  // loading de horarios
   const [loading, setLoading] = useState(false);
 
+  // modal info inicial
   const [showInfoModal, setShowInfoModal] = useState(true);
 
+  // datos del formulario
   const [fullName, setFullName] = useState("");
   const [idNumber, setIdNumber] = useState("");
   const [phone, setPhone] = useState("");
@@ -172,18 +178,20 @@ export default function Booking() {
   const [product, setProduct] = useState("");
   const [notes, setNotes] = useState("");
 
+  // envío
   const [shippingAddress, setShippingAddress] = useState("");
   const [shippingNeighborhood, setShippingNeighborhood] = useState("");
   const [shippingCity, setShippingCity] = useState("");
   const [shippingCarrier, setShippingCarrier] = useState("");
   const [carriers, setCarriers] = useState(["INTERRAPIDISIMO"]);
 
+  // errores UI
   const [errors, setErrors] = useState({});
 
   const currentMethod = METHODS.find((m) => m.key === method);
   const themeClass = currentMethod?.theme || "";
 
-  /* transportadoras dinámicas según ciudad */
+  // --- Transportadoras dinámicas según ciudad ---
   useEffect(() => {
     if (shippingCity.toLowerCase().includes("bogot")) {
       setCarriers(["PICAP", "INTERRAPIDISIMO"]);
@@ -195,17 +203,15 @@ export default function Booking() {
     }
   }, [shippingCity, shippingCarrier]);
 
-  /* cargar slots cuando cambian fecha o método */
+  // --- Cargar slots CUANDO haya fecha y el método sea TRYOUT o PICKUP ---
   useEffect(() => {
-    // SHIPPING no tiene horarios
-    if (method === "SHIPPING") {
+    if (!date) {
       setSlots([]);
       setSelectedSlot(null);
       return;
     }
-
-    // si no hay fecha válida todavía, no llames nada
-    if (!isValidYMD(date)) {
+    if (method === "SHIPPING") {
+      // Envío no tiene horarios
       setSlots([]);
       setSelectedSlot(null);
       return;
@@ -216,60 +222,56 @@ export default function Booking() {
   }, [date, method]);
 
   async function fetchSlots() {
-    // safety guard
-    if (!isValidYMD(date)) return;
-    if (method === "SHIPPING") return;
-
     setLoading(true);
     setSelectedSlot(null);
 
     try {
       const res = await fetch(
-        `${API_BASE}/api/availability?date=${encodeURIComponent(
-          date
-        )}&type=${encodeURIComponent(method)}`
+        `${API_BASE}/api/availability?date=${date}&type=${method}`
       );
 
-      let payload = null;
+      let payload;
       try {
         payload = await res.json();
-      } catch {
-        // respuesta no JSON (por ejemplo HTML de error)
-        // No mostramos toast rojo aquí. Solo dejamos slots vacíos.
+      } catch (parseErr) {
+        console.warn("Respuesta no JSON en /availability", parseErr);
+        toast.error("No se pudieron cargar los horarios", {
+          description: "Respuesta inesperada del servidor",
+          icon: <AlertCircle className="w-5 h-5" />,
+        });
         setSlots([]);
         setLoading(false);
         return;
       }
 
       if (!res.ok || !payload.ok) {
-        // si Backend dice NOT_FOUND o MISSING_PARAMS, eso significa "no hay horarios válidos"
-        // y es normal en primera carga / fechas sin ventanas -> no gritemos
-        if (
-          payload?.error &&
-          payload.error !== "NOT_FOUND" &&
-          payload.error !== "MISSING_PARAMS"
-        ) {
-          toast.error("No se pudieron cargar los horarios", {
-            description: payload.error,
-            icon: <AlertCircle className="w-5 h-5" />,
-          });
-        }
-
+        toast.error("No se pudieron cargar los horarios", {
+          description: payload?.error || "Intenta de nuevo",
+          icon: <AlertCircle className="w-5 h-5" />,
+        });
         setSlots([]);
         setLoading(false);
         return;
       }
 
+      // backend ya manda [{start:"HH:MM", end:"HH:MM"}, ...]
       const slotsFromApi = Array.isArray(payload?.data?.slots)
         ? payload.data.slots
         : [];
 
       setSlots(slotsFromApi);
+
+      if (!slotsFromApi.length) {
+        toast.error("No hay horarios disponibles", {
+          description:
+            'Intenta con otra fecha o prueba el método "Sin ensayar"',
+          icon: <AlertCircle className="w-5 h-5" />,
+        });
+      }
     } catch (err) {
       console.error(err);
       toast.error("Error al cargar horarios", {
         description: "Por favor intenta de nuevo",
-        icon: <AlertCircle className="w-5 h-5" />,
       });
       setSlots([]);
     } finally {
@@ -277,6 +279,7 @@ export default function Booking() {
     }
   }
 
+  // --- Validación formulario antes de enviar ---
   function validateForm() {
     const newErrors = {};
 
@@ -301,7 +304,6 @@ export default function Booking() {
 
     if (!date) newErrors.date = "Selecciona una fecha";
 
-    // para TRYOUT y PICKUP sí obligamos horario
     if (method !== "SHIPPING" && !selectedSlot) {
       newErrors.slot = "Selecciona un horario";
     }
@@ -321,6 +323,7 @@ export default function Booking() {
     return Object.keys(newErrors).length === 0;
   }
 
+  // --- Submit ---
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -329,17 +332,24 @@ export default function Booking() {
       return;
     }
 
-    // calcular start/end_time que vamos a mandar
-    // para SHIPPING usamos "00:00" dummy porque no hay turno
-    let start_time = "00:00";
-    let end_time = "00:00";
+    // Armamos start_time y end_time según tipo de cita
+    let start_time = null;
+    let end_time = null;
 
-    if (method !== "SHIPPING" && selectedSlot) {
-      // selectedSlot ya es el inicio exacto (p.ej. "07:15")
-      start_time = selectedSlot;
-      // buscamos el slot elegido en la lista para obtener el end
-      const chosen = slots.find((s) => s.start === selectedSlot);
-      end_time = chosen?.end || "00:00";
+    if (method === "TRYOUT" || method === "PICKUP") {
+      if (!selectedSlot) {
+        toast.error("Selecciona un horario disponible");
+        setErrors((prev) => ({
+          ...prev,
+          slot: "Selecciona un horario",
+        }));
+        return;
+      }
+      start_time = selectedSlot.start; // EJ "07:00"
+      end_time = selectedSlot.end; // EJ "07:30"
+    } else {
+      start_time = null;
+      end_time = null;
     }
 
     const payload = {
@@ -380,22 +390,28 @@ export default function Booking() {
 
       if (res.ok && responseBody?.ok) {
         toast.success("¡Reserva confirmada!", {
-          description: "Revisa tu correo para más detalles",
+          description:
+            method === "SHIPPING"
+              ? "Procesaremos tu envío y te confirmaremos por correo"
+              : "Revisa tu correo para más detalles",
           icon: <CheckCircle2 className="w-5 h-5" />,
           duration: 5000,
         });
 
-        // limpiamos formulario
+        // limpiar form
         setFullName("");
         setIdNumber("");
         setPhone("");
         setEmail("");
         setProduct("");
         setNotes("");
+
         setShippingAddress("");
         setShippingNeighborhood("");
         setShippingCity("");
         setShippingCarrier("");
+
+        // mantenemos method
         setDate("");
         setSelectedSlot(null);
         setSlots([]);
@@ -416,6 +432,7 @@ export default function Booking() {
     }
   }
 
+  // --- limpiar error puntual al digitar ---
   const clearError = (field) => {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
@@ -428,7 +445,7 @@ export default function Booking() {
       <InfoModal open={showInfoModal} onClose={() => setShowInfoModal(false)} />
 
       <div className="container-page">
-        {/* Header principal */}
+        {/* Header general */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -464,7 +481,17 @@ export default function Booking() {
                   <motion.button
                     key={m.key}
                     type="button"
-                    onClick={() => setMethod(m.key)}
+                    onClick={() => {
+                      setMethod(m.key);
+                      // si cambia método, reset de slots en front
+                      setSelectedSlot(null);
+                      if (m.key === "SHIPPING") {
+                        setSlots([]);
+                      } else if (date) {
+                        // si ya hay fecha, vuelvo a cargar disponibilidad
+                        fetchSlots();
+                      }
+                    }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     className={`pill relative overflow-hidden ${
@@ -495,9 +522,10 @@ export default function Booking() {
               })}
             </div>
 
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
               {method === "TRYOUT" && (
                 <motion.div
+                  key="callout-tryout"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
@@ -525,8 +553,10 @@ export default function Booking() {
                   </div>
                 </motion.div>
               )}
+
               {method === "PICKUP" && (
                 <motion.div
+                  key="callout-pickup"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
@@ -548,8 +578,10 @@ export default function Booking() {
                   </div>
                 </motion.div>
               )}
+
               {method === "SHIPPING" && (
                 <motion.div
+                  key="callout-ship"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
@@ -594,6 +626,7 @@ export default function Booking() {
                   <Calendar className="w-5 h-5 brand-text" />
                   Fecha <span className="text-rose-500">*</span>
                 </label>
+
                 <motion.input
                   whileFocus={{ scale: 1.01 }}
                   type="date"
@@ -601,6 +634,8 @@ export default function Booking() {
                   onChange={(e) => {
                     setDate(e.target.value);
                     clearError("date");
+                    // al cambiar fecha limpio el slot
+                    setSelectedSlot(null);
                   }}
                   min={new Date().toISOString().split("T")[0]}
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
@@ -609,6 +644,7 @@ export default function Booking() {
                       : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
                   }`}
                 />
+
                 {errors.date && (
                   <motion.p
                     initial={{ opacity: 0, y: -10 }}
@@ -621,7 +657,7 @@ export default function Booking() {
                 )}
               </div>
 
-              {/* Horarios (solo TRYOUT / PICKUP) */}
+              {/* Horario (solo TRYOUT / PICKUP) */}
               {method !== "SHIPPING" && (
                 <div>
                   <label className="lbl flex items-center gap-2">
@@ -631,7 +667,6 @@ export default function Booking() {
 
                   <AnimatePresence mode="wait">
                     {!date ? (
-                      // aún no eligió fecha
                       <motion.div
                         key="no-date"
                         initial={{ opacity: 0 }}
@@ -643,7 +678,6 @@ export default function Booking() {
                         Selecciona una fecha primero
                       </motion.div>
                     ) : loading ? (
-                      // cargando horarios
                       <motion.div
                         key="loading"
                         initial={{ opacity: 0 }}
@@ -663,8 +697,7 @@ export default function Booking() {
                         </motion.div>
                         Cargando horarios...
                       </motion.div>
-                    ) : slots.length === 0 ? (
-                      // sin horarios disponibles para esa fecha/método
+                    ) : !slots.length ? (
                       <motion.div
                         key="no-slots"
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -686,31 +719,40 @@ export default function Booking() {
                         </div>
                       </motion.div>
                     ) : (
-                      // lista de horarios seleccionables
                       <motion.div
                         key="slots"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar"
                       >
-                        {slots.map((s) => (
-                          <motion.button
-                            key={`${s.start}-${s.end}`}
-                            type="button"
-                            onClick={() => {
-                              setSelectedSlot(s.start);
-                              clearError("slot");
-                            }}
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            className={`slot ${
-                              selectedSlot === s.start ? "slot-active" : ""
-                            }`}
-                          >
-                            {/* mostramos la hora como "HH:MM – HH:MM" */}
-                            {s.start} – {s.end}
-                          </motion.button>
-                        ))}
+                        {slots.map((s) => {
+                          const label = `${s.start} – ${s.end}`;
+                          const isActive =
+                            selectedSlot &&
+                            selectedSlot.start === s.start &&
+                            selectedSlot.end === s.end;
+
+                          return (
+                            <motion.button
+                              key={`${s.start}-${s.end}`}
+                              type="button"
+                              onClick={() => {
+                                setSelectedSlot({
+                                  start: s.start,
+                                  end: s.end,
+                                });
+                                clearError("slot");
+                              }}
+                              whileHover={{ scale: 1.03 }}
+                              whileTap={{ scale: 0.97 }}
+                              className={`slot ${
+                                isActive ? "slot-active" : ""
+                              }`}
+                            >
+                              {label}
+                            </motion.button>
+                          );
+                        })}
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -1135,7 +1177,7 @@ export default function Booking() {
             </motion.div>
           )}
 
-          {/* Botón enviar */}
+          {/* Botón submit */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1156,6 +1198,7 @@ export default function Booking() {
           </motion.div>
         </form>
 
+        {/* Footer contacto */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1187,7 +1230,7 @@ export default function Booking() {
         </motion.div>
       </div>
 
-      {/* scrollbar custom para la lista de horarios */}
+      {/* scrollbar estilos */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
