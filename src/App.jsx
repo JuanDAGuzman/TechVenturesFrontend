@@ -28,7 +28,7 @@ function Header() {
           className="font-extrabold text-xl text-[var(--brand)] hover:opacity-80 transition flex items-center gap-2"
         >
           <motion.img
-            src="/techvent.png"
+            src="/TECHVENT.png"
             alt="TechVenturesCO"
             className="w-18 h-12"
             whileHover={{ rotate: 360 }}
