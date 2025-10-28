@@ -44,7 +44,7 @@ export default function Footer() {
             >
               <h3 className="font-extrabold text-xl text-[var(--brand)] mb-3 flex items-center gap-2">
                 <img
-                  src="./public/techvent.png"
+                  src="/techvent.png"
                   alt="TechVenturesCO"
                   className="w-18 h-12"
                 />
