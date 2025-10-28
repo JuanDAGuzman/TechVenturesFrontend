@@ -1,902 +1,1041 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import dayjs from "dayjs";
-import TimeSlotPicker from "../components/TimeSlotPicker.jsx";
-import { getAvailability, createAppointment } from "../api.js";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  Mail,
+  Package,
+  MapPin,
+  Truck,
+  AlertCircle,
+  CheckCircle2,
+  Sparkles,
+  Info,
+  FileText,
+  X,
+  Home,
+  Map,
+} from "lucide-react";
+import { toast, Toaster } from "sonner";
 
-const emailRe = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
-const initialForm = {
-  name: "",
-  idNumber: "",
-  email: "",
-  phone: "",
-  product: "",
-  notes: "",
-  shipping_address: "",
-  shipping_neighborhood: "",
-  shipping_city: "",
-  shipping_carrier: "",
-};
-function onlyDigits(s = "") {
-  return (s || "").replace(/\D/g, "");
-}
+const METHODS = [
+  {
+    key: "TRYOUT",
+    label: "Ensayar personalmente",
+    icon: Sparkles,
+    desc: "Visítanos y prueba antes de comprar",
+    theme: "",
+  },
+  {
+    key: "PICKUP",
+    label: "Sin ensayar",
+    icon: MapPin,
+    desc: "Recoge tu pedido sin cita previa",
+    theme: "theme-pickup",
+  },
+  {
+    key: "SHIPPING",
+    label: "Envío (no contraentrega)",
+    icon: Truck,
+    desc: "Te lo enviamos a tu dirección",
+    theme: "theme-shipping",
+  },
+];
 
-function minutesBetween(hhmmStart, hhmmEnd) {
-  if (!hhmmStart || !hhmmEnd) return null;
-  const [sh, sm] = hhmmStart.split(":").map(Number);
-  const [eh, em] = hhmmEnd.split(":").map(Number);
-  return eh * 60 + em - (sh * 60 + sm);
-}
-function allowNumericKeys(e) {
-  const ok =
-    /\d/.test(e.key) ||
-    [
-      "Backspace",
-      "Delete",
-      "ArrowLeft",
-      "ArrowRight",
-      "Tab",
-      "Home",
-      "End",
-    ].includes(e.key) ||
-    (e.ctrlKey && ["a", "c", "v", "x"].includes(e.key.toLowerCase()));
-  if (!ok) e.preventDefault();
-}
-
-function ModalToast({
-  open,
-  title,
-  items = [],
-  variant = "error",
-  onClose,
-  waitSeconds = 0,
-}) {
-  const [remaining, setRemaining] = useState(0);
+function InfoModal({ open, onClose }) {
+  const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
     if (!open) return;
-    setRemaining(waitSeconds || 0);
-    if (!waitSeconds) return;
+    setCountdown(5);
 
-    const id = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          clearInterval(id);
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
           return 0;
         }
-        return r - 1;
+        return prev - 1;
       });
     }, 1000);
 
-    return () => clearInterval(id);
-  }, [open, waitSeconds]);
+    return () => clearInterval(interval);
+  }, [open]);
 
   useEffect(() => {
-    const onKey = (e) => e.key === "Escape" && remaining === 0 && onClose?.();
-    if (open) window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open, onClose, remaining]);
+    const handleEscape = (e) => {
+      if (e.key === "Escape" && countdown === 0) onClose();
+    };
+    if (open) window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [open, countdown, onClose]);
 
   if (!open) return null;
 
-  const styles = {
-    error: {
-      bar: "bg-rose-600",
-      border: "border-slate-300",
-      icon: "text-rose-600",
-    },
-    warning: {
-      bar: "bg-amber-600",
-      border: "border-slate-300",
-      icon: "text-amber-600",
-    },
-    success: {
-      bar: "bg-emerald-600",
-      border: "border-slate-300",
-      icon: "text-emerald-600",
-    },
-  }[variant];
-
-  const Icon = () => (
-    <span
-      className={`inline-flex items-center justify-center h-9 w-9 rounded-full bg-slate-100 ${styles.icon}`}
-    >
-      {variant === "success" ? "✓" : "!"}
-    </span>
-  );
-
-  const tryClose = () => {
-    if (remaining === 0) onClose?.();
-  };
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      onMouseDown={tryClose}
-    >
-      <div className="absolute inset-0 bg-black/55" />
-      <div
-        className={`relative w-full max-w-xl bg-white border ${styles.border} rounded-2xl shadow-2xl`}
-        onMouseDown={(e) => e.stopPropagation()}
-        role="dialog"
-        aria-modal="true"
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden"
       >
-        <div className={`h-2 ${styles.bar} rounded-t-2xl`} />
-        <div className="p-6">
-          <div className="flex items-start gap-3">
-            <Icon />
-            <div className="flex-1">
-              <div className="flex items-start justify-between">
-                <h3 className="text-xl font-bold text-slate-900">{title}</h3>
-                <button
-                  onClick={tryClose}
-                  className="ml-3 rounded-full px-2 py-1 text-slate-700 hover:bg-slate-100 disabled:opacity-40"
-                  aria-label="Cerrar"
-                  disabled={remaining > 0}
-                >
-                  ✕
-                </button>
-              </div>
+        <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-1" />
 
-              {Array.isArray(items) && items.length > 1 ? (
-                <ul className="mt-3 list-disc pl-5 space-y-1 text-slate-800">
-                  {items.map((it, idx) => (
-                    <li key={idx} className="text-sm leading-relaxed">
-                      {it}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="mt-3 text-slate-800 text-sm leading-relaxed">
-                  {items[0]}
-                </p>
-              )}
-
-              <div className="mt-6 flex justify-end">
-                <button
-                  onClick={tryClose}
-                  className="px-4 py-2 rounded-xl font-semibold text-white bg-[var(--brand)] hover:bg-[var(--brand-hover)] focus:outline-none focus:ring-4 focus:ring-[var(--brand-ring)] disabled:opacity-60"
-                  disabled={remaining > 0}
-                >
-                  {remaining > 0 ? `Entendido (${remaining})` : "Entendido"}
-                </button>
-              </div>
+        <div className="p-6 sm:p-8">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+              <AlertCircle className="w-6 h-6 text-amber-600" />
             </div>
+            <div className="flex-1">
+              <h2 className="text-2xl font-black text-slate-900 mb-2">
+                Información importante
+              </h2>
+            </div>
+            {countdown === 0 && (
+              <button
+                onClick={onClose}
+                className="flex-shrink-0 text-slate-400 hover:text-slate-600 transition"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            )}
+          </div>
+
+          <div className="space-y-3 mb-6 max-h-[50vh] overflow-y-auto pr-2">
+            {[
+              "Usa tus datos reales (nombre, cédula, correo y celular). Esto permite validar y hacer trazabilidad correcta.",
+              "Si ingresas datos incorrectos no podremos atenderte ni validar tu cita.",
+              "¿Te equivocaste? Responde al correo de confirmación para solicitar reprogramación/anulación y luego agenda nuevamente.",
+              "Los intentos con datos falsos o repetidos pueden bloquear futuras reservas.",
+              "Si das parte de pago con una gráfica, especifica en 'Notas': gráfica entregada, gráfica deseada y monto a encimar.",
+            ].map((text, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.1 * (idx + 1) }}
+                className="flex items-start gap-3"
+              >
+                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-xs font-bold text-amber-700">
+                  {idx + 1}
+                </span>
+                <p className="text-slate-700 text-sm leading-relaxed">{text}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="flex justify-end">
+            <motion.button
+              whileHover={{ scale: countdown === 0 ? 1.02 : 1 }}
+              whileTap={{ scale: countdown === 0 ? 0.98 : 1 }}
+              onClick={onClose}
+              disabled={countdown > 0}
+              className="px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:opacity-60 disabled:cursor-not-allowed transition shadow-lg"
+            >
+              {countdown > 0 ? `Entendido (${countdown})` : "Entendido"}
+            </motion.button>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function MethodCallout({ type }) {
-  if (type === "TRYOUT") {
-    return (
-      <div className="callout mt-4">
-        <div className="callout-title">Ensayo presencial</div>
-        <ul>
-          <li>
-            Los horarios se habilitan manualmente en bloques de{" "}
-            <b>15, 20 o 30 min</b> según disponibilidad.
-          </li>
-          <li>
-            Instalamos y probamos; si quieres trae tu equipo o usamos nuestro{" "}
-            <b>equipo de test</b>.
-          </li>
-          <li>
-            Si no alcanzas a venir, puedes <b>reprogramar</b> respondiendo al
-            correo de confirmación.
-          </li>
-        </ul>
-      </div>
-    );
-  }
-  if (type === "PICKUP") {
-    return (
-      <div className="callout mt-4">
-        <div className="callout-title">Sin ensayar</div>
-        <ul>
-          <li>
-            Verificamos con <b>videos de prueba</b> antes de la entrega (no
-            presencial).
-          </li>
-          <li>
-            Los horarios se habilitan manualmente en bloques de{" "}
-            <b>15, 20 o 30 min</b> según disponibilidad.
-          </li>
-        </ul>
-      </div>
-    );
-  }
-  return (
-    <div className="callout mt-4">
-      <div className="callout-title">Envío (no contraentrega)</div>
-      <ul>
-        <li>
-          <b>No es contraentrega</b>; el valor del artículo se paga <b>antes</b>{" "}
-          del despacho.
-        </li>
-        <li>
-          Al recibir, solo cancelas el <b>costo de envío</b> (si aplica).
-        </li>
-        <li>
-          En <b>Bogotá</b>: PICAP o INTERRAPIDISIMO. Otras ciudades:
-          INTERRAPIDISIMO.
-        </li>
-      </ul>
+      </motion.div>
     </div>
   );
 }
 
 export default function Booking() {
-  const [type, setType] = useState("TRYOUT");
-  const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
+  const [method, setMethod] = useState("TRYOUT");
+  const [date, setDate] = useState("");
   const [slots, setSlots] = useState([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
-  const [timeSel, setTimeSel] = useState("");
-
-  const [form, setForm] = useState(initialForm);
-  const [carriers, setCarriers] = useState(["INTERRAPIDISIMO"]);
-  const [msg, setMsg] = useState("");
+  const [selectedSlot, setSelectedSlot] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(true);
+
+  const [fullName, setFullName] = useState("");
+  const [idNumber, setIdNumber] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [product, setProduct] = useState("");
+  const [notes, setNotes] = useState("");
+
+  const [shippingAddress, setShippingAddress] = useState("");
+  const [shippingNeighborhood, setShippingNeighborhood] = useState("");
+  const [shippingCity, setShippingCity] = useState("");
+  const [shippingCarrier, setShippingCarrier] = useState("");
+  const [carriers, setCarriers] = useState(["INTERRAPIDISIMO"]);
 
   const [errors, setErrors] = useState({});
-  const [toast, setToast] = useState({
-    open: false,
-    title: "",
-    items: [],
-    variant: "error",
-  });
-  const firstErrorRef = useRef(null);
 
-  const themeClass =
-    type === "PICKUP"
-      ? "theme-pickup"
-      : type === "SHIPPING"
-      ? "theme-shipping"
-      : "";
-
-  const minsSelected = useMemo(() => {
-    if (type === "SHIPPING") return null;
-    const [s, e] = (timeSel || "").split("-");
-    return minutesBetween(s, e) ?? 15;
-  }, [type, timeSel]);
+  const currentMethod = METHODS.find((m) => m.key === method);
+  const themeClass = currentMethod?.theme || "";
 
   useEffect(() => {
-    setToast({
-      open: true,
-      title: "Información importante",
-      items: [
-        "Usa tus datos reales (nombre, cédula, correo y celular). Esto permite validar y hacer trazabilidad correcta.",
-        "Si ingresas datos incorrectos no podremos atenderte ni validar tu cita.",
-        "¿Te equivocaste? Responde al correo de confirmación para solicitar reprogramación/anulación y luego agenda nuevamente.",
-        "Los intentos con datos falsos o repetidos pueden bloquear futuras reservas.",
-        "Si das parte de pago con una gráfica, especifica en 'Notas': gráfica entregada, gráfica deseada y monto a encimar.",
-      ],
-      variant: "warning",
-      waitSeconds: 6,
-    });
-  }, []);
+    if (shippingCity.toLowerCase().includes("bogot")) {
+      setCarriers(["PICAP", "INTERRAPIDISIMO"]);
+    } else {
+      setCarriers(["INTERRAPIDISIMO"]);
+      if (shippingCarrier === "PICAP") {
+        setShippingCarrier("");
+      }
+    }
+  }, [shippingCity]);
 
   useEffect(() => {
-    (async () => {
-      setMsg("");
-      setTimeSel("");
-      await refreshAvailability();
-    })();
-  }, [date, type]);
-
-  async function refreshAvailability() {
-    if (type === "SHIPPING") {
+    if (!date) {
       setSlots([]);
+      setSelectedSlot(null);
       return;
     }
-    try {
-      setLoadingSlots(true);
-      const res = await getAvailability(date, type);
-      setSlots(res?.ok ? res.data.slots || [] : []);
-    } finally {
-      setLoadingSlots(false);
+    if (method !== "SHIPPING") {
+      fetchSlots();
     }
-  }
+  }, [date, method]);
 
-  async function onCityChange(city) {
-    setForm((f) => ({ ...f, shipping_city: city, shipping_carrier: "" }));
-    try {
-      if (!city) return setCarriers(["INTERRAPIDISIMO"]);
-      const API = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
-      const r = await fetch(
-        `${API}/shipping-options?city=${encodeURIComponent(city)}`
-      );
-      const data = await r.json();
-      setCarriers(
-        data?.ok && Array.isArray(data.options)
-          ? data.options
-          : ["INTERRAPIDISIMO"]
-      );
-    } catch {
-      setCarriers(["INTERRAPIDISIMO"]);
-    }
-  }
-
-  function validate() {
-    const e = {};
-    if (!form.name.trim()) e.name = "Ingresa tu nombre completo.";
-    if (!form.idNumber.trim()) e.idNumber = "Ingresa tu cédula.";
-    if (!form.phone.trim()) e.phone = "Ingresa tu número de celular.";
-    if (!form.email.trim()) e.email = "Ingresa tu correo.";
-    else if (!emailRe.test(form.email))
-      e.email = "Correo inválido (ej: nombre@dominio.com).";
-
-    if (type !== "SHIPPING" && !timeSel) e.time = "Selecciona un horario.";
-
-    if (type === "SHIPPING") {
-      if (!form.product.trim())
-        e.product =
-          "Indica el producto completo (ej.: RTX 3070 EVGA XC3 ULTRA).";
-    }
-
-    if (type === "SHIPPING") {
-      if (!form.shipping_address.trim())
-        e.shipping_address = "Dirección requerida.";
-      if (!form.shipping_neighborhood.trim())
-        e.shipping_neighborhood = "Barrio requerido.";
-      if (!form.shipping_city.trim()) e.shipping_city = "Ciudad requerida.";
-      if (!form.shipping_carrier.trim())
-        e.shipping_carrier = "Selecciona transportadora.";
-    }
-
-    setErrors(e);
-    const items = Object.values(e);
-    if (items.length)
-      setToast({
-        open: true,
-        title: "Corrige los campos marcados.",
-        items,
-        variant: "error",
-      });
-
-    setTimeout(() => {
-      const el =
-        firstErrorRef.current ||
-        document.querySelector("[data-error='true']") ||
-        document.querySelector("[aria-invalid='true']");
-      if (el?.focus) el.focus();
-      firstErrorRef.current = null;
-    }, 0);
-
-    return e;
-  }
-
-  const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors]);
-
-  const onChange = (field) => (e) =>
-    setForm({ ...form, [field]: e.target.value });
-  const onChangeDigits = (field, maxLen) => (e) =>
-    setForm({
-      ...form,
-      [field]: onlyDigits(e.target.value).slice(0, maxLen || 30),
-    });
-
-  const displaySlots = useMemo(() => {
-    if (type === "SHIPPING") return [];
-
-    const isToday = dayjs(date).isSame(dayjs(), "day");
-    const now = dayjs();
-
-    const fmt12 = (hhmm) => {
-      const d = dayjs(`${date} ${hhmm}`);
-      const suf = d.format("A") === "AM" ? "a. m." : "p. m.";
-      return { time: d.format("hh:mm"), suf };
-    };
-
-    let list = Array.isArray(slots) ? slots : [];
-    if (isToday)
-      list = list.filter((s) => dayjs(`${date} ${s.start}`).isAfter(now));
-
-    return list.map((s) => {
-      const S = fmt12(s.start);
-      const E = fmt12(s.end);
-      const same = S.suf === E.suf;
-      const label = same
-        ? `${S.time} – ${E.time} ${E.suf}`
-        : `${S.time} ${S.suf} – ${E.time} ${E.suf}`;
-      return { value: `${s.start}-${s.end}`, label };
-    });
-  }, [slots, date, type]);
-
-  async function submit() {
-    setMsg("");
-    const e = validate();
-    if (Object.keys(e).length) return;
-
-    let start, end;
-    if (type === "SHIPPING") {
-      start = "00:00";
-      end = "00:00";
-    } else {
-      [start, end] = (timeSel || "").split("-");
-    }
-
-    const payload = {
-      type_code: type,
-      date,
-      start_time: start,
-      end_time: end,
-      product: form.product,
-      customer_name: form.name,
-      customer_email: form.email,
-      customer_phone: form.phone,
-      customer_id_number: form.idNumber,
-      delivery_method: type === "SHIPPING" ? "SHIPPING" : "IN_PERSON",
-      notes: form.notes,
-      shipping_address: form.shipping_address,
-      shipping_neighborhood: form.shipping_neighborhood,
-      shipping_city: form.shipping_city,
-      shipping_carrier: form.shipping_carrier,
-    };
-
+  async function fetchSlots() {
     setLoading(true);
+    setSelectedSlot(null);
     try {
-      const res = await createAppointment(payload);
-      if (res?.ok) {
-        setToast({
-          open: true,
-          title: "¡Datos guardados!",
-          items: [
-            type === "SHIPPING"
-              ? "Procesaremos tu envío y te confirmaremos por correo."
-              : "Te enviamos confirmación al correo.",
-          ],
-          variant: "success",
-        });
-        setMsg(
-          type === "SHIPPING"
-            ? "✅ Datos de envío confirmados."
-            : "✅ Cita creada."
-        );
-        setForm(initialForm);
-        if (type !== "SHIPPING") setTimeSel("");
-        await refreshAvailability();
-      } else if (res?.error === "SLOT_TAKEN") {
-        setToast({
-          open: true,
-          title: "Ese horario ya fue tomado",
-          items: ["Elige otro bloque disponible."],
-          variant: "warning",
-        });
-        setMsg("⚠️ Ese horario ya fue tomado. Elige otro.");
-        setTimeSel("");
-        await refreshAvailability();
-      } else if (res?.error === "USER_LIMIT_REACHED") {
-        const scope = res?.meta?.scope === "WEEK" ? "esta semana" : "este día";
-        setToast({
-          open: true,
-          title: "Límite de reservas alcanzado",
-          items: [
-            `Ya alcanzaste el máximo de reservas permitidas ${scope} con tus datos.`,
-          ],
-          variant: "warning",
-        });
-        setMsg("⚠️ Límite de reservas.");
-      } else if (res?.error === "RATE_LIMIT") {
-        setToast({
-          open: true,
-          title: "Demasiados intentos",
-          items: ["Por favor, inténtalo en unos minutos."],
-          variant: "warning",
-        });
-        setMsg("⚠️ Demasiados intentos. Intenta más tarde.");
-      } else if (res?.error === "INVALID_CARRIER_FOR_CITY") {
-        setToast({
-          open: true,
-          title: "Transportadora inválida",
-          items: ["La transportadora no está permitida para esa ciudad."],
-          variant: "error",
-        });
-      } else if (res?.error === "MISSING_SHIPPING_FIELDS") {
-        setToast({
-          open: true,
-          title: "Faltan datos de envío",
-          items: ["Completa dirección, barrio, ciudad y transportadora."],
-          variant: "error",
-        });
-      } else {
-        setToast({
-          open: true,
-          title: "No se pudo procesar",
-          items: ["Intenta de nuevo en unos minutos."],
-          variant: "error",
+      const res = await fetch(
+        `https://techventuresback-production.up.railway.app/api/bookings/slots?date=${date}&method=${method}`
+      );
+      const data = await res.json();
+      setSlots(data.slots || []);
+
+      if (!data.slots || data.slots.length === 0) {
+        toast.error("No hay horarios disponibles", {
+          description: "Intenta con otra fecha o método",
+          icon: <AlertCircle className="w-5 h-5" />,
         });
       }
     } catch (err) {
       console.error(err);
-      setToast({
-        open: true,
-        title: "Error de red/servidor",
-        items: ["Revisa tu conexión o inténtalo más tarde."],
-        variant: "error",
+      toast.error("Error al cargar horarios", {
+        description: "Por favor intenta de nuevo",
       });
+      setSlots([]);
     } finally {
       setLoading(false);
     }
   }
 
-  return (
-    <div className={`container-page ${themeClass}`}>
-      <ModalToast
-        open={toast.open}
-        title={toast.title}
-        items={toast.items}
-        variant={toast.variant}
-        waitSeconds={toast.waitSeconds || 0}
-        onClose={() =>
-          setToast({ open: false, title: "", items: [], variant: "error" })
+  function validateForm() {
+    const newErrors = {};
+
+    if (!fullName.trim()) newErrors.fullName = "El nombre es obligatorio";
+    if (!idNumber.trim()) newErrors.idNumber = "La cédula es obligatoria";
+    if (!phone.trim()) {
+      newErrors.phone = "El celular es obligatorio";
+    } else if (!/^\d{10}$/.test(phone.replace(/\s/g, ""))) {
+      newErrors.phone = "Ingresa un número válido de 10 dígitos";
+    }
+    if (!email.trim()) {
+      newErrors.email = "El correo es obligatorio";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Ingresa un correo válido";
+    }
+
+    if (!product.trim()) {
+      newErrors.product = "El producto es obligatorio";
+    }
+
+    if (!date) newErrors.date = "Selecciona una fecha";
+
+    if (method === "TRYOUT" && !selectedSlot) {
+      newErrors.slot = "Selecciona un horario";
+    }
+
+    if (method === "SHIPPING") {
+      if (!shippingAddress.trim())
+        newErrors.shippingAddress = "La dirección es obligatoria";
+      if (!shippingNeighborhood.trim())
+        newErrors.shippingNeighborhood = "El barrio es obligatorio";
+      if (!shippingCity.trim())
+        newErrors.shippingCity = "La ciudad es obligatoria";
+      if (!shippingCarrier)
+        newErrors.shippingCarrier = "Selecciona una transportadora";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      toast.error("Por favor completa todos los campos obligatorios");
+      return;
+    }
+
+    const payload = {
+      method,
+      date,
+      slot: selectedSlot,
+      fullName,
+      idNumber,
+      phone,
+      email,
+      product,
+      notes: notes || "",
+      ...(method === "SHIPPING" && {
+        shipping_address: shippingAddress,
+        shipping_neighborhood: shippingNeighborhood,
+        shipping_city: shippingCity,
+        shipping_carrier: shippingCarrier,
+      }),
+    };
+
+    try {
+      const loadingToast = toast.loading("Procesando tu reserva...");
+
+      const res = await fetch(
+        "https://techventuresback-production.up.railway.app/api/bookings",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
         }
-      />
+      );
 
-      <div className="card relative overflow-hidden">
-        <div className="absolute left-0 right-0 top-0 h-1 bg-[var(--brand)]" />
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-          Agendar cita —{" "}
-          <span className="text-[var(--brand)]">TechVenturesCO</span>
-        </h1>
-        <p className="text-slate-500 mt-1">
-          Elige el método y agenda tu visita o envío. ¡Todo en 30 segundos!
-        </p>
-      </div>
+      toast.dismiss(loadingToast);
 
-      <section className="card">
-        <label className="block font-semibold mb-2">Método</label>
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            className={`pill ${type === "TRYOUT" ? "pill-on-i" : ""}`}
-            onClick={() => setType("TRYOUT")}
-          >
-            🎧 Ensayar personalmente
-          </button>
-          <button
-            className={`pill ${type === "PICKUP" ? "pill-on-b" : ""}`}
-            onClick={() => setType("PICKUP")}
-          >
-            🕒 Sin ensayar
-          </button>
-          <button
-            className={`pill ${type === "SHIPPING" ? "pill-on-g" : ""}`}
-            onClick={() => setType("SHIPPING")}
-          >
-            📦 Envío (no contraentrega)
-          </button>
-        </div>
-        <MethodCallout type={type} mins={minsSelected} />
-      </section>
+      if (res.ok) {
+        toast.success("¡Reserva confirmada!", {
+          description: "Revisa tu correo para más detalles",
+          icon: <CheckCircle2 className="w-5 h-5" />,
+          duration: 5000,
+        });
 
-      <section className="card grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="lbl">
-            Fecha <span className="text-rose-600">*</span>
-          </label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => {
-              setDate(e.target.value);
-              setMsg("");
-            }}
-            className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none"
-          />
-        </div>
-        {type !== "SHIPPING" && (
-          <div>
-            <label className="lbl">
-              Horario <span className="text-rose-600">*</span>
+        setFullName("");
+        setIdNumber("");
+        setPhone("");
+        setEmail("");
+        setProduct("");
+        setNotes("");
+        setShippingAddress("");
+        setShippingNeighborhood("");
+        setShippingCity("");
+        setShippingCarrier("");
+        setDate("");
+        setSelectedSlot(null);
+        setSlots([]);
+        setErrors({});
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.error || "Error al crear la reserva");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Error de conexión", {
+        description: "Por favor intenta de nuevo",
+      });
+    }
+  }
+
+  const clearError = (field) => {
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  return (
+    <div className={`min-h-screen ${themeClass}`}>
+      <Toaster position="top-center" richColors />
+      <InfoModal open={showInfoModal} onClose={() => setShowInfoModal(false)} />
+
+      <div className="container-page">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <h1 className="text-3xl sm:text-4xl font-black text-slate-900 mb-3">
+            Agendar cita — <span className="brand-text">TechVenturesCO</span>
+          </h1>
+          <p className="text-slate-600 text-lg">
+            Elige el método y agenda tu visita o envío. ¡Todo en 30 segundos!
+          </p>
+        </motion.div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="card"
+          >
+            <label className="lbl flex items-center gap-2 mb-4">
+              <Sparkles className="w-5 h-5 brand-text" />
+              Método
             </label>
-            {loadingSlots ? (
-              <p className="text-slate-500 text-sm">Cargando horarios…</p>
-            ) : (
-              <>
-                <TimeSlotPicker
-                  slots={displaySlots}
-                  value={timeSel}
-                  onChange={setTimeSel}
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {METHODS.map((m) => {
+                const Icon = m.icon;
+                const isActive = method === m.key;
+
+                return (
+                  <motion.button
+                    key={m.key}
+                    type="button"
+                    onClick={() => setMethod(m.key)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`pill relative overflow-hidden ${
+                      isActive
+                        ? m.key === "TRYOUT"
+                          ? "pill-on-i"
+                          : m.key === "PICKUP"
+                          ? "pill-on-b"
+                          : "pill-on-g"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <Icon className="w-6 h-6" />
+                      <div>
+                        <div className="font-bold">{m.label}</div>
+                        <div
+                          className={`text-xs mt-1 ${
+                            isActive ? "opacity-90" : "text-slate-500"
+                          }`}
+                        >
+                          {m.desc}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            <AnimatePresence>
+              {method === "TRYOUT" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="mt-4"
+                >
+                  <div className="callout">
+                    <div className="callout-title">Ensayo presencial</div>
+                    <ul>
+                      <li>
+                        Los horarios se habilitan manualmente en bloques de{" "}
+                        <strong>15, 20 o 30 min</strong> según disponibilidad.
+                      </li>
+                      <li>
+                        Instalamos y probamos; si quieres{" "}
+                        <strong>tu equipo</strong> o usamos nuestro{" "}
+                        <strong>equipo de test</strong>.
+                      </li>
+                      <li>
+                        Si no alcanzas a venir, puedes{" "}
+                        <strong>reprogramar</strong> respondiendo al correo de
+                        confirmación.
+                      </li>
+                    </ul>
+                  </div>
+                </motion.div>
+              )}
+              {method === "PICKUP" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="mt-4"
+                >
+                  <div className="callout">
+                    <div className="callout-title">Sin ensayar</div>
+                    <ul>
+                      <li>
+                        Verificamos con <strong>videos de prueba</strong> antes
+                        de la entrega (no presencial).
+                      </li>
+                      <li>
+                        Los horarios se habilitan manualmente en bloques de{" "}
+                        <strong>15, 20 o 30 min</strong> según disponibilidad.
+                      </li>
+                    </ul>
+                  </div>
+                </motion.div>
+              )}
+              {method === "SHIPPING" && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="mt-4"
+                >
+                  <div className="callout">
+                    <div className="callout-title">
+                      Envío (no contraentrega)
+                    </div>
+                    <ul>
+                      <li>
+                        <strong>No es contraentrega</strong>; el valor del
+                        artículo se paga <strong>antes</strong> del despacho.
+                      </li>
+                      <li>
+                        Al recibir, solo cancelas el{" "}
+                        <strong>costo de envío</strong> (si aplica).
+                      </li>
+                      <li>
+                        En <strong>Bogotá</strong>: PICAP o INTERRAPIDISIMO.
+                        Otras ciudades: INTERRAPIDISIMO.
+                      </li>
+                    </ul>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          {method !== "SHIPPING" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="card"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                  <label className="lbl flex items-center gap-2">
+                    <Calendar className="w-5 h-5 brand-text" />
+                    Fecha <span className="text-rose-500">*</span>
+                  </label>
+                  <motion.input
+                    whileFocus={{ scale: 1.01 }}
+                    type="date"
+                    value={date}
+                    onChange={(e) => {
+                      setDate(e.target.value);
+                      clearError("date");
+                    }}
+                    min={new Date().toISOString().split("T")[0]}
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
+                      errors.date
+                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
+                        : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
+                    }`}
+                  />
+                  {errors.date && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="err mt-1 flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.date}
+                    </motion.p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="lbl flex items-center gap-2">
+                    <Clock className="w-5 h-5 brand-text" />
+                    Horario <span className="text-rose-500">*</span>
+                  </label>
+
+                  <AnimatePresence mode="wait">
+                    {!date ? (
+                      <motion.div
+                        key="no-date"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center gap-2 text-slate-500 text-sm bg-slate-50 rounded-xl p-4 border-2 border-dashed border-slate-200"
+                      >
+                        <Info className="w-5 h-5" />
+                        Selecciona una fecha primero
+                      </motion.div>
+                    ) : loading ? (
+                      <motion.div
+                        key="loading"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center justify-center gap-2 text-slate-500 text-sm bg-slate-50 rounded-xl p-4 border-2 border-slate-200"
+                      >
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            duration: 1,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                        >
+                          <Clock className="w-5 h-5" />
+                        </motion.div>
+                        Cargando horarios...
+                      </motion.div>
+                    ) : slots.length === 0 ? (
+                      <motion.div
+                        key="no-slots"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4"
+                      >
+                        <div className="flex items-start gap-3">
+                          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                          <div>
+                            <p className="font-semibold text-amber-900 mb-1">
+                              No hay horarios disponibles
+                            </p>
+                            <p className="text-sm text-amber-700">
+                              Intenta con otra fecha o prueba el método "Sin
+                              ensayar"
+                            </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="slots"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar"
+                      >
+                        {slots.map((s) => (
+                          <motion.button
+                            key={s.start}
+                            type="button"
+                            onClick={() => {
+                              setSelectedSlot(s.start);
+                              clearError("slot");
+                            }}
+                            whileHover={{ scale: s.available ? 1.03 : 1 }}
+                            whileTap={{ scale: s.available ? 0.97 : 1 }}
+                            disabled={!s.available}
+                            className={`slot ${
+                              selectedSlot === s.start ? "slot-active" : ""
+                            } ${!s.available ? "slot-dis" : ""}`}
+                          >
+                            {s.start}
+                          </motion.button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {errors.slot && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="err mt-2 flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.slot}
+                    </motion.p>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="card"
+          >
+            <h3 className="lbl flex items-center gap-2 mb-4">
+              <User className="w-5 h-5 brand-text" />
+              Datos personales
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-slate-700">
+                  Nombre completo <span className="text-rose-500">*</span>
+                </label>
+                <motion.input
+                  whileFocus={{ scale: 1.01 }}
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => {
+                    setFullName(e.target.value);
+                    clearError("fullName");
+                  }}
+                  placeholder="Juan Pérez"
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
+                    errors.fullName
+                      ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
+                      : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
+                  }`}
                 />
-                {displaySlots.length === 0 &&
-                dayjs(date).isSame(dayjs(), "day") ? (
-                  <p className="text-slate-500 text-xs mt-2">
-                    No quedan horarios para hoy. Prueba con otra fecha.
-                  </p>
-                ) : (
-                  <p className="text-slate-500 text-xs mt-2">
-                    Selecciona un horario (obligatorio)
-                  </p>
+                {errors.fullName && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="err mt-1 text-xs flex items-center gap-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.fullName}
+                  </motion.p>
                 )}
-              </>
-            )}
-            {errors.time ? (
-              <p
-                className="text-rose-600 text-sm mt-2"
-                data-error="true"
-                ref={!firstErrorRef.current ? firstErrorRef : null}
-              >
-                {errors.time}
-              </p>
-            ) : null}
-          </div>
-        )}
-      </section>
+              </div>
 
-      <section className="card grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="lbl">
-            Nombre completo <span className="text-rose-600">*</span>
-          </label>
-          <input
-            placeholder="Nombre completo"
-            value={form.name}
-            onChange={onChange("name")}
-            className={`w-full px-3 py-2 rounded-xl border ${
-              errors.name ? "border-rose-400" : "border-slate-300"
-            } focus:outline-none`}
-            aria-invalid={!!errors.name}
-            ref={!firstErrorRef.current && errors.name ? firstErrorRef : null}
-          />
-          {errors.name ? (
-            <p className="err mt-1">{errors.name}</p>
-          ) : (
-            <p className="muted mt-1">Obligatorio</p>
-          )}
-        </div>
-        <div>
-          <label className="lbl">
-            Cédula <span className="text-rose-600">*</span>
-          </label>
-          <input
-            placeholder="Cédula"
-            value={form.idNumber}
-            onKeyDown={allowNumericKeys}
-            onChange={onChangeDigits("idNumber", 20)}
-            inputMode="numeric"
-            className={`w-full px-3 py-2 rounded-xl border ${
-              errors.idNumber ? "border-rose-400" : "border-slate-300"
-            } focus:outline-none`}
-            aria-invalid={!!errors.idNumber}
-            ref={
-              !firstErrorRef.current && errors.idNumber ? firstErrorRef : null
-            }
-          />
-          {errors.idNumber ? (
-            <p className="err mt-1">{errors.idNumber}</p>
-          ) : (
-            <p className="muted mt-1">Obligatorio</p>
-          )}
-        </div>
-        <div>
-          <label className="lbl">
-            Celular <span className="text-rose-600">*</span>
-          </label>
-          <input
-            placeholder="Celular"
-            value={form.phone}
-            onKeyDown={allowNumericKeys}
-            onChange={onChangeDigits("phone", 15)}
-            inputMode="numeric"
-            className={`w-full px-3 py-2 rounded-xl border ${
-              errors.phone ? "border-rose-400" : "border-slate-300"
-            } focus:outline-none`}
-            aria-invalid={!!errors.phone}
-            ref={!firstErrorRef.current && errors.phone ? firstErrorRef : null}
-          />
-          {errors.phone ? (
-            <p className="err mt-1">{errors.phone}</p>
-          ) : (
-            <p className="muted mt-1">Obligatorio</p>
-          )}
-        </div>
-      </section>
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-slate-700">
+                  Cédula <span className="text-rose-500">*</span>
+                </label>
+                <motion.input
+                  whileFocus={{ scale: 1.01 }}
+                  type="text"
+                  value={idNumber}
+                  onChange={(e) => {
+                    setIdNumber(e.target.value);
+                    clearError("idNumber");
+                  }}
+                  placeholder="123456789"
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
+                    errors.idNumber
+                      ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
+                      : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
+                  }`}
+                />
+                {errors.idNumber && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="err mt-1 text-xs flex items-center gap-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.idNumber}
+                  </motion.p>
+                )}
+              </div>
 
-      <section className="card grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="lbl">
-            Correo <span className="text-rose-600">*</span>
-          </label>
-          <input
-            placeholder="Correo (obligatorio)"
-            value={form.email}
-            onChange={(e) => {
-              const v = e.target.value;
-              setForm({ ...form, email: v });
-              if (v && !emailRe.test(v))
-                setErrors((p) => ({ ...p, email: "Correo inválido." }));
-              else
-                setErrors((p) => {
-                  const cp = { ...p };
-                  delete cp.email;
-                  return cp;
-                });
-            }}
-            onBlur={() => {
-              if (!form.email || !emailRe.test(form.email))
-                setErrors((p) => ({ ...p, email: "Correo inválido." }));
-            }}
-            className={`w-full px-3 py-2 rounded-xl border ${
-              errors.email ? "border-rose-400" : "border-slate-300"
-            } focus:outline-none`}
-            aria-invalid={!!errors.email}
-            ref={!firstErrorRef.current && errors.email ? firstErrorRef : null}
-          />
-          {errors.email ? (
-            <p className="err mt-1">{errors.email}</p>
-          ) : (
-            <p className="muted mt-1">Obligatorio</p>
-          )}
-        </div>
-        <div>
-          <label className="lbl">
-            Producto{" "}
-            {type === "SHIPPING" ? (
-              <span className="text-rose-600">*</span>
-            ) : (
-              <span className="text-slate-400">(opcional)</span>
-            )}
-          </label>
-          <input
-            placeholder="Producto (ej. RTX 3070 EVGA XC3 ULTRA)"
-            value={form.product}
-            onChange={onChange("product")}
-            className={`w-full px-3 py-2 rounded-xl border ${
-              errors.product ? "border-rose-400" : "border-slate-300"
-            } focus:outline-none`}
-            aria-invalid={!!errors.product}
-            ref={
-              !firstErrorRef.current && errors.product ? firstErrorRef : null
-            }
-          />
-          {type === "SHIPPING" ? (
-            errors.product ? (
-              <p className="err mt-1">{errors.product}</p>
-            ) : (
-              <p className="muted mt-1">Obligatorio en envíos</p>
-            )
-          ) : (
-            <p className="muted mt-1">Opcional</p>
-          )}
-        </div>
-      </section>
-
-      <section className="card">
-        <label className="lbl">Notas (opcional)</label>
-        <textarea
-          placeholder="Notas (opcional)"
-          value={form.notes}
-          onChange={onChange("notes")}
-          className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:outline-none"
-        />
-      </section>
-
-      {type === "SHIPPING" && (
-        <>
-          <h2 className="font-bold text-lg">Datos de envío</h2>
-          <section className="card grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-2">
-              <label className="lbl">
-                Dirección <span className="text-rose-600">*</span>
-              </label>
-              <input
-                placeholder="Dirección"
-                value={form.shipping_address}
-                onChange={onChange("shipping_address")}
-                className={`w-full px-3 py-2 rounded-xl border ${
-                  errors.shipping_address
-                    ? "border-rose-400"
-                    : "border-slate-300"
-                } focus:outline-none`}
-                aria-invalid={!!errors.shipping_address}
-                ref={
-                  !firstErrorRef.current && errors.shipping_address
-                    ? firstErrorRef
-                    : null
-                }
-              />
-              {errors.shipping_address ? (
-                <p className="err mt-1">{errors.shipping_address}</p>
-              ) : (
-                <p className="muted mt-1">Obligatorio</p>
-              )}
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-slate-700">
+                  Celular <span className="text-rose-500">*</span>
+                </label>
+                <motion.input
+                  whileFocus={{ scale: 1.01 }}
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    clearError("phone");
+                  }}
+                  placeholder="3001234567"
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
+                    errors.phone
+                      ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
+                      : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
+                  }`}
+                />
+                {errors.phone && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="err mt-1 text-xs flex items-center gap-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.phone}
+                  </motion.p>
+                )}
+              </div>
             </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-slate-700">
+                  Correo <span className="text-rose-500">*</span>
+                </label>
+                <motion.input
+                  whileFocus={{ scale: 1.01 }}
+                  type="email"
+                  value={email}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    clearError("email");
+                  }}
+                  placeholder="correo@ejemplo.com"
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
+                    errors.email
+                      ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
+                      : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
+                  }`}
+                />
+                {errors.email && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="err mt-1 text-xs flex items-center gap-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.email}
+                  </motion.p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
+                  <Package className="w-4 h-4 brand-text" />
+                  Producto <span className="text-rose-500">*</span>
+                </label>
+                <motion.input
+                  whileFocus={{ scale: 1.01 }}
+                  type="text"
+                  value={product}
+                  onChange={(e) => {
+                    setProduct(e.target.value);
+                    clearError("product");
+                  }}
+                  placeholder="ej. RTX 3070 EVGA XC3 ULTRA"
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
+                    errors.product
+                      ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
+                      : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
+                  }`}
+                />
+                {errors.product && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="err mt-1 text-xs flex items-center gap-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    {errors.product}
+                  </motion.p>
+                )}
+              </div>
+            </div>
+
             <div>
-              <label className="lbl">
-                Barrio <span className="text-rose-600">*</span>
+              <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
+                <FileText className="w-4 h-4 brand-text" />
+                Notas{" "}
+                <span className="text-slate-400 text-xs font-normal">
+                  (opcional)
+                </span>
               </label>
-              <input
-                placeholder="Barrio"
-                value={form.shipping_neighborhood}
-                onChange={onChange("shipping_neighborhood")}
-                className={`w-full px-3 py-2 rounded-xl border ${
-                  errors.shipping_neighborhood
-                    ? "border-rose-400"
-                    : "border-slate-300"
-                } focus:outline-none`}
-                aria-invalid={!!errors.shipping_neighborhood}
-                ref={
-                  !firstErrorRef.current && errors.shipping_neighborhood
-                    ? firstErrorRef
-                    : null
-                }
+              <motion.textarea
+                whileFocus={{ scale: 1.01 }}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Ej: Gráfica entregada RTX 2060, gráfica deseada RTX 3070, monto a encimar $500.000"
+                rows={3}
+                className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-[var(--brand)] focus:ring-4 focus:ring-[var(--brand-ring)] transition resize-none"
               />
-              {errors.shipping_neighborhood ? (
-                <p className="err mt-1">{errors.shipping_neighborhood}</p>
-              ) : (
-                <p className="muted mt-1">Obligatorio</p>
-              )}
-            </div>
-            <div>
-              <label className="lbl">
-                Ciudad <span className="text-rose-600">*</span>
-              </label>
-              <input
-                placeholder="Ciudad"
-                value={form.shipping_city}
-                onChange={(e) => onCityChange(e.target.value)}
-                className={`w-full px-3 py-2 rounded-xl border ${
-                  errors.shipping_city ? "border-rose-400" : "border-slate-300"
-                } focus:outline-none`}
-                aria-invalid={!!errors.shipping_city}
-                ref={
-                  !firstErrorRef.current && errors.shipping_city
-                    ? firstErrorRef
-                    : null
-                }
-              />
-              {errors.shipping_city ? (
-                <p className="err mt-1">{errors.shipping_city}</p>
-              ) : (
-                <p className="muted mt-1">Obligatorio</p>
-              )}
-            </div>
-            <div className="md:col-span-2">
-              <label className="lbl">
-                Transportadora <span className="text-rose-600">*</span>
-              </label>
-              <select
-                value={form.shipping_carrier}
-                onChange={onChange("shipping_carrier")}
-                className={`w-full px-3 py-2 rounded-xl border ${
-                  errors.shipping_carrier
-                    ? "border-rose-400"
-                    : "border-slate-300"
-                } bg-white focus:outline-none`}
-                aria-invalid={!!errors.shipping_carrier}
-                ref={
-                  !firstErrorRef.current && errors.shipping_carrier
-                    ? firstErrorRef
-                    : null
-                }
-              >
-                <option value="">Selecciona transportadora</option>
-                {carriers.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <p className="text-slate-500 text-xs mt-1">
-                En Bogotá: PICAP o INTERRAPIDISIMO. Otras ciudades:
-                INTERRAPIDISIMO.
+              <p className="text-xs text-slate-500 mt-1">
+                Si das parte de pago con una gráfica, especifica: gráfica
+                entregada, gráfica deseada y monto a encimar
               </p>
             </div>
-          </section>
-        </>
-      )}
+          </motion.div>
 
-      <div className="mt-3">
-        <button className="btn-primary" disabled={loading} onClick={submit}>
-          {loading
-            ? "Guardando…"
-            : type === "SHIPPING"
-            ? "Confirmar datos de envío"
-            : "Confirmar cita"}
-        </button>
-        {msg && <p className="mt-3">{msg}</p>}
+          {method === "SHIPPING" && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="card"
+            >
+              <h3 className="lbl flex items-center gap-2 mb-4">
+                <Truck className="w-5 h-5 brand-text" />
+                Datos de envío
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
+                    <Home className="w-4 h-4 brand-text" />
+                    Dirección <span className="text-rose-500">*</span>
+                  </label>
+                  <motion.input
+                    whileFocus={{ scale: 1.01 }}
+                    type="text"
+                    value={shippingAddress}
+                    onChange={(e) => {
+                      setShippingAddress(e.target.value);
+                      clearError("shippingAddress");
+                    }}
+                    placeholder="Calle 123 #45-67"
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
+                      errors.shippingAddress
+                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
+                        : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
+                    }`}
+                  />
+                  {errors.shippingAddress && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="err mt-1 text-xs flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.shippingAddress}
+                    </motion.p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-slate-700">
+                    Barrio <span className="text-rose-500">*</span>
+                  </label>
+                  <motion.input
+                    whileFocus={{ scale: 1.01 }}
+                    type="text"
+                    value={shippingNeighborhood}
+                    onChange={(e) => {
+                      setShippingNeighborhood(e.target.value);
+                      clearError("shippingNeighborhood");
+                    }}
+                    placeholder="Chapinero"
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
+                      errors.shippingNeighborhood
+                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
+                        : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
+                    }`}
+                  />
+                  {errors.shippingNeighborhood && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="err mt-1 text-xs flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.shippingNeighborhood}
+                    </motion.p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
+                    <Map className="w-4 h-4 brand-text" />
+                    Ciudad <span className="text-rose-500">*</span>
+                  </label>
+                  <motion.input
+                    whileFocus={{ scale: 1.01 }}
+                    type="text"
+                    value={shippingCity}
+                    onChange={(e) => {
+                      setShippingCity(e.target.value);
+                      clearError("shippingCity");
+                    }}
+                    placeholder="Bogotá"
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
+                      errors.shippingCity
+                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
+                        : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
+                    }`}
+                  />
+                  {errors.shippingCity && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="err mt-1 text-xs flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.shippingCity}
+                    </motion.p>
+                  )}
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-semibold mb-2 text-slate-700">
+                    Transportadora <span className="text-rose-500">*</span>
+                  </label>
+                  <motion.select
+                    whileFocus={{ scale: 1.01 }}
+                    value={shippingCarrier}
+                    onChange={(e) => {
+                      setShippingCarrier(e.target.value);
+                      clearError("shippingCarrier");
+                    }}
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition bg-white ${
+                      errors.shippingCarrier
+                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
+                        : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
+                    }`}
+                  >
+                    <option value="">Selecciona transportadora</option>
+                    {carriers.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </motion.select>
+                  <p className="text-xs text-slate-500 mt-1">
+                    En Bogotá: PICAP o INTERRAPIDISIMO. Otras ciudades:
+                    INTERRAPIDISIMO.
+                  </p>
+                  {errors.shippingCarrier && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="err mt-1 text-xs flex items-center gap-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.shippingCarrier}
+                    </motion.p>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+          >
+            <motion.button
+              type="submit"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              className="btn-primary flex items-center justify-center gap-2"
+              disabled={loading}
+            >
+              <CheckCircle2 className="w-5 h-5" />
+              {method === "SHIPPING"
+                ? "Confirmar datos de envío"
+                : "Confirmar reserva"}
+            </motion.button>
+          </motion.div>
+        </form>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6 }}
+          className="mt-8 text-center text-sm text-slate-500"
+        >
+          <p>
+            ¿Tienes dudas? Escríbenos a{" "}
+            <span className="brand-text font-semibold">
+              techventuresco@gmail.com
+            </span>
+          </p>
+        </motion.div>
       </div>
+
+      <style>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f5f9;
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: var(--brand);
+          border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: var(--brand-hover);
+        }
+      `}</style>
     </div>
   );
 }
