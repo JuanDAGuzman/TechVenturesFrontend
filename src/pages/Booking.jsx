@@ -5,7 +5,6 @@ import {
   Clock,
   User,
   Phone,
-  Mail,
   Package,
   MapPin,
   Truck,
@@ -19,6 +18,9 @@ import {
   Map,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
+
+// 🔗 Backend correcto en Railway
+const API_BASE = "https://techventuresbackend-production.up.railway.app";
 
 // ========== Configuración de métodos ==========
 const METHODS = [
@@ -176,7 +178,7 @@ export default function Booking() {
   const currentMethod = METHODS.find((m) => m.key === method);
   const themeClass = currentMethod?.theme || "";
 
-  // Update carriers when city changes
+  // Cambiar carriers según ciudad
   useEffect(() => {
     if (shippingCity.toLowerCase().includes("bogot")) {
       setCarriers(["PICAP", "INTERRAPIDISIMO"]);
@@ -188,7 +190,7 @@ export default function Booking() {
     }
   }, [shippingCity, shippingCarrier]);
 
-  // cargar slots cuando cambia fecha o método
+  // cargar slots cuando cambia fecha o método (solo TRYOUT / PICKUP)
   useEffect(() => {
     if (!date) {
       setSlots([]);
@@ -198,19 +200,19 @@ export default function Booking() {
     if (method !== "SHIPPING") {
       fetchSlots();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, method]);
 
-  // -------- fetchSlots corregido --------
+  // -------- fetchSlots --------
   async function fetchSlots() {
     setLoading(true);
     setSelectedSlot(null);
 
     try {
       const res = await fetch(
-        `https://techventuresback-production.up.railway.app/api/availability?date=${date}&type=${method}`
+        `${API_BASE}/api/availability?date=${date}&type=${method}`
       );
 
-      // Intentamos leer JSON de forma segura
       let payload;
       try {
         payload = await res.json();
@@ -232,9 +234,8 @@ export default function Booking() {
         return;
       }
 
-      // payload.data es lo que devuelve getAvailability()
+      // tu backend responde { ok: true, data: [...] }
       const slotsArr = Array.isArray(payload.data) ? payload.data : [];
-
       setSlots(slotsArr);
 
       if (slotsArr.length === 0) {
@@ -259,31 +260,29 @@ export default function Booking() {
 
     if (!fullName.trim()) newErrors.fullName = "El nombre es obligatorio";
     if (!idNumber.trim()) newErrors.idNumber = "La cédula es obligatoria";
+
     if (!phone.trim()) {
       newErrors.phone = "El celular es obligatorio";
     } else if (!/^\d{10}$/.test(phone.replace(/\s/g, ""))) {
       newErrors.phone = "Ingresa un número válido de 10 dígitos";
     }
+
     if (!email.trim()) {
       newErrors.email = "El correo es obligatorio";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Ingresa un correo válido";
     }
 
-    // Producto obligatorio siempre
     if (!product.trim()) {
       newErrors.product = "El producto es obligatorio";
     }
 
-    // Fecha SIEMPRE obligatoria
     if (!date) newErrors.date = "Selecciona una fecha";
 
-    // Horario solo obligatorio para TRYOUT
     if (method === "TRYOUT" && !selectedSlot) {
       newErrors.slot = "Selecciona un horario";
     }
 
-    // Validaciones de envío
     if (method === "SHIPPING") {
       if (!shippingAddress.trim())
         newErrors.shippingAddress = "La dirección es obligatoria";
@@ -299,7 +298,7 @@ export default function Booking() {
     return Object.keys(newErrors).length === 0;
   }
 
-  // -------- handleSubmit corregido --------
+  // -------- handleSubmit --------
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -315,9 +314,8 @@ export default function Booking() {
     if (method === "TRYOUT" && selectedSlot) {
       // slot tipo "HH:MM"
       start_time = selectedSlot;
-
       const [hours, minutes] = selectedSlot.split(":").map(Number);
-      const endMinutes = minutes + 30; // asumimos 30 min
+      const endMinutes = minutes + 30; // asumimos cita de 30 min
       const endHours = hours + Math.floor(endMinutes / 60);
       end_time = `${String(endHours).padStart(2, "0")}:${String(
         endMinutes % 60
@@ -345,18 +343,14 @@ export default function Booking() {
     try {
       const loadingToast = toast.loading("Procesando tu reserva...");
 
-      const res = await fetch(
-        "https://techventuresback-production.up.railway.app/api/appointments",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        }
-      );
+      const res = await fetch(`${API_BASE}/api/appointments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       toast.dismiss(loadingToast);
 
-      // Intentar leer JSON siempre
       let responseBody = null;
       try {
         responseBody = await res.json();
@@ -371,7 +365,7 @@ export default function Booking() {
           duration: 5000,
         });
 
-        // Reset
+        // limpiar formulario
         setFullName("");
         setIdNumber("");
         setPhone("");
@@ -414,6 +408,7 @@ export default function Booking() {
       <InfoModal open={showInfoModal} onClose={() => setShowInfoModal(false)} />
 
       <div className="container-page">
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -573,7 +568,7 @@ export default function Booking() {
             className="card"
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* FECHA - Siempre visible */}
+              {/* FECHA */}
               <div>
                 <label className="lbl flex items-center gap-2">
                   <Calendar className="w-5 h-5 brand-text" />
@@ -606,7 +601,7 @@ export default function Booking() {
                 )}
               </div>
 
-              {/* HORARIO - Solo para TRYOUT y PICKUP */}
+              {/* HORARIO (solo TRYOUT / PICKUP) */}
               {method !== "SHIPPING" && (
                 <div>
                   <label className="lbl flex items-center gap-2">
@@ -765,12 +760,11 @@ export default function Booking() {
                   inputMode="numeric"
                   value={idNumber}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, ""); // Solo números
+                    const value = e.target.value.replace(/\D/g, "");
                     setIdNumber(value);
                     clearError("idNumber");
                   }}
                   onKeyDown={(e) => {
-                    // Permitir solo números y teclas de control
                     if (
                       !/\d/.test(e.key) &&
                       ![
@@ -820,12 +814,11 @@ export default function Booking() {
                   inputMode="numeric"
                   value={phone}
                   onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, ""); // Solo números
+                    const value = e.target.value.replace(/\D/g, "");
                     setPhone(value);
                     clearError("phone");
                   }}
                   onKeyDown={(e) => {
-                    // Permitir solo números y teclas de control
                     if (
                       !/\d/.test(e.key) &&
                       ![
@@ -954,7 +947,7 @@ export default function Booking() {
             </div>
           </motion.div>
 
-          {/* DATOS DE ENVÍO (solo si method === "SHIPPING") */}
+          {/* DATOS DE ENVÍO (solo SHIPPING) */}
           {method === "SHIPPING" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -1129,6 +1122,7 @@ export default function Booking() {
           </motion.div>
         </form>
 
+        {/* Footer */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1144,6 +1138,7 @@ export default function Booking() {
         </motion.div>
       </div>
 
+      {/* Scrollbar custom */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
