@@ -1140,18 +1140,18 @@ export default function Booking() {
                 techventuresco@gmail.com
               </a>
             </span>
-          </p>
-          <p>
-            ó{" "}
-            <span className="brand-text font-semibold">
-              <a
-                href="https://api.whatsapp.com/send/?phone=573108216274&text&type=phone_number&app_absent=0"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Whatsapp
-              </a>
-            </span>
+            <p>
+              ó{" "}
+              <span className="brand-text font-semibold">
+                <a
+                  href="https://api.whatsapp.com/send/?phone=573108216274&text&type=phone_number&app_absent=0"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Whatsapp
+                </a>
+              </span>
+            </p>
           </p>
         </motion.div>
       </div>
