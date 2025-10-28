@@ -33,7 +33,7 @@ const METHODS = [
     key: "PICKUP",
     label: "Sin ensayar",
     icon: MapPin,
-    desc: "Recoge tu pedido sin cita previa",
+    desc: "Agenda tu cita sin prueba del producto; te enviaremos videos de funcionamiento.",
     theme: "theme-pickup",
   },
   {
