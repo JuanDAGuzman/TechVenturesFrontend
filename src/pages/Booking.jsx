@@ -45,7 +45,6 @@ const METHODS = [
   },
 ];
 
-// =============== InfoModal (popup inicial) ===============
 function InfoModal({ open, onClose }) {
   const [countdown, setCountdown] = useState(5);
 
@@ -82,11 +81,9 @@ function InfoModal({ open, onClose }) {
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden mt-10"
       >
-        {/* bar arriba */}
         <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-1" />
 
         <div className="p-6 sm:p-8">
-          {/* header modal */}
           <div className="flex items-start gap-4 mb-6">
             <div className="flex-shrink-0 w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
               <AlertCircle className="w-6 h-6 text-amber-600" />
@@ -108,7 +105,6 @@ function InfoModal({ open, onClose }) {
             )}
           </div>
 
-          {/* body modal */}
           <div className="space-y-3 mb-6 max-h-[50vh] overflow-y-auto pr-2">
             {[
               "Usa tus datos reales (nombre, cédula, correo y celular). Esto permite validar y hacer trazabilidad correcta.",
@@ -131,8 +127,6 @@ function InfoModal({ open, onClose }) {
               </motion.div>
             ))}
           </div>
-
-          {/* footer modal */}
           <div className="flex justify-end">
             <motion.button
               whileHover={{ scale: countdown === 0 ? 1.02 : 1 }}
@@ -150,27 +144,21 @@ function InfoModal({ open, onClose }) {
   );
 }
 
-// =============== Booking Page ===============
 export default function Booking() {
-  // método TRYOUT / PICKUP / SHIPPING
   const [method, setMethod] = useState("TRYOUT");
 
-  // fecha seleccionada
   const [date, setDate] = useState("");
 
-  // slots disponibles [{start,end}]
   const [slots, setSlots] = useState([]);
 
-  // slot seleccionado: { start, end } ó null
   const [selectedSlot, setSelectedSlot] = useState(null);
 
-  // loading de horarios
   const [loading, setLoading] = useState(false);
 
-  // modal info inicial
+  const [slotsError, setSlotsError] = useState(null);
+
   const [showInfoModal, setShowInfoModal] = useState(true);
 
-  // datos del formulario
   const [fullName, setFullName] = useState("");
   const [idNumber, setIdNumber] = useState("");
   const [phone, setPhone] = useState("");
@@ -178,20 +166,17 @@ export default function Booking() {
   const [product, setProduct] = useState("");
   const [notes, setNotes] = useState("");
 
-  // envío
   const [shippingAddress, setShippingAddress] = useState("");
   const [shippingNeighborhood, setShippingNeighborhood] = useState("");
   const [shippingCity, setShippingCity] = useState("");
   const [shippingCarrier, setShippingCarrier] = useState("");
   const [carriers, setCarriers] = useState(["INTERRAPIDISIMO"]);
 
-  // errores UI
   const [errors, setErrors] = useState({});
 
   const currentMethod = METHODS.find((m) => m.key === method);
   const themeClass = currentMethod?.theme || "";
 
-  // --- Transportadoras dinámicas según ciudad ---
   useEffect(() => {
     if (shippingCity.toLowerCase().includes("bogot")) {
       setCarriers(["PICAP", "INTERRAPIDISIMO"]);
@@ -203,83 +188,95 @@ export default function Booking() {
     }
   }, [shippingCity, shippingCarrier]);
 
-  // --- Cargar slots CUANDO haya fecha y el método sea TRYOUT o PICKUP ---
   useEffect(() => {
-    if (!date) {
-      setSlots([]);
-      setSelectedSlot(null);
-      return;
-    }
-    if (method === "SHIPPING") {
-      // Envío no tiene horarios
-      setSlots([]);
-      setSelectedSlot(null);
-      return;
-    }
+    setSelectedSlot(null);
+    setSlots([]);
+    setSlotsError(null);
+
+    if (!date) return;
+
+    if (method === "SHIPPING") return;
 
     fetchSlots();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [date, method]);
 
   async function fetchSlots() {
     setLoading(true);
     setSelectedSlot(null);
+    setSlots([]);
+    setSlotsError(null); // limpiamos error viejo antes de intentar
 
     try {
       const res = await fetch(
         `${API_BASE}/api/availability?date=${date}&type=${method}`
       );
 
-      let payload;
+      // intenta parsear
+      let payload = null;
       try {
         payload = await res.json();
-      } catch (parseErr) {
-        console.warn("Respuesta no JSON en /availability", parseErr);
+      } catch (err) {
+        console.warn("Respuesta NO JSON en /availability", err);
+        setSlotsError("SERVIDOR");
+        setSlots([]);
+        setLoading(false);
         toast.error("No se pudieron cargar los horarios", {
           description: "Respuesta inesperada del servidor",
-          icon: <AlertCircle className="w-5 h-5" />,
         });
+        return;
+      }
+
+      // si backend responde con error http o payload.ok === false
+      if (!res.ok || !payload?.ok) {
+        console.warn("availability devolvió error:", payload);
         setSlots([]);
+        setSlotsError(payload?.error || "NOT_FOUND");
+
+        // mostramos toast SOLO si de verdad no hay horarios para esa combinacion
+        // y NO cuando es simplemente que estamos cambiando de método
+        if (
+          payload?.error === "NOT_FOUND" ||
+          (Array.isArray(payload?.data?.slots) &&
+            payload.data.slots.length === 0)
+        ) {
+          toast.error("No hay horarios disponibles", {
+            description:
+              'Intenta con otra fecha o prueba el método "Sin ensayar"',
+          });
+        }
         setLoading(false);
         return;
       }
 
-      if (!res.ok || !payload.ok) {
-        toast.error("No se pudieron cargar los horarios", {
-          description: payload?.error || "Intenta de nuevo",
-          icon: <AlertCircle className="w-5 h-5" />,
-        });
-        setSlots([]);
-        setLoading(false);
-        return;
-      }
-
-      // backend ya manda [{start:"HH:MM", end:"HH:MM"}, ...]
+      // extraemos slots reales
       const slotsFromApi = Array.isArray(payload?.data?.slots)
         ? payload.data.slots
         : [];
 
+      // guardamos
       setSlots(slotsFromApi);
 
-      if (!slotsFromApi.length) {
+      if (slotsFromApi.length === 0) {
+        setSlotsError("VACIO");
         toast.error("No hay horarios disponibles", {
           description:
             'Intenta con otra fecha o prueba el método "Sin ensayar"',
-          icon: <AlertCircle className="w-5 h-5" />,
         });
+      } else {
+        setSlotsError(null);
       }
     } catch (err) {
-      console.error(err);
+      console.error("fetchSlots error:", err);
+      setSlots([]);
+      setSlotsError("NETWORK");
       toast.error("Error al cargar horarios", {
         description: "Por favor intenta de nuevo",
       });
-      setSlots([]);
     } finally {
       setLoading(false);
     }
   }
 
-  // --- Validación formulario antes de enviar ---
   function validateForm() {
     const newErrors = {};
 
@@ -697,7 +694,7 @@ export default function Booking() {
                         </motion.div>
                         Cargando horarios...
                       </motion.div>
-                    ) : !slots.length ? (
+                    ) : slotsError && slots.length === 0 ? (
                       <motion.div
                         key="no-slots"
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -713,7 +710,7 @@ export default function Booking() {
                             </p>
                             <p className="text-sm text-amber-700">
                               Intenta con otra fecha o prueba el método "Sin
-                              ensayar"
+                              ensayo presencial".
                             </p>
                           </div>
                         </div>
@@ -723,61 +720,30 @@ export default function Booking() {
                         key="slots"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="
-                          grid
-                          grid-cols-1
-                          sm:grid-cols-2
-                          lg:grid-cols-3
-                          gap-3
-                          overflow-y-visible
-                        "
+                        className="grid grid-cols-2 gap-2"
                       >
                         {slots.map((s) => {
                           const isActive =
                             selectedSlot &&
                             selectedSlot.start === s.start &&
                             selectedSlot.end === s.end;
+                          const label = `${s.start} – ${s.end}`;
 
                           return (
                             <motion.button
                               key={`${s.start}-${s.end}`}
                               type="button"
                               onClick={() => {
-                                setSelectedSlot({
-                                  start: s.start,
-                                  end: s.end,
-                                });
+                                setSelectedSlot({ start: s.start, end: s.end });
                                 clearError("slot");
                               }}
-                              whileHover={{ scale: 1.015 }}
-                              whileTap={{ scale: 0.985 }}
-                              className={`
-                                w-full text-center
-                                rounded-xl border-2
-                                px-4 py-3
-                                font-medium
-                                text-slate-800
-                                transition
-                                focus:outline-none
-                                focus:ring-4
-                                ${
-                                  isActive
-                                    ? `
-                                      border-[var(--brand)]
-                                      bg-[var(--brand)]/10
-                                      focus:ring-[var(--brand-ring)]
-                                    `
-                                    : `
-                                      border-slate-200
-                                      bg-white
-                                      hover:border-[var(--brand)]
-                                      hover:bg-[var(--brand)]/5
-                                      focus:ring-[var(--brand-ring)]
-                                    `
-                                }
-                              `}
+                              whileHover={{ scale: 1.03 }}
+                              whileTap={{ scale: 0.97 }}
+                              className={`slot ${
+                                isActive ? "slot-active" : ""
+                              }`}
                             >
-                              {s.start} – {s.end}
+                              {label}
                             </motion.button>
                           );
                         })}
