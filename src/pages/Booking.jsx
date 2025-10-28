@@ -1129,7 +1129,7 @@ export default function Booking() {
           transition={{ delay: 0.6 }}
           className="mt-8 text-center text-sm text-slate-500"
         >
-          <p>
+          <p className="text-center text-sm text-slate-500">
             ¿Tienes dudas? Escríbenos a{" "}
             <span className="brand-text font-semibold">
               <a
@@ -1139,19 +1139,17 @@ export default function Booking() {
               >
                 techventuresco@gmail.com
               </a>
+            </span>{" "}
+            ó{" "}
+            <span className="brand-text font-semibold">
+              <a
+                href="https://api.whatsapp.com/send/?phone=573108216274&text&type=phone_number&app_absent=0"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Whatsapp
+              </a>
             </span>
-            <p>
-              ó{" "}
-              <span className="brand-text font-semibold">
-                <a
-                  href="https://api.whatsapp.com/send/?phone=573108216274&text&type=phone_number&app_absent=0"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Whatsapp
-                </a>
-              </span>
-            </p>
           </p>
         </motion.div>
       </div>
