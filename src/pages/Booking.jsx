@@ -19,8 +19,9 @@ import {
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
-// IMPORTANTE: dominio backend correcto (sin /api al final)
-const API_BASE = "https://techventuresbackend-production.up.railway.app";
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  "https://techventuresbackend-production.up.railway.app/api";
 
 const METHODS = [
   {
@@ -216,7 +217,7 @@ export default function Booking() {
     setLoadingSlots(true);
     try {
       const res = await fetch(
-        `${API_BASE}/api/availability?date=${date}&type=${method}`
+        `${API_BASE}/availability?date=${date}&type=${method}`
       );
 
       let data;
@@ -355,7 +356,7 @@ export default function Booking() {
     try {
       const loadingToast = toast.loading("Procesando tu reserva...");
 
-      const res = await fetch(`${API_BASE}/api/appointments`, {
+      const res = await fetch(`${API_BASE}/appointments`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
