@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
+// ========== Configuración de métodos ==========
 const METHODS = [
   {
     key: "TRYOUT",
@@ -44,6 +45,7 @@ const METHODS = [
   },
 ];
 
+// ========== Modal de Información Importante ==========
 function InfoModal({ open, onClose }) {
   const [countdown, setCountdown] = useState(5);
 
@@ -144,6 +146,7 @@ function InfoModal({ open, onClose }) {
   );
 }
 
+// ========== Componente Principal ==========
 export default function Booking() {
   const [method, setMethod] = useState("TRYOUT");
   const [date, setDate] = useState("");
@@ -152,6 +155,7 @@ export default function Booking() {
   const [loading, setLoading] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(true);
 
+  // Form state
   const [fullName, setFullName] = useState("");
   const [idNumber, setIdNumber] = useState("");
   const [phone, setPhone] = useState("");
@@ -159,17 +163,20 @@ export default function Booking() {
   const [product, setProduct] = useState("");
   const [notes, setNotes] = useState("");
 
+  // Shipping fields
   const [shippingAddress, setShippingAddress] = useState("");
   const [shippingNeighborhood, setShippingNeighborhood] = useState("");
   const [shippingCity, setShippingCity] = useState("");
   const [shippingCarrier, setShippingCarrier] = useState("");
   const [carriers, setCarriers] = useState(["INTERRAPIDISIMO"]);
 
+  // Errors
   const [errors, setErrors] = useState({});
 
   const currentMethod = METHODS.find((m) => m.key === method);
   const themeClass = currentMethod?.theme || "";
 
+  // Update carriers when city changes
   useEffect(() => {
     if (shippingCity.toLowerCase().includes("bogot")) {
       setCarriers(["PICAP", "INTERRAPIDISIMO"]);
@@ -235,6 +242,7 @@ export default function Booking() {
       newErrors.email = "Ingresa un correo válido";
     }
 
+    // Producto obligatorio siempre
     if (!product.trim()) {
       newErrors.product = "El producto es obligatorio";
     }
@@ -245,6 +253,7 @@ export default function Booking() {
       newErrors.slot = "Selecciona un horario";
     }
 
+    // Validaciones de envío
     if (method === "SHIPPING") {
       if (!shippingAddress.trim())
         newErrors.shippingAddress = "La dirección es obligatoria";
@@ -307,6 +316,7 @@ export default function Booking() {
           duration: 5000,
         });
 
+        // Reset
         setFullName("");
         setIdNumber("");
         setPhone("");
@@ -359,6 +369,7 @@ export default function Booking() {
         </motion.div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* MÉTODO */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -495,6 +506,7 @@ export default function Booking() {
             </AnimatePresence>
           </motion.div>
 
+          {/* FECHA Y HORARIO */}
           {method !== "SHIPPING" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -638,6 +650,7 @@ export default function Booking() {
             </motion.div>
           )}
 
+          {/* DATOS PERSONALES */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -688,12 +701,36 @@ export default function Booking() {
                 <motion.input
                   whileFocus={{ scale: 1.01 }}
                   type="text"
+                  inputMode="numeric"
                   value={idNumber}
                   onChange={(e) => {
-                    setIdNumber(e.target.value);
+                    const value = e.target.value.replace(/\D/g, ""); // Solo números
+                    setIdNumber(value);
                     clearError("idNumber");
                   }}
+                  onKeyDown={(e) => {
+                    // Permitir solo números y teclas de control
+                    if (
+                      !/\d/.test(e.key) &&
+                      ![
+                        "Backspace",
+                        "Delete",
+                        "ArrowLeft",
+                        "ArrowRight",
+                        "Tab",
+                        "Home",
+                        "End",
+                      ].includes(e.key) &&
+                      !(
+                        e.ctrlKey &&
+                        ["a", "c", "v", "x"].includes(e.key.toLowerCase())
+                      )
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
                   placeholder="123456789"
+                  maxLength={20}
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
                     errors.idNumber
                       ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
@@ -719,12 +756,36 @@ export default function Booking() {
                 <motion.input
                   whileFocus={{ scale: 1.01 }}
                   type="tel"
+                  inputMode="numeric"
                   value={phone}
                   onChange={(e) => {
-                    setPhone(e.target.value);
+                    const value = e.target.value.replace(/\D/g, ""); // Solo números
+                    setPhone(value);
                     clearError("phone");
                   }}
+                  onKeyDown={(e) => {
+                    // Permitir solo números y teclas de control
+                    if (
+                      !/\d/.test(e.key) &&
+                      ![
+                        "Backspace",
+                        "Delete",
+                        "ArrowLeft",
+                        "ArrowRight",
+                        "Tab",
+                        "Home",
+                        "End",
+                      ].includes(e.key) &&
+                      !(
+                        e.ctrlKey &&
+                        ["a", "c", "v", "x"].includes(e.key.toLowerCase())
+                      )
+                    ) {
+                      e.preventDefault();
+                    }
+                  }}
                   placeholder="3001234567"
+                  maxLength={15}
                   className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
                     errors.phone
                       ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
@@ -832,6 +893,7 @@ export default function Booking() {
             </div>
           </motion.div>
 
+          {/* DATOS DE ENVÍO (solo si method === SHIPPING) */}
           {method === "SHIPPING" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -985,6 +1047,7 @@ export default function Booking() {
             </motion.div>
           )}
 
+          {/* SUBMIT */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1014,7 +1077,7 @@ export default function Booking() {
           <p>
             ¿Tienes dudas? Escríbenos a{" "}
             <span className="brand-text font-semibold">
-              techventuresco@gmail.com
+              contacto@techventuresco.com
             </span>
           </p>
         </motion.div>
