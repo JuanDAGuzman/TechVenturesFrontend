@@ -14,14 +14,14 @@ export default function Footer() {
   const links = {
     company: [
       { label: "Agendar cita", href: "/" },
-      { label: "Contacto", href: "https://api.whatsapp.com/send/?phone=573108216274&text&type=phone_number&app_absent=0" },
+      { label: "Contacto", href: "https://api.whatsapp.com/send/?phone=573108216274&text&type=phone_number&app_absent=0",target: "_blank", },
     ],
     social: [
       { icon: Github, label: "GitHub", href: "https://github.com/JuanDAGuzman" },
       {
         icon: Linkedin,
         label: "LinkedIn",
-        href: "https://www.linkedin.com/in/juan-diego-ar%C3%A9valo-guzm%C3%A1n-030b36305/",
+        href: "https://www.linkedin.com/in/juan-diego-ar%C3%A9valo-guzm%C3%A1n-030b36305/",target: "_blank",
       },
       {
         icon: Mail,

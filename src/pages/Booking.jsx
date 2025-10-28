@@ -1132,13 +1132,23 @@ export default function Booking() {
           <p>
             ¿Tienes dudas? Escríbenos a{" "}
             <span className="brand-text font-semibold">
-              techventuresco@gmail.com
+              <a
+                href="mailto:techventuresco@gmail.com"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                techventuresco@gmail.com
+              </a>
             </span>
           </p>
           <p>
-            Tambien a{" "}
+            ó{" "}
             <span className="brand-text font-semibold">
-              <a href="https://api.whatsapp.com/send/?phone=573108216274&text&type=phone_number&app_absent=0">
+              <a
+                href="https://api.whatsapp.com/send/?phone=573108216274&text&type=phone_number&app_absent=0"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 Whatsapp
               </a>
             </span>
