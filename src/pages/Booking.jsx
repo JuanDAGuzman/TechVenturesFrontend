@@ -144,6 +144,153 @@ function InfoModal({ open, onClose }) {
   );
 }
 
+function CustomerDataModal({ open, onClose, customerData, onConfirm }) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden"
+      >
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-500 p-1" />
+
+        <div className="p-6 sm:p-8">
+          <div className="flex items-start gap-4 mb-6">
+            <div className="flex-shrink-0 w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+              <Info className="w-6 h-6 text-blue-600" />
+            </div>
+
+            <div className="flex-1">
+              <h2 className="text-2xl font-black text-slate-900 mb-2">
+                Datos encontrados
+              </h2>
+              <p className="text-slate-600">
+                Ya tenemos información de esta cédula. ¿Deseas cargar estos
+                datos?
+              </p>
+            </div>
+
+            <button
+              onClick={onClose}
+              className="flex-shrink-0 text-slate-400 hover:text-slate-600 transition"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div className="space-y-3 mb-6 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="bg-slate-50 rounded-xl p-4 space-y-3">
+              <div>
+                <p className="text-xs font-semibold text-slate-500 mb-1">
+                  NOMBRE COMPLETO
+                </p>
+                <p className="text-slate-900 font-medium">
+                  {customerData.customer_name}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-xs font-semibold text-slate-500 mb-1">
+                  CÉDULA
+                </p>
+                <p className="text-slate-900 font-medium">
+                  {customerData.customer_id_number}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 mb-1">
+                    CELULAR
+                  </p>
+                  <p className="text-slate-900 font-medium">
+                    {customerData.customer_phone}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 mb-1">
+                    CORREO
+                  </p>
+                  <p className="text-slate-900 font-medium text-sm break-all">
+                    {customerData.customer_email}
+                  </p>
+                </div>
+              </div>
+
+              {customerData.shipping_address && (
+                <>
+                  <div className="border-t border-slate-200 my-3 pt-3">
+                    <p className="text-xs font-bold text-slate-700 mb-2">
+                      DIRECCIÓN DE ENVÍO
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-slate-500 mb-1">
+                      DIRECCIÓN
+                    </p>
+                    <p className="text-slate-900 font-medium">
+                      {customerData.shipping_address}
+                    </p>
+                  </div>
+
+                  {customerData.shipping_neighborhood && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-500 mb-1">
+                          BARRIO
+                        </p>
+                        <p className="text-slate-900 font-medium">
+                          {customerData.shipping_neighborhood}
+                        </p>
+                      </div>
+
+                      {customerData.shipping_city && (
+                        <div>
+                          <p className="text-xs font-semibold text-slate-500 mb-1">
+                            CIUDAD
+                          </p>
+                          <p className="text-slate-900 font-medium">
+                            {customerData.shipping_city}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onClose}
+              className="flex-1 px-6 py-3 rounded-xl font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition"
+            >
+              No, gracias
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onConfirm}
+              className="flex-1 px-6 py-3 rounded-xl font-bold text-white bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600 transition shadow-lg"
+            >
+              Sí, cargar datos
+            </motion.button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function Booking() {
   const [method, setMethod] = useState("TRYOUT");
 
@@ -177,6 +324,10 @@ export default function Booking() {
   const currentMethod = METHODS.find((m) => m.key === method);
   const themeClass = currentMethod?.theme || "";
 
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
+  const [foundCustomerData, setFoundCustomerData] = useState(null);
+  const [isSearchingCustomer, setIsSearchingCustomer] = useState(false);
+
   useEffect(() => {
     if (shippingCity.toLowerCase().includes("bogot")) {
       setCarriers(["PICAP", "INTERRAPIDISIMO"]);
@@ -204,14 +355,13 @@ export default function Booking() {
     setLoading(true);
     setSelectedSlot(null);
     setSlots([]);
-    setSlotsError(null); // limpiamos error viejo antes de intentar
+    setSlotsError(null); 
 
     try {
       const res = await fetch(
         `${API_BASE}/api/availability?date=${date}&type=${method}`
       );
 
-      // intenta parsear
       let payload = null;
       try {
         payload = await res.json();
@@ -226,14 +376,11 @@ export default function Booking() {
         return;
       }
 
-      // si backend responde con error http o payload.ok === false
       if (!res.ok || !payload?.ok) {
         console.warn("availability devolvió error:", payload);
         setSlots([]);
         setSlotsError(payload?.error || "NOT_FOUND");
 
-        // mostramos toast SOLO si de verdad no hay horarios para esa combinacion
-        // y NO cuando es simplemente que estamos cambiando de método
         if (
           payload?.error === "NOT_FOUND" ||
           (Array.isArray(payload?.data?.slots) &&
@@ -248,12 +395,10 @@ export default function Booking() {
         return;
       }
 
-      // extraemos slots reales
       const slotsFromApi = Array.isArray(payload?.data?.slots)
         ? payload.data.slots
         : [];
 
-      // guardamos
       setSlots(slotsFromApi);
 
       if (slotsFromApi.length === 0) {
@@ -320,7 +465,6 @@ export default function Booking() {
     return Object.keys(newErrors).length === 0;
   }
 
-  // --- Submit ---
   async function handleSubmit(e) {
     e.preventDefault();
 
@@ -329,7 +473,6 @@ export default function Booking() {
       return;
     }
 
-    // Armamos start_time y end_time según tipo de cita
     let start_time = null;
     let end_time = null;
 
@@ -342,16 +485,16 @@ export default function Booking() {
         }));
         return;
       }
-      start_time = selectedSlot.start; // EJ "07:00"
-      end_time = selectedSlot.end; // EJ "07:30"
+      start_time = selectedSlot.start; 
+      end_time = selectedSlot.end; 
     } else {
       start_time = null;
       end_time = null;
     }
 
     const payload = {
-      type_code: method, // TRYOUT | PICKUP | SHIPPING
-      date: date, // YYYY-MM-DD
+      type_code: method, 
+      date: date,
       start_time: start_time,
       end_time: end_time,
       product: product,
@@ -395,7 +538,6 @@ export default function Booking() {
           duration: 5000,
         });
 
-        // limpiar form
         setFullName("");
         setIdNumber("");
         setPhone("");
@@ -408,7 +550,6 @@ export default function Booking() {
         setShippingCity("");
         setShippingCarrier("");
 
-        // mantenemos method
         setDate("");
         setSelectedSlot(null);
         setSlots([]);
@@ -429,20 +570,74 @@ export default function Booking() {
     }
   }
 
-  // --- limpiar error puntual al digitar ---
   const clearError = (field) => {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
+  async function searchCustomerByIdNumber(idNum) {
+    if (!idNum || idNum.length < 6) return; 
+
+    setIsSearchingCustomer(true);
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/api/customer-by-id?id_number=${idNum}`
+      );
+
+      if (!res.ok) {
+        console.warn("Error buscando cliente");
+        return;
+      }
+
+      const data = await res.json();
+
+      if (data.ok && data.found) {
+        setFoundCustomerData(data.data);
+        setShowCustomerModal(true);
+      }
+    } catch (err) {
+      console.error("Error al buscar cliente:", err);
+    } finally {
+      setIsSearchingCustomer(false);
+    }
+  }
+
+  function loadCustomerData() {
+    if (!foundCustomerData) return;
+
+    setFullName(foundCustomerData.customer_name || "");
+    setPhone(foundCustomerData.customer_phone || "");
+    setEmail(foundCustomerData.customer_email || "");
+    setShippingAddress(foundCustomerData.shipping_address || "");
+    setShippingNeighborhood(foundCustomerData.shipping_neighborhood || "");
+    setShippingCity(foundCustomerData.shipping_city || "");
+
+    setShowCustomerModal(false);
+    setFoundCustomerData(null);
+
+    toast.success("Datos cargados correctamente", {
+      description: "Verifica que la información sea correcta",
+      icon: <CheckCircle2 className="w-5 h-5" />,
+    });
+  }
 
   return (
     <div className={`min-h-screen ${themeClass}`}>
       <Toaster position="top-center" richColors />
       <InfoModal open={showInfoModal} onClose={() => setShowInfoModal(false)} />
 
+      <CustomerDataModal
+        open={showCustomerModal}
+        onClose={() => {
+          setShowCustomerModal(false);
+          setFoundCustomerData(null);
+        }}
+        customerData={foundCustomerData}
+        onConfirm={loadCustomerData}
+      />
+
       <div className="container-page">
-        {/* Header general */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -457,7 +652,6 @@ export default function Booking() {
         </motion.div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Método */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -480,12 +674,10 @@ export default function Booking() {
                     type="button"
                     onClick={() => {
                       setMethod(m.key);
-                      // si cambia método, reset de slots en front
                       setSelectedSlot(null);
                       if (m.key === "SHIPPING") {
                         setSlots([]);
                       } else if (date) {
-                        // si ya hay fecha, vuelvo a cargar disponibilidad
                         fetchSlots();
                       }
                     }}
@@ -609,7 +801,6 @@ export default function Booking() {
             </AnimatePresence>
           </motion.div>
 
-          {/* Fecha + Horario */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -617,7 +808,6 @@ export default function Booking() {
             className="card"
           >
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Fecha */}
               <div>
                 <label className="lbl flex items-center gap-2">
                   <Calendar className="w-5 h-5 brand-text" />
@@ -631,7 +821,6 @@ export default function Booking() {
                   onChange={(e) => {
                     setDate(e.target.value);
                     clearError("date");
-                    // al cambiar fecha limpio el slot
                     setSelectedSlot(null);
                   }}
                   min={new Date().toISOString().split("T")[0]}
@@ -654,7 +843,6 @@ export default function Booking() {
                 )}
               </div>
 
-              {/* Horario (solo TRYOUT / PICKUP) */}
               {method !== "SHIPPING" && (
                 <div>
                   <label className="lbl flex items-center gap-2">
@@ -766,7 +954,6 @@ export default function Booking() {
             </div>
           </motion.div>
 
-          {/* Datos personales */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -779,7 +966,6 @@ export default function Booking() {
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-              {/* Nombre */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-slate-700">
                   Nombre completo <span className="text-rose-500">*</span>
@@ -811,49 +997,70 @@ export default function Booking() {
                 )}
               </div>
 
-              {/* Cédula */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-slate-700">
                   Cédula <span className="text-rose-500">*</span>
                 </label>
-                <motion.input
-                  whileFocus={{ scale: 1.01 }}
-                  type="text"
-                  inputMode="numeric"
-                  value={idNumber}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/\D/g, "");
-                    setIdNumber(value);
-                    clearError("idNumber");
-                  }}
-                  onKeyDown={(e) => {
-                    if (
-                      !/\d/.test(e.key) &&
-                      ![
-                        "Backspace",
-                        "Delete",
-                        "ArrowLeft",
-                        "ArrowRight",
-                        "Tab",
-                        "Home",
-                        "End",
-                      ].includes(e.key) &&
-                      !(
-                        e.ctrlKey &&
-                        ["a", "c", "v", "x"].includes(e.key.toLowerCase())
-                      )
-                    ) {
-                      e.preventDefault();
-                    }
-                  }}
-                  placeholder="123456789"
-                  maxLength={20}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
-                    errors.idNumber
-                      ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                      : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
-                  }`}
-                />
+                <div className="relative">
+                  <motion.input
+                    whileFocus={{ scale: 1.01 }}
+                    type="text"
+                    inputMode="numeric"
+                    value={idNumber}
+                    onChange={(e) => {
+                      const value = e.target.value.replace(/\D/g, "");
+                      setIdNumber(value);
+                      clearError("idNumber");
+                    }}
+                    onBlur={(e) => {
+                      const value = e.target.value.trim();
+                      if (value && value.length >= 6) {
+                        searchCustomerByIdNumber(value);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (
+                        !/\d/.test(e.key) &&
+                        ![
+                          "Backspace",
+                          "Delete",
+                          "ArrowLeft",
+                          "ArrowRight",
+                          "Tab",
+                          "Home",
+                          "End",
+                        ].includes(e.key) &&
+                        !(
+                          e.ctrlKey &&
+                          ["a", "c", "v", "x"].includes(e.key.toLowerCase())
+                        )
+                      ) {
+                        e.preventDefault();
+                      }
+                    }}
+                    placeholder="123456789"
+                    maxLength={20}
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${
+                      errors.idNumber
+                        ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
+                        : "border-slate-200 focus:border-[var(--brand)] focus:ring-[var(--brand-ring)]"
+                    }`}
+                  />
+                  {isSearchingCustomer && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
+                      >
+                        <Clock className="w-5 h-5 text-blue-500" />
+                      </motion.div>
+                    </div>
+                  )}
+                </div>
                 {errors.idNumber && (
                   <motion.p
                     initial={{ opacity: 0, y: -10 }}
@@ -866,7 +1073,6 @@ export default function Booking() {
                 )}
               </div>
 
-              {/* Celular */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-slate-700">
                   Celular <span className="text-rose-500">*</span>
@@ -923,7 +1129,6 @@ export default function Booking() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-              {/* Correo */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-slate-700">
                   Correo <span className="text-rose-500">*</span>
@@ -955,7 +1160,6 @@ export default function Booking() {
                 )}
               </div>
 
-              {/* Producto */}
               <div>
                 <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
                   <Package className="w-4 h-4 brand-text" />
@@ -989,7 +1193,6 @@ export default function Booking() {
               </div>
             </div>
 
-            {/* Notas */}
             <div>
               <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
                 <FileText className="w-4 h-4 brand-text" />
@@ -1013,7 +1216,6 @@ export default function Booking() {
             </div>
           </motion.div>
 
-          {/* Datos de envío (solo SHIPPING) */}
           {method === "SHIPPING" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -1027,7 +1229,6 @@ export default function Booking() {
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                {/* Dirección */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
                     <Home className="w-4 h-4 brand-text" />
@@ -1060,7 +1261,6 @@ export default function Booking() {
                   )}
                 </div>
 
-                {/* Barrio */}
                 <div>
                   <label className="block text-sm font-semibold mb-2 text-slate-700">
                     Barrio <span className="text-rose-500">*</span>
@@ -1094,7 +1294,6 @@ export default function Booking() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Ciudad */}
                 <div>
                   <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
                     <Map className="w-4 h-4 brand-text" />
@@ -1127,7 +1326,6 @@ export default function Booking() {
                   )}
                 </div>
 
-                {/* Transportadora */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-semibold mb-2 text-slate-700">
                     Transportadora <span className="text-rose-500">*</span>
@@ -1171,7 +1369,6 @@ export default function Booking() {
             </motion.div>
           )}
 
-          {/* Botón submit */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -1192,7 +1389,6 @@ export default function Booking() {
           </motion.div>
         </form>
 
-        {/* Footer contacto */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -1224,7 +1420,6 @@ export default function Booking() {
         </motion.div>
       </div>
 
-      {/* scrollbar estilos */}
       <style>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 6px;
