@@ -147,31 +147,46 @@ export default function AdminPage() {
       const isPicap =
         String(form.shipping_carrier || "").toUpperCase() === "PICAP";
 
-      // 1. Subir el archivo PRIMERO (si hay)
       if (form._guide_file && !isPicap) {
+        console.log("[markAsShipped] Subiendo archivo...");
+
         const formData = new FormData();
         formData.append("guide", form._guide_file);
 
-        const uploadRes = await fetch(
-          `${API}/admin/appointments/${editingId}/upload-guide`,
-          {
-            method: "POST",
-            headers: {
-              "x-admin-token": token,
-            },
-            body: formData,
+        try {
+          const uploadRes = await fetch(
+            `${API}/admin/appointments/${editingId}/upload-guide`,
+            {
+              method: "POST",
+              headers: {
+                "x-admin-token": token,
+              },
+              body: formData,
+            }
+          );
+
+          console.log("[markAsShipped] Upload status:", uploadRes.status);
+
+          const uploadJson = await safeJson(uploadRes);
+          console.log("[markAsShipped] Upload response:", uploadJson);
+
+          if (!uploadRes.ok || uploadJson?.ok === false) {
+            throw new Error(uploadJson?.error || "UPLOAD_ERROR");
           }
-        );
 
-        const uploadJson = await safeJson(uploadRes);
-        if (!uploadRes.ok || uploadJson?.ok === false) {
-          throw new Error(uploadJson?.error || "UPLOAD_ERROR");
+          console.log(
+            "[markAsShipped] Archivo subido exitosamente:",
+            uploadJson.url
+          );
+        } catch (uploadErr) {
+          console.error("[markAsShipped] Error al subir archivo:", uploadErr);
+          setToast(`Error al subir archivo: ${uploadErr.message}`);
+          return; 
         }
-
-        console.log("[DEBUG] Archivo subido:", uploadJson.url);
       }
 
-      // 2. Marcar como enviado
+      console.log("[markAsShipped] Marcando como enviado...");
+
       const costStr = (form._shipping_cost_tmp ?? "").toString().trim();
       const costVal =
         costStr === "" ? null : Number(costStr.replace(/[^\d.-]/g, ""));
@@ -200,6 +215,8 @@ export default function AdminPage() {
         }
       }
 
+      console.log("[markAsShipped] Payload:", payload);
+
       const r = await fetch(`${API}/admin/appointments/${editingId}/ship`, {
         method: "PATCH",
         headers: {
@@ -209,7 +226,11 @@ export default function AdminPage() {
         body: JSON.stringify(payload),
       });
 
+      console.log("[markAsShipped] Ship status:", r.status);
+
       const j = await safeJson(r);
+      console.log("[markAsShipped] Ship response:", j);
+
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "HTTP_ERROR");
 
       setForm((prev) => ({
@@ -229,10 +250,11 @@ export default function AdminPage() {
         _guide_file: null,
       }));
 
-      setToast("Envío marcado como enviado con guía adjunta.");
+      setToast("✅ Envío marcado como enviado con guía adjunta.");
+      console.log("[markAsShipped] Proceso completado exitosamente");
     } catch (e) {
-      console.error("markAsShipped error:", e);
-      setToast(String(e?.message || "No se pudo marcar como enviado."));
+      console.error("[markAsShipped] ERROR GENERAL:", e);
+      setToast(`❌ Error: ${e?.message || "No se pudo marcar como enviado"}`);
     }
   }
 
