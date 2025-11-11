@@ -175,8 +175,17 @@ export default function AdminPage() {
         }
 
         if (form._guide_file) {
-          formData.append("guide", form._guide_file);
+          console.log(
+            "[DEBUG FRONTEND] Agregando archivo:",
+            form._guide_file.name
+          );
+          formData.append("guide", form._guide_file, form._guide_file.name);
         }
+      }
+
+      console.log("[DEBUG FRONTEND] FormData entries:");
+      for (let pair of formData.entries()) {
+        console.log(pair[0], ":", pair[1]);
       }
 
       const r = await fetch(`${API}/admin/appointments/${editingId}/ship`, {
@@ -212,9 +221,7 @@ export default function AdminPage() {
         _guide_file: null,
       }));
 
-      setToast(
-        "Envío marcado como enviado. Correo con guía adjunta enviado al cliente."
-      );
+      setToast("Envío marcado como enviado.");
     } catch (e) {
       console.error("markAsShipped error:", e);
       setToast(String(e?.message || "No se pudo marcar como enviado."));
