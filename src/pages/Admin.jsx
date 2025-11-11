@@ -147,11 +147,36 @@ export default function AdminPage() {
       const isPicap =
         String(form.shipping_carrier || "").toUpperCase() === "PICAP";
 
+      // 1. Subir el archivo PRIMERO (si hay)
+      if (form._guide_file && !isPicap) {
+        const formData = new FormData();
+        formData.append("guide", form._guide_file);
+
+        const uploadRes = await fetch(
+          `${API}/admin/appointments/${editingId}/upload-guide`,
+          {
+            method: "POST",
+            headers: {
+              "x-admin-token": token,
+            },
+            body: formData,
+          }
+        );
+
+        const uploadJson = await safeJson(uploadRes);
+        if (!uploadRes.ok || uploadJson?.ok === false) {
+          throw new Error(uploadJson?.error || "UPLOAD_ERROR");
+        }
+
+        console.log("[DEBUG] Archivo subido:", uploadJson.url);
+      }
+
+      // 2. Marcar como enviado
       const costStr = (form._shipping_cost_tmp ?? "").toString().trim();
       const costVal =
         costStr === "" ? null : Number(costStr.replace(/[^\d.-]/g, ""));
 
-      const formData = new FormData();
+      const payload = {};
 
       if (isPicap) {
         const tripLink = (form._shipping_trip_link_tmp || "").trim();
@@ -159,9 +184,9 @@ export default function AdminPage() {
           alert("Falta el link del viaje PICAP.");
           return;
         }
-        formData.append("shipping_trip_link", tripLink);
+        payload.shipping_trip_link = tripLink;
         if (costVal !== null) {
-          formData.append("shipping_cost", costVal.toString());
+          payload.shipping_cost = costVal;
         }
       } else {
         const trackingNum = (form._tracking_number_tmp || "").trim();
@@ -169,31 +194,19 @@ export default function AdminPage() {
           alert("Falta el número de guía.");
           return;
         }
-        formData.append("tracking_number", trackingNum);
+        payload.tracking_number = trackingNum;
         if (costVal !== null) {
-          formData.append("shipping_cost", costVal.toString());
+          payload.shipping_cost = costVal;
         }
-
-        if (form._guide_file) {
-          console.log(
-            "[DEBUG FRONTEND] Agregando archivo:",
-            form._guide_file.name
-          );
-          formData.append("guide", form._guide_file, form._guide_file.name);
-        }
-      }
-
-      console.log("[DEBUG FRONTEND] FormData entries:");
-      for (let pair of formData.entries()) {
-        console.log(pair[0], ":", pair[1]);
       }
 
       const r = await fetch(`${API}/admin/appointments/${editingId}/ship`, {
         method: "PATCH",
         headers: {
+          "Content-Type": "application/json",
           "x-admin-token": token,
         },
-        body: formData,
+        body: JSON.stringify(payload),
       });
 
       const j = await safeJson(r);
@@ -203,25 +216,20 @@ export default function AdminPage() {
         ...prev,
         status: "SHIPPED",
         tracking_number:
-          j.item?.tracking_number ??
-          (isPicap ? null : formData.get("tracking_number")) ??
-          prev.tracking_number ??
-          null,
+          j.item?.tracking_number ?? prev.tracking_number ?? null,
         shipping_cost:
           j.item?.shipping_cost ?? costVal ?? prev.shipping_cost ?? null,
         shipping_trip_link:
-          j.item?.shipping_trip_link ??
-          (isPicap
-            ? formData.get("shipping_trip_link")
-            : prev.shipping_trip_link) ??
-          null,
+          j.item?.shipping_trip_link ?? prev.shipping_trip_link ?? null,
+        tracking_file_url:
+          j.item?.tracking_file_url ?? prev.tracking_file_url ?? null,
         _tracking_number_tmp: "",
         _shipping_cost_tmp: "",
         _shipping_trip_link_tmp: "",
         _guide_file: null,
       }));
 
-      setToast("Envío marcado como enviado.");
+      setToast("Envío marcado como enviado con guía adjunta.");
     } catch (e) {
       console.error("markAsShipped error:", e);
       setToast(String(e?.message || "No se pudo marcar como enviado."));
