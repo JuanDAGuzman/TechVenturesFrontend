@@ -355,7 +355,7 @@ export default function Booking() {
     setLoading(true);
     setSelectedSlot(null);
     setSlots([]);
-    setSlotsError(null); 
+    setSlotsError(null);
 
     try {
       const res = await fetch(
@@ -485,15 +485,15 @@ export default function Booking() {
         }));
         return;
       }
-      start_time = selectedSlot.start; 
-      end_time = selectedSlot.end; 
+      start_time = selectedSlot.start;
+      end_time = selectedSlot.end;
     } else {
       start_time = null;
       end_time = null;
     }
 
     const payload = {
-      type_code: method, 
+      type_code: method,
       date: date,
       start_time: start_time,
       end_time: end_time,
@@ -576,7 +576,7 @@ export default function Booking() {
     }
   };
   async function searchCustomerByIdNumber(idNum) {
-    if (!idNum || idNum.length < 6) return; 
+    if (!idNum || idNum.length < 6) return;
 
     setIsSearchingCustomer(true);
 
@@ -1061,6 +1061,12 @@ export default function Booking() {
                     </div>
                   )}
                 </div>
+
+                <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
+                  <Info className="w-3 h-3" />
+                  Si ya agendaste antes, tus datos se cargarán automáticamente
+                </p>
+
                 {errors.idNumber && (
                   <motion.p
                     initial={{ opacity: 0, y: -10 }}
