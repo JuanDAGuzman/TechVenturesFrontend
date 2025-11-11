@@ -148,20 +148,38 @@ export default function AdminPage() {
         String(form.shipping_carrier || "").toUpperCase() === "PICAP";
 
       if (form._guide_file && !isPicap) {
-        console.log("[markAsShipped] Subiendo archivo...");
-
-        const formData = new FormData();
-        formData.append("guide", form._guide_file);
+        console.log("[markAsShipped] Convirtiendo archivo a base64...");
 
         try {
+          const fileData = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const base64 = reader.result.split(",")[1];
+              resolve(base64);
+            };
+            reader.onerror = () => reject(new Error("Error al leer archivo"));
+            reader.readAsDataURL(form._guide_file);
+          });
+
+          console.log(
+            "[markAsShipped] Archivo convertido, tamaño:",
+            fileData.length,
+            "caracteres"
+          );
+          console.log("[markAsShipped] Subiendo archivo...");
+
           const uploadRes = await fetch(
             `${API}/admin/appointments/${editingId}/upload-guide`,
             {
               method: "POST",
               headers: {
+                "Content-Type": "application/json",
                 "x-admin-token": token,
               },
-              body: formData,
+              body: JSON.stringify({
+                filename: form._guide_file.name,
+                fileData: fileData,
+              }),
             }
           );
 
@@ -181,7 +199,7 @@ export default function AdminPage() {
         } catch (uploadErr) {
           console.error("[markAsShipped] Error al subir archivo:", uploadErr);
           setToast(`Error al subir archivo: ${uploadErr.message}`);
-          return; 
+          return;
         }
       }
 
@@ -215,8 +233,6 @@ export default function AdminPage() {
         }
       }
 
-      console.log("[markAsShipped] Payload:", payload);
-
       const r = await fetch(`${API}/admin/appointments/${editingId}/ship`, {
         method: "PATCH",
         headers: {
@@ -226,11 +242,7 @@ export default function AdminPage() {
         body: JSON.stringify(payload),
       });
 
-      console.log("[markAsShipped] Ship status:", r.status);
-
       const j = await safeJson(r);
-      console.log("[markAsShipped] Ship response:", j);
-
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "HTTP_ERROR");
 
       setForm((prev) => ({
