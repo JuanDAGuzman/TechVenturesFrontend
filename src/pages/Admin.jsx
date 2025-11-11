@@ -8,9 +8,6 @@ import {
   adminDeleteWindow,
 } from "../api.js";
 
-/* =======================
-   API base robusta
-   ======================= */
 const API = (
   import.meta.env.VITE_API_BASE ??
   import.meta.env.VITE_API ??
@@ -18,9 +15,6 @@ const API = (
   "http://localhost:4000/api"
 ).replace(/\/+$/, "");
 
-/* =======================
-   Helpers UI
-   ======================= */
 function mapTypeEs(code) {
   switch (code) {
     case "TRYOUT":
@@ -73,7 +67,6 @@ function statusBadgeClass(code) {
 }
 const fmt = (hhmm) => (hhmm || "").slice(0, 5);
 
-/* Intenta parsear JSON sin romper UI si el backend devolvió HTML */
 async function safeJson(res) {
   const text = await res.text();
   try {
@@ -83,9 +76,6 @@ async function safeJson(res) {
   }
 }
 
-/* =======================
-   Página Admin
-   ======================= */
 export default function AdminPage() {
   const [token, setToken] = useState(getAdminToken());
   const [date, setDate] = useState(dayjs().format("YYYY-MM-DD"));
@@ -95,7 +85,6 @@ export default function AdminPage() {
   const [toast, setToast] = useState("");
   const [showToken, setShowToken] = useState(false);
 
-  // Sábado
   const [satDate, setSatDate] = useState(() => {
     const d = dayjs();
     const nextSat = d.day() <= 6 ? d.day(6) : d.add(1, "week").day(6);
@@ -103,21 +92,17 @@ export default function AdminPage() {
   });
   const [ranges, setRanges] = useState([{ start: "08:00", end: "11:00" }]);
   const [savedRanges, setSavedRanges] = useState([]);
-  // edición puntual de sábado
   const [satEditId, setSatEditId] = useState(null);
   const [satEdit, setSatEdit] = useState({ start: "", end: "" });
 
-  // Weekday manual (L–V)
   const [wDate, setWDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [wType, setWType] = useState("TRYOUT");
   const [wStart, setWStart] = useState("20:00");
   const [wEnd, setWEnd] = useState("20:15");
   const [wSaved, setWSaved] = useState([]);
-  // edición puntual de L–V
   const [wEditId, setWEditId] = useState(null);
   const [wEdit, setWEdit] = useState({ start: "", end: "" });
 
-  // Modal cita
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState("");
   const [form, setForm] = useState(null);
@@ -129,11 +114,9 @@ export default function AdminPage() {
     [token]
   );
 
-  /* ===== Cargar citas ===== */
   useEffect(() => {
     setToast("");
     if (token) fetchAppts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, date]);
 
   async function fetchAppts() {
@@ -157,7 +140,6 @@ export default function AdminPage() {
     }
   }
 
-  /* ===== Ship (envío) ===== */
   async function markAsShipped() {
     try {
       if (!editingId) throw new Error("NO_EDITING_ID");
@@ -165,35 +147,46 @@ export default function AdminPage() {
       const isPicap =
         String(form.shipping_carrier || "").toUpperCase() === "PICAP";
 
-      // normaliza costo: null si vacío
       const costStr = (form._shipping_cost_tmp ?? "").toString().trim();
       const costVal =
         costStr === "" ? null : Number(costStr.replace(/[^\d.-]/g, ""));
 
-      const payload = isPicap
-        ? {
-            shipping_trip_link: (form._shipping_trip_link_tmp || "").trim(),
-            ...(costVal === null ? {} : { shipping_cost: costVal }),
-          }
-        : {
-            tracking_number: (form._tracking_number_tmp || "").trim(),
-            ...(costVal === null ? {} : { shipping_cost: costVal }),
-          };
+      const formData = new FormData();
 
-      if (isPicap && !payload.shipping_trip_link) {
-        alert("Falta el link del viaje PICAP.");
-        return;
-      }
-      if (!isPicap && !payload.tracking_number) {
-        alert("Falta el número de guía.");
-        return;
+      if (isPicap) {
+        const tripLink = (form._shipping_trip_link_tmp || "").trim();
+        if (!tripLink) {
+          alert("Falta el link del viaje PICAP.");
+          return;
+        }
+        formData.append("shipping_trip_link", tripLink);
+        if (costVal !== null) {
+          formData.append("shipping_cost", costVal.toString());
+        }
+      } else {
+        const trackingNum = (form._tracking_number_tmp || "").trim();
+        if (!trackingNum) {
+          alert("Falta el número de guía.");
+          return;
+        }
+        formData.append("tracking_number", trackingNum);
+        if (costVal !== null) {
+          formData.append("shipping_cost", costVal.toString());
+        }
+
+        if (form._guide_file) {
+          formData.append("guide", form._guide_file);
+        }
       }
 
       const r = await fetch(`${API}/admin/appointments/${editingId}/ship`, {
         method: "PATCH",
-        headers,
-        body: JSON.stringify(payload),
+        headers: {
+          "x-admin-token": token,
+        },
+        body: formData,
       });
+
       const j = await safeJson(r);
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "HTTP_ERROR");
 
@@ -202,27 +195,32 @@ export default function AdminPage() {
         status: "SHIPPED",
         tracking_number:
           j.item?.tracking_number ??
-          (isPicap ? null : payload.tracking_number) ??
+          (isPicap ? null : formData.get("tracking_number")) ??
           prev.tracking_number ??
           null,
         shipping_cost:
           j.item?.shipping_cost ?? costVal ?? prev.shipping_cost ?? null,
         shipping_trip_link:
           j.item?.shipping_trip_link ??
-          (isPicap ? payload.shipping_trip_link : prev.shipping_trip_link) ??
+          (isPicap
+            ? formData.get("shipping_trip_link")
+            : prev.shipping_trip_link) ??
           null,
         _tracking_number_tmp: "",
         _shipping_cost_tmp: "",
         _shipping_trip_link_tmp: "",
+        _guide_file: null,
       }));
-      setToast("Envío marcado como enviado y correos enviados.");
+
+      setToast(
+        "Envío marcado como enviado. Correo con guía adjunta enviado al cliente."
+      );
     } catch (e) {
       console.error("markAsShipped error:", e);
       setToast(String(e?.message || "No se pudo marcar como enviado."));
     }
   }
 
-  /* ===== Crud tabla ===== */
   function toggle(id) {
     setSelected((s) => ({ ...s, [id]: !s[id] }));
   }
@@ -253,11 +251,9 @@ export default function AdminPage() {
     }
   }
 
-  /* ===== SÁBADO ===== */
   useEffect(() => {
     if (!token || !satDate) return;
     fetchSaturdayRanges();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, satDate]);
 
   async function fetchSaturdayRanges() {
@@ -301,7 +297,6 @@ export default function AdminPage() {
     setRanges((rs) => rs.filter((_, idx) => idx !== i));
   }
 
-  // Guarda TODOS los rangos editables del editor de abajo (POST replace-all)
   function toMin(hhmm) {
     const [h, m] = String(hhmm || "")
       .split(":")
@@ -322,7 +317,7 @@ export default function AdminPage() {
           (r) =>
             /^\d{2}:\d{2}$/.test(r.start) &&
             /^\d{2}:\d{2}$/.test(r.end) &&
-            toMin(r.start) < toMin(r.end) // <— comparación por minutos
+            toMin(r.start) < toMin(r.end)
         );
 
       if (!clean.length) {
@@ -352,7 +347,6 @@ export default function AdminPage() {
     }
   }
 
-  // Edición puntual de un rango guardado (POST replace-all con el rango modificado)
   async function satSaveEdit() {
     try {
       if (
@@ -422,19 +416,15 @@ export default function AdminPage() {
     }
   }
 
-  /* ===== WEEKDAY (L–V) ===== */
   useEffect(() => {
     if (!token || !wDate || !wType) return;
     fetchWeekdayWindows();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, wDate, wType]);
 
   async function fetchWeekdayWindows() {
     try {
       const j = await adminListWindows(wDate, wType, token);
-      // backend devuelve: { ok: true, rows: [...] }
       const items = Array.isArray(j.rows) ? j.rows : [];
-      // Normaliza para la UI
       setWSaved(
         items.map((r) => ({
           id: r.id,
@@ -452,7 +442,6 @@ export default function AdminPage() {
 
   async function addWeekdayWindow() {
     try {
-      // Validación robusta (formato y que inicio < fin en minutos)
       const ok =
         /^\d{2}:\d{2}$/.test(wStart) &&
         /^\d{2}:\d{2}$/.test(wEnd) &&
@@ -465,10 +454,10 @@ export default function AdminPage() {
 
       const payload = {
         date: wDate,
-        type_code: wType, // << OJO: type_code (TRYOUT | PICKUP)
+        type_code: wType,
         start_time: wStart,
         end_time: wEnd,
-        slot_minutes: Number(slotSizeW) || 15, // 15 | 20 | 30
+        slot_minutes: Number(slotSizeW) || 15,
       };
 
       const j = await adminCreateWindow(payload, token);
@@ -482,7 +471,6 @@ export default function AdminPage() {
     }
   }
 
-  // Editar una ventana L–V guardada: POST nuevo + DELETE viejo
   async function wSaveEdit() {
     try {
       if (
@@ -497,8 +485,6 @@ export default function AdminPage() {
       const patch = {
         start_time: wEdit.start,
         end_time: wEdit.end,
-        // Si quieres, puedes permitir cambiar el tamaño del bloque aquí:
-        // slot_minutes: Number(slotSizeW) || 15,
       };
 
       const j = await adminUpdateWindow(wEditId, patch, token);
@@ -527,7 +513,6 @@ export default function AdminPage() {
     }
   }
 
-  /* ===== Modal Cita ===== */
   async function openEditor(id) {
     try {
       const r = await fetch(`${API}/admin/appointments/${id}`, { headers });
@@ -545,7 +530,6 @@ export default function AdminPage() {
         product: item.product || "",
         notes: item.notes || "",
 
-        // shipping guardados
         shipping_address: item.shipping_address || "",
         shipping_neighborhood: item.shipping_neighborhood || "",
         shipping_city: item.shipping_city || "",
@@ -556,7 +540,6 @@ export default function AdminPage() {
 
         shipped_at: item.shipped_at || null,
 
-        // temporales (inputs)
         _tracking_number_tmp: "",
         _shipping_cost_tmp:
           item.shipping_cost == null ? "" : String(item.shipping_cost),
@@ -607,7 +590,6 @@ export default function AdminPage() {
     }
   }
 
-  /* ===== Render ===== */
   return (
     <div className="container-page">
       <div className="card relative overflow-hidden">
@@ -620,7 +602,6 @@ export default function AdminPage() {
         </p>
       </div>
 
-      {/* Token + Fecha */}
       <section className="card grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <label className="lbl">Token admin</label>
@@ -659,7 +640,6 @@ export default function AdminPage() {
         </div>
       </section>
 
-      {/* Tabla Citas */}
       <section className="card">
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-bold text-lg">Citas del día</h2>
@@ -792,7 +772,6 @@ export default function AdminPage() {
         {toast && <p className="mt-3">{toast}</p>}
       </section>
 
-      {/* Sábado */}
       <section className="card" id="sat-editor">
         <h2 className="font-bold text-lg mb-3">
           Configurar disponibilidad de sábado
@@ -891,7 +870,6 @@ export default function AdminPage() {
           )}
         </div>
 
-        {/* Lista de rangos (Sábado) */}
         <div className="flex flex-col gap-3">
           {ranges.map((r, i) => (
             <div
@@ -935,7 +913,6 @@ export default function AdminPage() {
             Agregar rango
           </button>
 
-          {/* NUEVO: tamaño de bloque para los rangos que vas a guardar */}
           <select
             value={slotSizeSat}
             onChange={(e) => setSlotSizeSat(Number(e.target.value))}
@@ -964,7 +941,6 @@ export default function AdminPage() {
         </div>
       </section>
 
-      {/* Weekday manual (L–V) */}
       <section className="card">
         <h2 className="font-bold text-lg mb-3">Abrir horario manual (L–V)</h2>
 
@@ -1024,7 +1000,6 @@ export default function AdminPage() {
             Abrir horario
           </button>
 
-          {/* tamaño de bloque L–V */}
           <select
             value={slotSizeW}
             onChange={(e) => setSlotSizeW(Number(e.target.value))}
@@ -1130,12 +1105,10 @@ export default function AdminPage() {
         </div>
       </section>
 
-      {/* Modal Ver/Editar Cita */}
       {open && form && (
         <div className="fixed inset-0 z-50 bg-black/30 flex items-start justify-center p-4 overflow-y-auto">
           <div className="w-full max-w-2xl my-6">
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              {/* Header fijo */}
               <div className="px-6 py-4 border-b sticky top-0 bg-white z-10 flex items-center justify-between">
                 <h3 className="font-bold text-lg">
                   Cita —{" "}
@@ -1151,7 +1124,6 @@ export default function AdminPage() {
                 </button>
               </div>
 
-              {/* Contenido */}
               <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto">
                 <div>
                   <label className="lbl">Nombre</label>
@@ -1252,7 +1224,6 @@ export default function AdminPage() {
                   </select>
                 </div>
 
-                {/* Si YA fue enviada: mostrar registro */}
                 {form.status === "SHIPPED" ? (
                   <>
                     <div className="md:col-span-2">
@@ -1269,7 +1240,7 @@ export default function AdminPage() {
                         </div>
                         {form.shipping_cost != null && (
                           <div className="md:col-span-2 text-sm text-slate-700">
-                            <b>Valor del envío:</b>{" "}
+                            <b>Valor del servicio:</b>{" "}
                             {Number(form.shipping_cost).toLocaleString(
                               "es-CO",
                               {
@@ -1317,7 +1288,6 @@ export default function AdminPage() {
                   </>
                 ) : (
                   <>
-                    {/* ÚNICO bloque de Despachar envío */}
                     <div className="md:col-span-2">
                       <div className="py-2 px-3 rounded-lg bg-emerald-50 text-emerald-700 text-sm mb-2">
                         Despachar envío
@@ -1389,6 +1359,7 @@ export default function AdminPage() {
                             placeholder="Ej: 1234567890"
                           />
                         </div>
+
                         <div>
                           <label className="lbl">
                             Valor del envío (opcional)
@@ -1408,11 +1379,39 @@ export default function AdminPage() {
                         </div>
 
                         <div className="md:col-span-2">
+                          <label className="lbl">
+                            Imagen de la guía (opcional)
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*,.pdf"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              setForm({
+                                ...form,
+                                _guide_file: file || null,
+                              });
+                            }}
+                            className="w-full px-3 py-3 rounded-xl border border-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                          />
+                          <p className="muted mt-1">
+                            Sube la imagen de la guía en formato PNG, JPG o PDF.
+                            Se enviará al cliente por correo.
+                          </p>
+                          {form._guide_file && (
+                            <p className="text-sm text-emerald-600 mt-2">
+                              ✓ Archivo seleccionado: {form._guide_file.name}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="md:col-span-2">
                           <button
                             onClick={markAsShipped}
                             className="mt-2 px-4 py-2 rounded-xl text-white bg-emerald-600 hover:bg-emerald-700"
                           >
-                            Marcar como enviado
+                            Marcar como enviado{" "}
+                            {form._guide_file && "(con guía adjunta)"}
                           </button>
                         </div>
                       </>
@@ -1420,7 +1419,6 @@ export default function AdminPage() {
                   </>
                 )}
 
-                {/* Datos de envío */}
                 {form.delivery_method === "SHIPPING" && (
                   <>
                     <div className="md:col-span-2">
@@ -1480,7 +1478,6 @@ export default function AdminPage() {
                 )}
               </div>
 
-              {/* Footer fijo */}
               <div className="px-6 py-4 border-t sticky bottom-0 bg-white z-10 flex items-center justify-end gap-2">
                 <button
                   onClick={() => setOpen(false)}
