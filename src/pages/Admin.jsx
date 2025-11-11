@@ -15,6 +15,8 @@ const API = (
   "http://localhost:4000/api"
 ).replace(/\/+$/, "");
 
+{/*PRUEBA PARA COMMIT*/}
+
 function mapTypeEs(code) {
   switch (code) {
     case "TRYOUT":
