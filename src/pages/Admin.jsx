@@ -655,169 +655,228 @@ export default function AdminPage() {
       </section>
 
       <section className="card">
-        <h2 className="font-bold text-lg mb-3">Abrir horarios de atención</h2>
-        <p className="text-sm text-slate-600 mb-4">
-          Gestiona la disponibilidad para cualquier día de la semana (L-D). Cada horario es específico por tipo de cita.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <label className="lbl">Fecha</label>
-            <input
-              type="date"
-              value={wDate}
-              onChange={(e) => setWDate(e.target.value)}
-              className="w-full px-3 py-3 rounded-xl border border-slate-300"
-            />
+            <h2 className="font-bold text-2xl mb-1">📅 Gestión de Horarios</h2>
+            <p className="text-sm text-slate-500">
+              Administra la disponibilidad para cualquier día de la semana
+            </p>
+          </div>
+        </div>
+
+        {/* Formulario de Apertura */}
+        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 mb-6 border border-blue-100">
+          <h3 className="font-semibold text-lg mb-4 text-slate-800">➕ Abrir Nuevo Horario</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                📆 Fecha
+              </label>
+              <input
+                type="date"
+                value={wDate}
+                onChange={(e) => setWDate(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                🎯 Tipo de Cita
+              </label>
+              <select
+                value={wType}
+                onChange={(e) => setWType(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-white"
+              >
+                <option value="TRYOUT">🔍 Ensayar</option>
+                <option value="PICKUP">📦 Sin ensayar</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                🕐 Hora Inicio
+              </label>
+              <input
+                type="time"
+                step={60}
+                value={wStart}
+                onChange={(e) => setWStart(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                🕐 Hora Fin
+              </label>
+              <input
+                type="time"
+                step={60}
+                value={wEnd}
+                onChange={(e) => setWEnd(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                ⏱️ Duración Bloques
+              </label>
+              <select
+                value={slotSizeW}
+                onChange={(e) => setSlotSizeW(Number(e.target.value))}
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-white"
+              >
+                <option value={15}>15 minutos</option>
+                <option value={20}>20 minutos</option>
+                <option value={30}>30 minutos</option>
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label className="lbl">Tipo</label>
-            <select
-              value={wType}
-              onChange={(e) => setWType(e.target.value)}
-              className="w-full px-3 py-3 rounded-xl border border-slate-300"
+          <div className="flex items-center gap-3">
+            <button
+              onClick={addWeekdayWindow}
+              className="px-6 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all transform hover:scale-105"
             >
-              <option value="TRYOUT">Ensayar (TRYOUT)</option>
-              <option value="PICKUP">Sin ensayar (PICKUP)</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="lbl">Desde</label>
-            <input
-              type="time"
-              step={60}
-              title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
-              value={wStart}
-              onChange={(e) => setWStart(e.target.value)}
-              className="w-full px-3 py-3 rounded-xl border border-slate-300"
-            />
-          </div>
-
-          <div>
-            <label className="lbl">Hasta</label>
-            <input
-              type="time"
-              step={60}
-              title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
-              value={wEnd}
-              onChange={(e) => setWEnd(e.target.value)}
-              className="w-full px-3 py-3 rounded-xl border border-slate-300"
-            />
+              ✅ Abrir Horario
+            </button>
+            <button
+              onClick={fetchWeekdayWindows}
+              className="px-5 py-3 rounded-xl bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-700"
+            >
+              🔄 Actualizar Lista
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 mt-4">
-          <button
-            onClick={addWeekdayWindow}
-            className="px-4 py-2 rounded-xl text-white bg-[var(--brand)] hover:bg-[var(--brand-hover)]"
-          >
-            Abrir horario
-          </button>
-
-          <select
-            value={slotSizeW}
-            onChange={(e) => setSlotSizeW(Number(e.target.value))}
-            className="px-3 py-2 rounded-xl border border-slate-300"
-            title="Tamaño de cada bloque"
-          >
-            <option value={15}>Bloques de 15 min</option>
-            <option value={20}>Bloques de 20 min</option>
-            <option value={30}>Bloques de 30 min</option>
-          </select>
-
-          <button
-            onClick={fetchWeekdayWindows}
-            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200"
-          >
-            Actualizar
-          </button>
-        </div>
-
-        <div className="mt-4">
-          <div className="text-sm text-slate-600 mb-1">
-            Abiertos para <b>{dayjs(wDate).format("DD/MM/YYYY")}</b> — {wType}
+        {/* Lista de Horarios Abiertos */}
+        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
+            <h3 className="font-semibold text-lg text-slate-800">
+              📋 Horarios para {dayjs(wDate).format("DD/MM/YYYY")}
+              <span className={`ml-3 px-3 py-1 rounded-full text-sm font-medium ${
+                wType === 'TRYOUT'
+                  ? 'bg-purple-100 text-purple-700'
+                  : 'bg-emerald-100 text-emerald-700'
+              }`}>
+                {wType === 'TRYOUT' ? '🔍 Ensayar' : '📦 Sin ensayar'}
+              </span>
+            </h3>
           </div>
 
-          {wSaved.length === 0 ? (
-            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-sm">
-              Sin ventanas manuales
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {wSaved.map((r) => (
-                <div
-                  key={r.id}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 text-sm w-fit"
-                >
-                  {wEditId === r.id ? (
-                    <>
-                      <input
-                        type="time"
-                        step={60}
-                        title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
-                        value={wEdit.start}
-                        onChange={(e) =>
-                          setWEdit((s) => ({ ...s, start: e.target.value }))
-                        }
-                        className="px-2 py-1 rounded border border-indigo-300"
-                      />
-                      <span>—</span>
-                      <input
-                        type="time"
-                        step={60}
-                        title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
-                        value={wEdit.end}
-                        onChange={(e) =>
-                          setWEdit((s) => ({ ...s, end: e.target.value }))
-                        }
-                        className="px-2 py-1 rounded border border-indigo-300"
-                      />
-                      <button
-                        className="px-2 py-0.5 rounded-md bg-indigo-600 text-white hover:bg-indigo-700"
-                        onClick={wSaveEdit}
-                      >
-                        Guardar
-                      </button>
-                      <button
-                        className="px-2 py-0.5 rounded-md bg-indigo-100 hover:bg-indigo-200"
-                        onClick={() => setWEditId(null)}
-                      >
-                        Cancelar
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="font-medium">
-                        {r.start}–{r.end}
-                      </span>
-                      {typeof r.slot === "number" ? (
-                        <span className="text-xs text-slate-500 ml-2">
-                          · {r.slot} min
-                        </span>
-                      ) : null}
-                      <button
-                        className="px-2 py-0.5 rounded-md bg-indigo-100 hover:bg-indigo-200"
-                        onClick={() => {
-                          setWEditId(r.id);
-                          setWEdit({ start: r.start, end: r.end });
-                        }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        className="px-2 py-0.5 rounded-md text-white bg-rose-600 hover:bg-rose-700"
-                        onClick={() => delWeekdayWindow(r.id)}
-                      >
-                        Eliminar
-                      </button>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="p-6">
+            {wSaved.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">📭</div>
+                <p className="text-slate-500 text-lg font-medium mb-2">
+                  No hay horarios abiertos
+                </p>
+                <p className="text-slate-400 text-sm">
+                  Abre tu primer horario usando el formulario de arriba
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {wSaved.map((r) => (
+                  <div
+                    key={r.id}
+                    className={`group relative rounded-xl border-2 transition-all ${
+                      wEditId === r.id
+                        ? 'border-blue-400 bg-blue-50 shadow-lg'
+                        : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
+                    }`}
+                  >
+                    {wEditId === r.id ? (
+                      <div className="p-4">
+                        <div className="mb-3">
+                          <label className="block text-xs font-medium text-slate-600 mb-1">
+                            Hora de inicio
+                          </label>
+                          <input
+                            type="time"
+                            step={60}
+                            value={wEdit.start}
+                            onChange={(e) =>
+                              setWEdit((s) => ({ ...s, start: e.target.value }))
+                            }
+                            className="w-full px-3 py-2 rounded-lg border-2 border-blue-300 focus:border-blue-500 outline-none"
+                          />
+                        </div>
+                        <div className="mb-4">
+                          <label className="block text-xs font-medium text-slate-600 mb-1">
+                            Hora de fin
+                          </label>
+                          <input
+                            type="time"
+                            step={60}
+                            value={wEdit.end}
+                            onChange={(e) =>
+                              setWEdit((s) => ({ ...s, end: e.target.value }))
+                            }
+                            className="w-full px-3 py-2 rounded-lg border-2 border-blue-300 focus:border-blue-500 outline-none"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            className="flex-1 px-3 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                            onClick={wSaveEdit}
+                          >
+                            💾 Guardar
+                          </button>
+                          <button
+                            className="flex-1 px-3 py-2 rounded-lg bg-slate-200 text-slate-700 font-medium hover:bg-slate-300 transition-colors"
+                            onClick={() => setWEditId(null)}
+                          >
+                            ✖️ Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl">🕐</span>
+                            <div>
+                              <div className="font-bold text-lg text-slate-800">
+                                {r.start} — {r.end}
+                              </div>
+                              {typeof r.slot === "number" && (
+                                <div className="text-xs text-slate-500 font-medium">
+                                  ⏱️ Bloques de {r.slot} min
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+                          <button
+                            className="flex-1 px-3 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200 transition-colors"
+                            onClick={() => {
+                              setWEditId(r.id);
+                              setWEdit({ start: r.start, end: r.end });
+                            }}
+                          >
+                            ✏️ Editar
+                          </button>
+                          <button
+                            className="flex-1 px-3 py-2 rounded-lg bg-rose-100 text-rose-700 text-sm font-medium hover:bg-rose-200 transition-colors"
+                            onClick={() => delWeekdayWindow(r.id)}
+                          >
+                            🗑️ Eliminar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 
