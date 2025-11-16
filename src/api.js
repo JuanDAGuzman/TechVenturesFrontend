@@ -16,22 +16,9 @@ export async function createAppointment(payload) {
   return res.json();
 }
 
-/* ====== Sábados (ya lo tenías, se mantiene) ====== */
-export async function setSaturdayWindows(date, ranges, adminToken) {
-  const res = await fetch(`${API}/admin/saturday-windows`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-admin-token": adminToken,
-    },
-    body: JSON.stringify({ date, ranges }),
-  });
-  return res.json();
-}
-
-/* ========= L–D: Ventanas manuales (appt_windows) ========= */
+/* ========= Ventanas de disponibilidad (availability_windows) ========= */
 /* Usa SIEMPRE estos para abrir/editar/eliminar/listar
-   ventanas de TRYOUT / PICKUP cualquier día (incluye domingos) */
+   ventanas de TRYOUT / PICKUP cualquier día (L-D) */
 
 function adminHeaders(token) {
   return {

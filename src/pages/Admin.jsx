@@ -87,16 +87,6 @@ export default function AdminPage() {
   const [toast, setToast] = useState("");
   const [showToken, setShowToken] = useState(false);
 
-  const [satDate, setSatDate] = useState(() => {
-    const d = dayjs();
-    const nextSat = d.day() <= 6 ? d.day(6) : d.add(1, "week").day(6);
-    return nextSat.format("YYYY-MM-DD");
-  });
-  const [ranges, setRanges] = useState([{ start: "08:00", end: "11:00" }]);
-  const [savedRanges, setSavedRanges] = useState([]);
-  const [satEditId, setSatEditId] = useState(null);
-  const [satEdit, setSatEdit] = useState({ start: "", end: "" });
-
   const [wDate, setWDate] = useState(dayjs().format("YYYY-MM-DD"));
   const [wType, setWType] = useState("TRYOUT");
   const [wStart, setWStart] = useState("20:00");
@@ -108,7 +98,6 @@ export default function AdminPage() {
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState("");
   const [form, setForm] = useState(null);
-  const [slotSizeSat, setSlotSizeSat] = useState(15);
   const [slotSizeW, setSlotSizeW] = useState(15);
 
   const headers = useMemo(
@@ -302,169 +291,11 @@ export default function AdminPage() {
     }
   }
 
-  useEffect(() => {
-    if (!token || !satDate) return;
-    fetchSaturdayRanges();
-  }, [token, satDate]);
-
-  async function fetchSaturdayRanges() {
-    try {
-      const r = await fetch(`${API}/admin/saturday-windows?date=${satDate}`, {
-        headers,
-      });
-      const j = await safeJson(r);
-      if (!r.ok || j?.ok === false) throw new Error(j?.error || "HTTP_ERROR");
-      const items = Array.isArray(j.items) ? j.items : [];
-      setSavedRanges(
-        items.map((it) => ({
-          id: it.id,
-          start: it.start_time,
-          end: it.end_time,
-        }))
-      );
-      if (items.length) {
-        setRanges(
-          items.map((it) => ({ start: it.start_time, end: it.end_time }))
-        );
-        setToast("Disponibilidad cargada.");
-      } else {
-        setRanges([{ start: "08:00", end: "11:00" }]);
-        setToast("No hay disponibilidad guardada para ese sábado.");
-      }
-      setSatEditId(null);
-    } catch (e) {
-      console.error("[fetchSaturdayRanges]", e);
-      setToast("No se pudo cargar la disponibilidad de sábado.");
-    }
-  }
-
-  function addRange() {
-    setRanges((rs) => [...rs, { start: "08:00", end: "11:00" }]);
-  }
-  function setRange(i, k, v) {
-    setRanges((rs) => rs.map((r, idx) => (idx === i ? { ...r, [k]: v } : r)));
-  }
-  function removeRange(i) {
-    setRanges((rs) => rs.filter((_, idx) => idx !== i));
-  }
-
   function toMin(hhmm) {
     const [h, m] = String(hhmm || "")
       .split(":")
       .map(Number);
     return h * 60 + m;
-  }
-
-  async function saveSaturday() {
-    try {
-      setLoading(true);
-
-      const clean = (ranges || [])
-        .map((r) => ({
-          start: String(r.start || "").slice(0, 5),
-          end: String(r.end || "").slice(0, 5),
-        }))
-        .filter(
-          (r) =>
-            /^\d{2}:\d{2}$/.test(r.start) &&
-            /^\d{2}:\d{2}$/.test(r.end) &&
-            toMin(r.start) < toMin(r.end)
-        );
-
-      if (!clean.length) {
-        setLoading(false);
-        setToast("Rango inválido. Revisa horas (HH:MM) y que inicio < fin.");
-        return;
-      }
-
-      const r = await fetch(`${API}/admin/saturday-windows`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          date: satDate,
-          ranges: clean.map((rr) => ({ ...rr, slot_minutes: slotSizeSat })),
-        }),
-      });
-
-      const j = await safeJson(r);
-      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
-      setToast("Disponibilidad de sábado guardada.");
-      await fetchSaturdayRanges();
-    } catch (e) {
-      console.error("[saveSaturday]", e);
-      setToast("No se pudo guardar la disponibilidad.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function satSaveEdit() {
-    try {
-      if (
-        !/^\d{2}:\d{2}$/.test(satEdit.start) ||
-        !/^\d{2}:\d{2}$/.test(satEdit.end) ||
-        satEdit.start >= satEdit.end
-      ) {
-        setToast("Hora inválida (usa HH:MM y que inicio < fin).");
-        return;
-      }
-      const newRanges = savedRanges.map((r) =>
-        r.id === satEditId
-          ? { start: satEdit.start, end: satEdit.end }
-          : { start: r.start, end: r.end }
-      );
-      const r = await fetch(`${API}/admin/saturday-windows`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({ date: satDate, ranges: newRanges }),
-      });
-      const j = await safeJson(r);
-      if (!r.ok || j?.ok === false) throw new Error("ERROR");
-      setToast("Rango actualizado.");
-      setSatEditId(null);
-      await fetchSaturdayRanges();
-    } catch (e) {
-      console.error("[satSaveEdit]", e);
-      setToast("No se pudo actualizar el rango.");
-    }
-  }
-
-  async function deleteSaturday() {
-    if (!confirm("¿Eliminar TODAS las ventanas de este sábado?")) return;
-    try {
-      setLoading(true);
-      const r = await fetch(`${API}/admin/saturday-windows?date=${satDate}`, {
-        method: "DELETE",
-        headers,
-      });
-      const j = await safeJson(r);
-      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
-      setSavedRanges([]);
-      setRanges([{ start: "08:00", end: "11:00" }]);
-      setToast("Disponibilidad eliminada para ese sábado.");
-    } catch (e) {
-      console.error("[deleteSaturday]", e);
-      setToast("No se pudo eliminar la disponibilidad.");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function deleteSavedRange(id) {
-    if (!confirm("¿Eliminar este rango?")) return;
-    try {
-      const r = await fetch(`${API}/admin/saturday-windows/${id}`, {
-        method: "DELETE",
-        headers,
-      });
-      const j = await safeJson(r);
-      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
-      setToast("Rango eliminado.");
-      await fetchSaturdayRanges();
-    } catch (e) {
-      console.error("[deleteSavedRange]", e);
-      setToast("No se pudo eliminar el rango.");
-    }
   }
 
   useEffect(() => {
@@ -823,177 +654,11 @@ export default function AdminPage() {
         {toast && <p className="mt-3">{toast}</p>}
       </section>
 
-      <section className="card" id="sat-editor">
-        <h2 className="font-bold text-lg mb-3">
-          Configurar disponibilidad de sábado
-        </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-          <div>
-            <label className="lbl">Fecha de sábado</label>
-            <input
-              type="date"
-              value={satDate}
-              onChange={(e) => setSatDate(e.target.value)}
-              className="w-full px-3 py-3 rounded-xl border border-slate-300"
-            />
-            <p className="muted mt-1">Selecciona el sábado a editar.</p>
-          </div>
-        </div>
-
-        <div className="mb-4">
-          <div className="text-sm text-slate-600 mb-1">
-            Disponibilidad guardada para{" "}
-            <b>{dayjs(satDate).format("DD/MM/YYYY")}</b>
-          </div>
-          {savedRanges.length === 0 ? (
-            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-sm">
-              Sin disponibilidad
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {savedRanges.map((r) => (
-                <div
-                  key={r.id}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-sm w-fit"
-                >
-                  {satEditId === r.id ? (
-                    <>
-                      <input
-                        type="time"
-                        step={60}
-                        title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
-                        value={satEdit.start}
-                        onChange={(e) =>
-                          setSatEdit((s) => ({ ...s, start: e.target.value }))
-                        }
-                        className="px-2 py-1 rounded border border-emerald-300"
-                      />
-                      <span>—</span>
-                      <input
-                        type="time"
-                        step={60}
-                        title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
-                        value={satEdit.end}
-                        onChange={(e) =>
-                          setSatEdit((s) => ({ ...s, end: e.target.value }))
-                        }
-                        className="px-2 py-1 rounded border border-emerald-300"
-                      />
-                      <button
-                        className="px-2 py-0.5 rounded-md bg-emerald-600 text-white hover:bg-emerald-700"
-                        onClick={satSaveEdit}
-                      >
-                        Guardar
-                      </button>
-                      <button
-                        className="px-2 py-0.5 rounded-md bg-emerald-100 hover:bg-emerald-200"
-                        onClick={() => setSatEditId(null)}
-                      >
-                        Cancelar
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="font-medium">
-                        {fmt(r.start)}–{fmt(r.end)}
-                      </span>
-                      <button
-                        className="px-2 py-0.5 rounded-md bg-emerald-100 hover:bg-emerald-200"
-                        onClick={() => {
-                          setSatEditId(r.id);
-                          setSatEdit({ start: r.start, end: r.end });
-                        }}
-                      >
-                        Editar
-                      </button>
-                      <button
-                        className="px-2 py-0.5 rounded-md text-white bg-rose-600 hover:bg-rose-700"
-                        onClick={() => deleteSavedRange(r.id)}
-                      >
-                        Eliminar
-                      </button>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-3">
-          {ranges.map((r, i) => (
-            <div
-              key={i}
-              className="flex flex-wrap items-center gap-2 md:gap-3 p-2 rounded-xl border border-slate-200 bg-slate-50"
-            >
-              <input
-                type="time"
-                step={60}
-                title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
-                value={r.start}
-                onChange={(e) => setRange(i, "start", e.target.value)}
-                className="min-w-[9.5rem] px-3 py-2 rounded-xl border border-slate-300"
-              />
-              <span className="text-slate-400">—</span>
-              <input
-                type="time"
-                step={60}
-                title="Usa formato 24h. 12:00 es mediodía; 00:00 es medianoche."
-                value={r.end}
-                onChange={(e) => setRange(i, "end", e.target.value)}
-                className="min-w-[9.5rem] px-3 py-2 rounded-xl border border-slate-300"
-              />
-
-              <button
-                onClick={() => removeRange(i)}
-                className="ml-auto px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200"
-                title="Eliminar este rango"
-              >
-                ×
-              </button>
-            </div>
-          ))}
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 mt-4">
-          <button
-            onClick={addRange}
-            className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200"
-          >
-            Agregar rango
-          </button>
-
-          <select
-            value={slotSizeSat}
-            onChange={(e) => setSlotSizeSat(Number(e.target.value))}
-            className="px-3 py-2 rounded-xl border border-slate-300"
-            title="Tamaño de cada bloque (solo afecta a cómo se partirán los turnos presenciales)"
-          >
-            <option value={15}>Bloques de 15 min</option>
-            <option value={20}>Bloques de 20 min</option>
-            <option value={30}>Bloques de 30 min</option>
-          </select>
-
-          <button
-            onClick={saveSaturday}
-            className="px-4 py-2 rounded-xl text-white bg-[var(--brand)] hover:bg-[var(--brand-hover)]"
-          >
-            Guardar
-          </button>
-
-          <button
-            onClick={deleteSaturday}
-            className="px-4 py-2 rounded-xl text-white bg-rose-600 hover:bg-rose-700"
-            title="Eliminar todas las ventanas de este sábado"
-          >
-            Eliminar todo
-          </button>
-        </div>
-      </section>
-
       <section className="card">
-        <h2 className="font-bold text-lg mb-3">Abrir horario manual (L–V)</h2>
+        <h2 className="font-bold text-lg mb-3">Abrir horarios de atención</h2>
+        <p className="text-sm text-slate-600 mb-4">
+          Gestiona la disponibilidad para cualquier día de la semana (L-D). Cada horario es específico por tipo de cita.
+        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <div>
