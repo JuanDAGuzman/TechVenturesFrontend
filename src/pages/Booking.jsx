@@ -555,12 +555,21 @@ export default function Booking() {
         setSlots([]);
         setErrors({});
       } else {
-        const msg =
-          responseBody?.error ||
-          "No pudimos crear la reserva. Intenta nuevamente.";
-        toast.error(msg, {
-          icon: <AlertCircle className="w-5 h-5" />,
-        });
+        // ⚠️ Manejo especial para usuarios en blacklist
+        if (responseBody?.error === "CUSTOMER_BLACKLISTED") {
+          toast.error("⛔ No puedes agendar citas", {
+            description: responseBody?.message || "Has incumplido previamente. Contacta al administrador.",
+            duration: 10000,
+            icon: <AlertCircle className="w-5 h-5" />,
+          });
+        } else {
+          const msg =
+            responseBody?.error ||
+            "No pudimos crear la reserva. Intenta nuevamente.";
+          toast.error(msg, {
+            icon: <AlertCircle className="w-5 h-5" />,
+          });
+        }
       }
     } catch (err) {
       console.error(err);

@@ -49,6 +49,8 @@ function mapStatusEs(code) {
       return "Atendida";
     case "SHIPPED":
       return "Enviada";
+    case "NO_SHOW":
+      return "No apareció";
     default:
       return code || "-";
   }
@@ -63,6 +65,8 @@ function statusBadgeClass(code) {
       return "bg-emerald-100 text-emerald-800";
     case "CANCELLED":
       return "bg-rose-100 text-rose-800";
+    case "NO_SHOW":
+      return "bg-red-100 text-red-800";
     default:
       return "bg-slate-100 text-slate-700";
   }
@@ -99,6 +103,12 @@ export default function AdminPage() {
   const [editingId, setEditingId] = useState("");
   const [form, setForm] = useState(null);
   const [slotSizeW, setSlotSizeW] = useState(15);
+
+  // Estados para blacklist y buscador
+  const [searchIdNumber, setSearchIdNumber] = useState("");
+  const [searchResult, setSearchResult] = useState(null);
+  const [blacklistItems, setBlacklistItems] = useState([]);
+  const [showBlacklist, setShowBlacklist] = useState(false);
 
   const headers = useMemo(
     () => ({ "Content-Type": "application/json", "x-admin-token": token }),
@@ -469,6 +479,85 @@ export default function AdminPage() {
     } catch (e) {
       console.error("saveEditor", e);
       setToast("No se pudo actualizar la cita.");
+    }
+  }
+
+  // Funciones de Blacklist
+  async function searchCustomer() {
+    if (!searchIdNumber || !token) return;
+    try {
+      const r = await fetch(`${API}/admin/search-customer?id_number=${searchIdNumber}`, {
+        headers,
+      });
+      const j = await safeJson(r);
+      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
+      setSearchResult(j);
+      if (!j.found) {
+        setToast("Cliente no encontrado en el sistema.");
+      }
+    } catch (e) {
+      console.error("searchCustomer", e);
+      setToast("Error al buscar cliente.");
+    }
+  }
+
+  async function addToBlacklist(reason, notes) {
+    if (!searchResult?.customer || !token) return;
+    try {
+      const r = await fetch(`${API}/admin/blacklist`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          customer_id_number: searchResult.customer.customer_id_number,
+          customer_name: searchResult.customer.customer_name,
+          customer_email: searchResult.customer.customer_email,
+          customer_phone: searchResult.customer.customer_phone,
+          reason,
+          notes,
+        }),
+      });
+      const j = await safeJson(r);
+      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
+      setToast("Cliente bloqueado exitosamente.");
+      await searchCustomer();
+      await fetchBlacklist();
+    } catch (e) {
+      console.error("addToBlacklist", e);
+      setToast("Error al bloquear cliente.");
+    }
+  }
+
+  async function removeFromBlacklist(idNumber) {
+    if (!idNumber || !token) return;
+    if (!confirm("¿Desbloquear este cliente?")) return;
+    try {
+      const r = await fetch(`${API}/admin/blacklist/${idNumber}`, {
+        method: "DELETE",
+        headers,
+      });
+      const j = await safeJson(r);
+      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
+      setToast("Cliente desbloqueado.");
+      await searchCustomer();
+      await fetchBlacklist();
+    } catch (e) {
+      console.error("removeFromBlacklist", e);
+      setToast("Error al desbloquear cliente.");
+    }
+  }
+
+  async function fetchBlacklist() {
+    if (!token) return;
+    try {
+      const r = await fetch(`${API}/admin/blacklist`, {
+        headers,
+      });
+      const j = await safeJson(r);
+      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
+      setBlacklistItems(j.items || []);
+    } catch (e) {
+      console.error("fetchBlacklist", e);
+      setBlacklistItems([]);
     }
   }
 
@@ -928,6 +1017,298 @@ export default function AdminPage() {
             )}
           </div>
         </div>
+      </section>
+
+      {/* Buscador de Clientes */}
+      <section className="card border-2 border-slate-200">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-bold text-2xl mb-1">🔍 Buscador de Clientes</h2>
+            <p className="text-sm text-slate-500">
+              Busca un cliente por cédula para ver su historial y estado de bloqueo
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 border border-slate-200">
+          <div className="flex gap-3 mb-6">
+            <input
+              type="text"
+              placeholder="Ingresa la cédula del cliente..."
+              value={searchIdNumber}
+              onChange={(e) => setSearchIdNumber(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && searchCustomer()}
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+            />
+            <button
+              onClick={searchCustomer}
+              className="px-6 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all transform hover:scale-105"
+            >
+              🔎 Buscar
+            </button>
+          </div>
+
+          {searchResult && (
+            <div className="bg-white rounded-xl border-2 border-slate-200 overflow-hidden">
+              {!searchResult.found ? (
+                <div className="p-8 text-center">
+                  <div className="text-6xl mb-4">❓</div>
+                  <p className="text-slate-600 font-medium">
+                    Cliente no encontrado en el sistema
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-bold text-xl text-slate-800">
+                          {searchResult.customer.customer_name}
+                        </h3>
+                        <p className="text-sm text-slate-500">
+                          Cédula: {searchResult.customer.customer_id_number}
+                        </p>
+                      </div>
+                      {searchResult.blacklisted ? (
+                        <span className="px-4 py-2 rounded-full bg-red-100 text-red-800 font-semibold text-sm">
+                          🚫 Bloqueado
+                        </span>
+                      ) : (
+                        <span className="px-4 py-2 rounded-full bg-green-100 text-green-800 font-semibold text-sm">
+                          ✅ Activo
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="p-6 space-y-6">
+                    {/* Información de Contacto */}
+                    <div>
+                      <h4 className="font-semibold text-sm text-slate-600 mb-3">
+                        📧 Información de Contacto
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="font-medium text-slate-700">Email:</span>
+                          <span className="text-slate-600">
+                            {searchResult.customer.customer_email || "No registrado"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <span className="font-medium text-slate-700">Teléfono:</span>
+                          <span className="text-slate-600">
+                            {searchResult.customer.customer_phone || "No registrado"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Estadísticas */}
+                    <div>
+                      <h4 className="font-semibold text-sm text-slate-600 mb-3">
+                        📊 Historial de Citas
+                      </h4>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        <div className="bg-slate-50 rounded-xl p-4 text-center">
+                          <div className="text-2xl font-bold text-slate-700">
+                            {searchResult.customer.total_appointments || 0}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-1">Total</div>
+                        </div>
+                        <div className="bg-red-50 rounded-xl p-4 text-center">
+                          <div className="text-2xl font-bold text-red-700">
+                            {searchResult.customer.no_shows || 0}
+                          </div>
+                          <div className="text-xs text-red-500 mt-1">No apareció</div>
+                        </div>
+                        <div className="bg-amber-50 rounded-xl p-4 text-center">
+                          <div className="text-2xl font-bold text-amber-700">
+                            {searchResult.customer.confirmed || 0}
+                          </div>
+                          <div className="text-xs text-amber-500 mt-1">Confirmadas</div>
+                        </div>
+                        <div className="bg-sky-50 rounded-xl p-4 text-center">
+                          <div className="text-2xl font-bold text-sky-700">
+                            {searchResult.customer.completed || 0}
+                          </div>
+                          <div className="text-xs text-sky-500 mt-1">Completadas</div>
+                        </div>
+                        <div className="bg-rose-50 rounded-xl p-4 text-center">
+                          <div className="text-2xl font-bold text-rose-700">
+                            {searchResult.customer.cancelled || 0}
+                          </div>
+                          <div className="text-xs text-rose-500 mt-1">Canceladas</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Info de Blacklist si está bloqueado */}
+                    {searchResult.blacklisted && searchResult.blacklist_info && (
+                      <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
+                        <h4 className="font-semibold text-red-800 mb-2">
+                          ⚠️ Detalles del Bloqueo
+                        </h4>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="font-medium text-red-700">Razón:</span>{" "}
+                            <span className="text-red-600">
+                              {searchResult.blacklist_info.reason}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="font-medium text-red-700">Bloqueado el:</span>{" "}
+                            <span className="text-red-600">
+                              {dayjs(searchResult.blacklist_info.blocked_at).format(
+                                "DD/MM/YYYY HH:mm"
+                              )}
+                            </span>
+                          </div>
+                          {searchResult.blacklist_info.notes && (
+                            <div>
+                              <span className="font-medium text-red-700">Notas:</span>{" "}
+                              <span className="text-red-600">
+                                {searchResult.blacklist_info.notes}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Acciones */}
+                    <div className="flex gap-3 pt-4 border-t border-slate-200">
+                      {searchResult.blacklisted ? (
+                        <button
+                          onClick={() =>
+                            removeFromBlacklist(searchResult.customer.customer_id_number)
+                          }
+                          className="px-6 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all transform hover:scale-105"
+                        >
+                          ✅ Desbloquear Cliente
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            const reason = prompt("Razón del bloqueo (ej: NO_SHOW, Comportamiento inapropiado):");
+                            if (!reason) return;
+                            const notes = prompt("Notas adicionales (opcional):");
+                            addToBlacklist(reason, notes || "");
+                          }}
+                          className="px-6 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all transform hover:scale-105"
+                        >
+                          🚫 Bloquear Cliente
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Gestión de Blacklist */}
+      <section className="card border-2 border-red-200 bg-red-50/30">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h2 className="font-bold text-2xl mb-1">🚫 Clientes Bloqueados</h2>
+            <p className="text-sm text-slate-500">
+              Lista de clientes que no pueden agendar citas
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setShowBlacklist(!showBlacklist);
+              if (!showBlacklist) fetchBlacklist();
+            }}
+            className="px-5 py-2.5 rounded-xl bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-700"
+          >
+            {showBlacklist ? "🔼 Ocultar" : "🔽 Mostrar"}
+          </button>
+        </div>
+
+        {showBlacklist && (
+          <div className="bg-white rounded-xl border-2 border-red-200 overflow-hidden">
+            {blacklistItems.length === 0 ? (
+              <div className="p-8 text-center">
+                <div className="text-6xl mb-4">✅</div>
+                <p className="text-slate-600 font-medium">
+                  No hay clientes bloqueados
+                </p>
+                <p className="text-sm text-slate-400 mt-2">
+                  Los clientes bloqueados aparecerán aquí
+                </p>
+              </div>
+            ) : (
+              <div className="p-6 space-y-4">
+                {blacklistItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-xl border-2 border-slate-200 hover:border-red-300 hover:shadow-md transition-all overflow-hidden"
+                  >
+                    <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+                      <div>
+                        <h4 className="font-bold text-slate-800">
+                          {item.customer_name}
+                        </h4>
+                        <p className="text-sm text-slate-500">
+                          Cédula: {item.customer_id_number}
+                        </p>
+                      </div>
+                      <span className="px-3 py-1 rounded-full bg-red-100 text-red-800 font-semibold text-xs">
+                        {item.reason}
+                      </span>
+                    </div>
+
+                    <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2 text-sm">
+                        {item.customer_email && (
+                          <div>
+                            <span className="font-medium text-slate-700">Email:</span>{" "}
+                            <span className="text-slate-600">{item.customer_email}</span>
+                          </div>
+                        )}
+                        {item.customer_phone && (
+                          <div>
+                            <span className="font-medium text-slate-700">Teléfono:</span>{" "}
+                            <span className="text-slate-600">{item.customer_phone}</span>
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-medium text-slate-700">Bloqueado el:</span>{" "}
+                          <span className="text-slate-600">
+                            {dayjs(item.blocked_at).format("DD/MM/YYYY HH:mm")}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {item.notes && (
+                          <div className="text-sm">
+                            <span className="font-medium text-slate-700">Notas:</span>
+                            <p className="text-slate-600 mt-1 bg-slate-50 p-2 rounded">
+                              {item.notes}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="px-4 pb-4">
+                      <button
+                        onClick={() => removeFromBlacklist(item.customer_id_number)}
+                        className="w-full px-4 py-2 rounded-lg text-white font-medium bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 transition-all"
+                      >
+                        ✅ Desbloquear
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       {open && form && (
