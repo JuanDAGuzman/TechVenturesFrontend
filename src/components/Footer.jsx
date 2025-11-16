@@ -51,18 +51,13 @@ export default function Footer() {
               className="space-y-4"
             >
               <div className="flex items-center gap-3">
-                <motion.div
+                <motion.img
+                  src="/TECHVENT.png"
+                  alt="TechVenturesCO"
+                  className="w-12 h-12 rounded-lg"
                   whileHover={{ rotate: 360, scale: 1.1 }}
                   transition={{ duration: 0.6, type: "spring" }}
-                  className="relative"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl blur-lg opacity-20 group-hover:opacity-40 transition-opacity"></div>
-                  <img
-                    src="/TECHVENT.png"
-                    alt="TechVenturesCO"
-                    className="relative w-14 h-14 rounded-xl shadow-md"
-                  />
-                </motion.div>
+                />
                 <div>
                   <h3 className="font-extrabold text-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
                     TechVenturesCO
