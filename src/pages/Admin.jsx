@@ -1413,6 +1413,7 @@ export default function AdminPage() {
                     <option value="CANCELLED">CANCELADA</option>
                     <option value="DONE">ATENDIDA</option>
                     <option value="SHIPPED">ENVIADA</option>
+                    <option value="NO_SHOW">NO APARECIÓ</option>
                   </select>
                 </div>
 
