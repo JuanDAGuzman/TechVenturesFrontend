@@ -23,7 +23,7 @@ function Header() {
       className="relative bg-white sticky top-0 z-50 shadow-md border-b border-slate-200"
     >
       <div className="container-page">
-        <div className="flex items-center justify-between py-3">
+        <div className="flex items-center justify-between py-2">
           {/* Logo */}
           <Link
             to="/"
