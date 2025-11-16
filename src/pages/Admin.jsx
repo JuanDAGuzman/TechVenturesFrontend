@@ -474,85 +474,122 @@ export default function AdminPage() {
 
   return (
     <div className="container-page">
-      <div className="card relative overflow-hidden">
-        <div className="absolute left-0 right-0 top-0 h-1 bg-[var(--brand)]" />
-        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-          Admin — <span className="text-[var(--brand)]">TechVenturesCO</span>
-        </h1>
-        <p className="text-slate-500 mt-1">
-          Gestión de citas y disponibilidad de sábados / huecos manuales.
-        </p>
-      </div>
-
-      <section className="card grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2">
-          <label className="lbl">Token admin</label>
-          <div className="flex gap-2">
-            <input
-              type={showToken ? "text" : "password"}
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="x-admin-token"
-              autoComplete="new-password"
-              spellCheck={false}
-              className="w-full flex-1 px-3 py-3 rounded-xl border border-slate-300"
-            />
-            <button
-              type="button"
-              onClick={() => setShowToken((s) => !s)}
-              className="px-3 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 whitespace-nowrap"
-              title={showToken ? "Ocultar token" : "Mostrar token"}
-            >
-              {showToken ? "Ocultar" : "Mostrar"}
-            </button>
-          </div>
-          <p className="muted mt-1">
-            Se guarda en tu navegador. Debe coincidir con{" "}
-            <code>ADMIN_TOKEN</code> del backend.
+      {/* Header Principal */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-8 shadow-2xl">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="relative z-10">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
+            🛠️ Panel de Administración
+          </h1>
+          <p className="text-indigo-100 text-lg">
+            TechVenturesCO — Gestión completa de citas y horarios
           </p>
         </div>
-        <div>
-          <label className="lbl">Fecha</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full px-3 py-3 rounded-xl border border-slate-300"
-          />
+        <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+        <div className="absolute -left-8 -top-8 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+      </div>
+
+      {/* Configuración */}
+      <section className="card border-2 border-slate-200">
+        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+          ⚙️ Configuración
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              🔐 Token de Administrador
+            </label>
+            <div className="flex gap-2">
+              <input
+                type={showToken ? "text" : "password"}
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="Ingresa tu token de admin"
+                autoComplete="new-password"
+                spellCheck={false}
+                className="w-full flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all outline-none font-mono text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowToken((s) => !s)}
+                className="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all font-medium whitespace-nowrap"
+                title={showToken ? "Ocultar token" : "Mostrar token"}
+              >
+                {showToken ? "👁️ Ocultar" : "👁️‍🗨️ Mostrar"}
+              </button>
+            </div>
+            <p className="text-sm text-slate-500 mt-2">
+              💾 Se guarda en tu navegador. Debe coincidir con <code className="px-2 py-0.5 bg-slate-100 rounded text-xs">ADMIN_TOKEN</code> del backend.
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              📅 Fecha de Consulta
+            </label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all outline-none"
+            />
+          </div>
         </div>
       </section>
 
-      <section className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-lg">Citas del día</h2>
-          <div className="flex gap-3">
+      {/* Citas del Día */}
+      <section className="card border-2 border-slate-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-2xl font-bold flex items-center gap-2">
+              📋 Citas del Día
+            </h2>
+            <p className="text-sm text-slate-500 mt-1">
+              {dayjs(date).format("DD/MM/YYYY")} • {rows.length} cita{rows.length !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={fetchAppts}
-              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200"
+              className="px-5 py-2.5 rounded-xl bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-700 flex items-center gap-2"
             >
-              Actualizar
+              🔄 Actualizar
             </button>
             <button
               onClick={delSelected}
-              className="px-4 py-2 rounded-xl text-white bg-rose-600 hover:bg-rose-700"
+              disabled={Object.keys(selected).filter(k => selected[k]).length === 0}
+              className="px-5 py-2.5 rounded-xl text-white font-medium bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-rose-500/30 transition-all flex items-center gap-2"
             >
-              Eliminar seleccionadas
+              🗑️ Eliminar ({Object.keys(selected).filter(k => selected[k]).length})
             </button>
           </div>
         </div>
 
         {loading ? (
-          <p className="muted">Cargando…</p>
+          <div className="text-center py-12">
+            <div className="text-5xl mb-4">⏳</div>
+            <p className="text-slate-500 font-medium">Cargando citas...</p>
+          </div>
         ) : rows.length === 0 ? (
-          <p className="muted">No hay citas para la fecha.</p>
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">📭</div>
+            <p className="text-slate-500 text-lg font-medium mb-2">
+              No hay citas para esta fecha
+            </p>
+            <p className="text-slate-400 text-sm">
+              Las citas agendadas aparecerán aquí
+            </p>
+          </div>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto rounded-xl border-2 border-slate-200">
             <table className="min-w-full text-sm">
-              <thead className="text-left text-slate-600">
+              <thead className="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
-                  <th className="py-3 px-2">
+                  <th className="py-4 px-4 text-left">
                     <input
                       type="checkbox"
+                      className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
                       onChange={(e) => {
                         const checked = e.target.checked;
                         const m = {};
@@ -561,75 +598,83 @@ export default function AdminPage() {
                       }}
                     />
                   </th>
-                  <th className="py-3 px-2">Tipo</th>
-                  <th className="py-3 px-2">Hora</th>
-                  <th className="py-3 px-2">Cliente</th>
-                  <th className="py-3 px-2">Contacto</th>
-                  <th className="py-3 px-2">Producto</th>
-                  <th className="py-3 px-2">Método</th>
-                  <th className="py-3 px-2">Estado</th>
-                  <th className="py-3 px-2"></th>
+                  <th className="py-4 px-4 text-left font-semibold text-slate-700">Tipo</th>
+                  <th className="py-4 px-4 text-left font-semibold text-slate-700">Hora</th>
+                  <th className="py-4 px-4 text-left font-semibold text-slate-700">Cliente</th>
+                  <th className="py-4 px-4 text-left font-semibold text-slate-700">Contacto</th>
+                  <th className="py-4 px-4 text-left font-semibold text-slate-700">Producto</th>
+                  <th className="py-4 px-4 text-left font-semibold text-slate-700">Método</th>
+                  <th className="py-4 px-4 text-left font-semibold text-slate-700">Estado</th>
+                  <th className="py-4 px-4 text-left font-semibold text-slate-700">Acciones</th>
                 </tr>
               </thead>
 
-              <tbody>
+              <tbody className="divide-y divide-slate-200">
                 {rows.map((r) => (
-                  <tr key={r.id} className="border-t">
-                    <td className="py-3 px-2">
+                  <tr key={r.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-4 px-4">
                       <input
                         type="checkbox"
+                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
                         checked={!!selected[r.id]}
                         onChange={() => toggle(r.id)}
                       />
                     </td>
 
-                    <td className="py-3 px-2">
-                      <span className="inline-flex px-2 py-1 rounded-full bg-slate-100">
+                    <td className="py-4 px-4">
+                      <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
+                        r.type_code === 'TRYOUT'
+                          ? 'bg-purple-100 text-purple-700'
+                          : r.type_code === 'PICKUP'
+                          ? 'bg-emerald-100 text-emerald-700'
+                          : 'bg-blue-100 text-blue-700'
+                      }`}>
                         {mapTypeEs(r.type_code)}
                       </span>
                     </td>
 
-                    <td className="py-3 px-2">
+                    <td className="py-4 px-4 font-medium text-slate-700">
                       {r.start_time
                         ? `${fmt(r.start_time)}–${fmt(r.end_time)}`
                         : "—"}
                     </td>
 
-                    <td className="py-3 px-2">{r.customer_name}</td>
+                    <td className="py-4 px-4 font-medium text-slate-800">{r.customer_name}</td>
 
-                    <td className="py-3 px-2">
-                      <a
-                        className="text-blue-600 hover:underline"
-                        href={`mailto:${r.customer_email}`}
-                      >
-                        {r.customer_email}
-                      </a>
-                      {" / "}
-                      <a
-                        className="text-blue-600 hover:underline"
-                        href={`tel:${r.customer_phone}`}
-                      >
-                        {r.customer_phone}
-                      </a>
+                    <td className="py-4 px-4">
+                      <div className="flex flex-col gap-1">
+                        <a
+                          className="text-blue-600 hover:text-blue-800 hover:underline text-xs"
+                          href={`mailto:${r.customer_email}`}
+                        >
+                          📧 {r.customer_email}
+                        </a>
+                        <a
+                          className="text-blue-600 hover:text-blue-800 hover:underline text-xs"
+                          href={`tel:${r.customer_phone}`}
+                        >
+                          📱 {r.customer_phone}
+                        </a>
+                      </div>
                     </td>
 
-                    <td className="py-3 px-2">{r.product || "-"}</td>
+                    <td className="py-4 px-4 text-slate-600">{r.product || "-"}</td>
 
-                    <td className="py-3 px-2">
+                    <td className="py-4 px-4">
                       <span
-                        className={`inline-flex px-2 py-1 rounded-full ${
+                        className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
                           r.delivery_method === "SHIPPING"
-                            ? "bg-emerald-100 text-emerald-800"
-                            : "bg-indigo-100 text-indigo-800"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-indigo-100 text-indigo-700"
                         }`}
                       >
                         {mapMethodEs(r.delivery_method)}
                       </span>
                     </td>
 
-                    <td className="py-3 px-2">
+                    <td className="py-4 px-4">
                       <span
-                        className={`inline-flex px-2 py-1 rounded-full ${statusBadgeClass(
+                        className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${statusBadgeClass(
                           r.status
                         )}`}
                       >
@@ -637,12 +682,12 @@ export default function AdminPage() {
                       </span>
                     </td>
 
-                    <td className="py-3 px-2">
+                    <td className="py-4 px-4">
                       <button
                         onClick={() => openEditor(r.id)}
-                        className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200"
+                        className="px-4 py-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-medium transition-colors"
                       >
-                        Ver / Editar
+                        ✏️ Editar
                       </button>
                     </td>
                   </tr>
@@ -651,7 +696,12 @@ export default function AdminPage() {
             </table>
           </div>
         )}
-        {toast && <p className="mt-3">{toast}</p>}
+
+        {toast && (
+          <div className="mt-4 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 font-medium">
+            ℹ️ {toast}
+          </div>
+        )}
       </section>
 
       <section className="card">
