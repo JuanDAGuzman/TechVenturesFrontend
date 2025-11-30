@@ -7,21 +7,24 @@ import {
   ExternalLink,
   Code,
 } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const location = useLocation();
+  const isContact = location.pathname === "/contact";
 
   const links = {
     company: [
       { label: "Agendar cita", href: "/" },
-      { label: "Contacto", href: "https://api.whatsapp.com/send/?phone=573108216274&text&type=phone_number&app_absent=0",target: "_blank", },
+      { label: "Contacto", href: "/contact" },
     ],
     social: [
       { icon: Github, label: "GitHub", href: "https://github.com/JuanDAGuzman" },
       {
         icon: Linkedin,
         label: "LinkedIn",
-        href: "https://www.linkedin.com/in/juan-diego-ar%C3%A9valo-guzm%C3%A1n-030b36305/",target: "_blank",
+        href: "https://www.linkedin.com/in/juan-diego-ar%C3%A9valo-guzm%C3%A1n-030b36305/", target: "_blank",
       },
       {
         icon: Mail,
@@ -40,38 +43,38 @@ export default function Footer() {
       {/* Top gradient border decorativo */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500"></div>
 
-      <div className="container-page relative py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+      <div className="container-page relative py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           {/* Brand Section */}
           <div className="lg:col-span-2">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="space-y-4"
+              className="space-y-3"
             >
               <div className="flex items-center gap-3">
                 <motion.img
                   src="/TECHVENT.png"
                   alt="TechVenturesCO"
-                  className="w-12 h-12 rounded-lg"
+                  className="w-10 h-10 rounded-lg"
                   whileHover={{ rotate: 360, scale: 1.1 }}
                   transition={{ duration: 0.6, type: "spring" }}
                 />
                 <div>
-                  <h3 className="font-extrabold text-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+                  <h3 className="font-extrabold text-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
                     TechVenturesCO
                   </h3>
-                  <p className="text-slate-500 text-sm">Tu tienda tecnológica</p>
+                  <p className="text-slate-500 text-xs">Tu tienda tecnológica</p>
                 </div>
               </div>
 
-              <p className="text-slate-600 text-sm leading-relaxed max-w-md">
+              <p className="text-slate-600 text-xs leading-relaxed max-w-md">
                 Componentes tecnológicos de alta calidad con servicio único de
                 ensayo presencial. <span className="text-purple-600 font-semibold">Prueba antes de comprar.</span>
               </p>
 
-              <div className="flex gap-3">
+              <div className="flex gap-2">
                 {links.social.map((social) => {
                   const Icon = social.icon;
                   return (
@@ -86,8 +89,8 @@ export default function Footer() {
                       aria-label={social.label}
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl blur-md opacity-0 group-hover:opacity-50 transition-opacity"></div>
-                      <div className="relative w-11 h-11 rounded-xl bg-slate-50 hover:bg-gradient-to-br hover:from-indigo-500 hover:to-purple-500 text-slate-600 hover:text-white flex items-center justify-center transition-all border-2 border-slate-200 hover:border-transparent shadow-sm hover:shadow-lg">
-                        <Icon className="w-5 h-5" />
+                      <div className="relative w-9 h-9 rounded-xl bg-slate-50 hover:bg-gradient-to-br hover:from-indigo-500 hover:to-purple-500 text-slate-600 hover:text-white flex items-center justify-center transition-all border-2 border-slate-200 hover:border-transparent shadow-sm hover:shadow-lg">
+                        <Icon className="w-4 h-4" />
                       </div>
                     </motion.a>
                   );
@@ -96,35 +99,47 @@ export default function Footer() {
             </motion.div>
           </div>
 
-          {/* Quick Links */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-          >
-            <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
-              <span className="w-1 h-6 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></span>
-              Enlaces rápidos
-            </h4>
-            <ul className="space-y-3">
-              {links.company.map((link) => (
-                <li key={link.label}>
-                  <a
-                    href={link.href}
-                    target={link.target}
-                    className="text-slate-600 hover:text-purple-600 transition text-sm flex items-center gap-2 group"
-                  >
-                    <span className="w-0 h-px bg-gradient-to-r from-purple-500 to-pink-500 group-hover:w-4 transition-all"></span>
-                    <span>{link.label}</span>
-                    {link.href.startsWith("http") && (
-                      <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
+          {/* Quick Links - Hidden on Contact page */}
+          {!isContact && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+            >
+              <h4 className="font-bold text-slate-900 mb-3 flex items-center gap-2 text-sm">
+                <span className="w-1 h-5 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full"></span>
+                Enlaces rápidos
+              </h4>
+              <ul className="space-y-2">
+                {links.company.map((link) => (
+                  <li key={link.label}>
+                    {link.href.startsWith("/") ? (
+                      <Link
+                        to={link.href}
+                        className="text-slate-600 hover:text-purple-600 transition text-xs flex items-center gap-2 group"
+                      >
+                        <span className="w-0 h-px bg-gradient-to-r from-purple-500 to-pink-500 group-hover:w-3 transition-all"></span>
+                        <span>{link.label}</span>
+                      </Link>
+                    ) : (
+                      <a
+                        href={link.href}
+                        target={link.target}
+                        className="text-slate-600 hover:text-purple-600 transition text-xs flex items-center gap-2 group"
+                      >
+                        <span className="w-0 h-px bg-gradient-to-r from-purple-500 to-pink-500 group-hover:w-3 transition-all"></span>
+                        <span>{link.label}</span>
+                        {link.href.startsWith("http") && (
+                          <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition" />
+                        )}
+                      </a>
                     )}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          )}
 
           {/* Contact */}
           <motion.div
