@@ -9,8 +9,15 @@ export default {
       colors: {
         brand: {
           indigo: "#6d28d9",   // morado bonito
-          blue:   "#2563eb",   // azul
-          green:  "#22c55e",   // verde
+          blue: "#2563eb",   // azul
+          green: "#22c55e",   // verde
+        },
+        christmas: {
+          red: "#D42426",
+          green: "#165B33",
+          gold: "#F8B229",
+          surface: "#F5F7FA",
+          text: "#1F2937"
         }
       },
       boxShadow: {

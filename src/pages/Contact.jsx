@@ -23,7 +23,7 @@ const SocialCard = ({ href, icon, label, description, color, delay }) => {
             <span className="text-xs text-slate-500 mt-1 font-medium text-center px-2">
                 {description}
             </span>
-            <span className="text-xs text-brand-indigo mt-2 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-xs text-christmas-red mt-2 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
                 Contactar
             </span>
         </motion.a>
@@ -72,7 +72,7 @@ export default function Contact() {
                     transition={{ duration: 0.6 }}
                     className="text-center mb-8"
                 >
-                    <h1 className="text-3xl md:text-4xl font-extrabold mb-2 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 bg-clip-text text-transparent">
+                    <h1 className="text-3xl md:text-4xl font-extrabold mb-2 text-christmas-red">
                         Contáctanos
                     </h1>
                     <p className="text-slate-600 text-base max-w-md mx-auto">

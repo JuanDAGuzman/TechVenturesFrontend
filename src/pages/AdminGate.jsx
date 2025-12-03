@@ -110,7 +110,7 @@ export default function AdminGate() {
     <div className="container-page">
       <div className="card max-w-md mx-auto">
         <h1 className="text-2xl font-extrabold mb-1">
-          Ingresar — <span className="text-[var(--brand)]">Admin</span>
+          Ingresar — <span className="text-christmas-red">Admin</span>
         </h1>
         <p className="muted mb-4">
           Introduce la clave de administrador para continuar. La sesión dura{" "}
@@ -135,7 +135,7 @@ export default function AdminGate() {
             const input = document.querySelector("input[type='password']");
             validateToken(input?.value || "", true); // renovar al autenticar
           }}
-          className="btn-primary mt-4"
+          className="w-full mt-4 py-3 rounded-xl bg-christmas-red text-white font-bold shadow-lg shadow-red-200 hover:bg-red-700 hover:shadow-xl transition-all"
         >
           Entrar
         </button>

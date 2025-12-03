@@ -15,7 +15,7 @@ const API = (
   "http://localhost:4000/api"
 ).replace(/\/+$/, "");
 
-{/*PRUEBA PARA COMMIT*/}
+{/*PRUEBA PARA COMMIT*/ }
 
 function mapTypeEs(code) {
   switch (code) {
@@ -564,13 +564,13 @@ export default function AdminPage() {
   return (
     <div className="container-page">
       {/* Header Principal */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-8 shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl bg-christmas-red p-8 shadow-2xl">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
             🛠️ Panel de Administración
           </h1>
-          <p className="text-indigo-100 text-lg">
+          <p className="text-red-100 text-lg">
             TechVenturesCO — Gestión completa de citas y horarios
           </p>
         </div>
@@ -597,7 +597,7 @@ export default function AdminPage() {
                 placeholder="Ingresa tu token de admin"
                 autoComplete="new-password"
                 spellCheck={false}
-                className="w-full flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all outline-none font-mono text-sm"
+                className="w-full flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none font-mono text-sm"
               />
               <button
                 type="button"
@@ -621,7 +621,7 @@ export default function AdminPage() {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all outline-none"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
             />
           </div>
         </div>
@@ -648,7 +648,7 @@ export default function AdminPage() {
             <button
               onClick={delSelected}
               disabled={Object.keys(selected).filter(k => selected[k]).length === 0}
-              className="px-5 py-2.5 rounded-xl text-white font-medium bg-gradient-to-r from-rose-500 to-red-600 hover:from-rose-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-rose-500/30 transition-all flex items-center gap-2"
+              className="px-5 py-2.5 rounded-xl text-white font-medium bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/30 transition-all flex items-center gap-2"
             >
               🗑️ Eliminar ({Object.keys(selected).filter(k => selected[k]).length})
             </button>
@@ -678,7 +678,7 @@ export default function AdminPage() {
                   <th className="py-4 px-4 text-left">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
+                      className="w-4 h-4 rounded border-slate-300 text-christmas-red focus:ring-2 focus:ring-red-500"
                       onChange={(e) => {
                         const checked = e.target.checked;
                         const m = {};
@@ -704,20 +704,19 @@ export default function AdminPage() {
                     <td className="py-4 px-4">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-2 focus:ring-indigo-500"
+                        className="w-4 h-4 rounded border-slate-300 text-christmas-red focus:ring-2 focus:ring-red-500"
                         checked={!!selected[r.id]}
                         onChange={() => toggle(r.id)}
                       />
                     </td>
 
                     <td className="py-4 px-4">
-                      <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
-                        r.type_code === 'TRYOUT'
-                          ? 'bg-purple-100 text-purple-700'
-                          : r.type_code === 'PICKUP'
+                      <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${r.type_code === 'TRYOUT'
+                        ? 'bg-red-100 text-red-700'
+                        : r.type_code === 'PICKUP'
                           ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}>
+                          : 'bg-amber-100 text-amber-700'
+                        }`}>
                         {mapTypeEs(r.type_code)}
                       </span>
                     </td>
@@ -751,11 +750,10 @@ export default function AdminPage() {
 
                     <td className="py-4 px-4">
                       <span
-                        className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${
-                          r.delivery_method === "SHIPPING"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-indigo-100 text-indigo-700"
-                        }`}
+                        className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${r.delivery_method === "SHIPPING"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-red-100 text-red-700"
+                          }`}
                       >
                         {mapMethodEs(r.delivery_method)}
                       </span>
@@ -774,7 +772,7 @@ export default function AdminPage() {
                     <td className="py-4 px-4">
                       <button
                         onClick={() => openEditor(r.id)}
-                        className="px-4 py-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-medium transition-colors"
+                        className="px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium transition-colors"
                       >
                         ✏️ Editar
                       </button>
@@ -804,7 +802,7 @@ export default function AdminPage() {
         </div>
 
         {/* Formulario de Apertura */}
-        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl p-6 mb-6 border border-blue-100">
+        <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 mb-6 border border-red-100">
           <h3 className="font-semibold text-lg mb-4 text-slate-800">➕ Abrir Nuevo Horario</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
@@ -816,7 +814,7 @@ export default function AdminPage() {
                 type="date"
                 value={wDate}
                 onChange={(e) => setWDate(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
               />
             </div>
 
@@ -827,7 +825,7 @@ export default function AdminPage() {
               <select
                 value={wType}
                 onChange={(e) => setWType(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-white"
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none bg-white"
               >
                 <option value="TRYOUT">🔍 Ensayar</option>
                 <option value="PICKUP">📦 Sin ensayar</option>
@@ -843,7 +841,7 @@ export default function AdminPage() {
                 step={60}
                 value={wStart}
                 onChange={(e) => setWStart(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
               />
             </div>
 
@@ -856,7 +854,7 @@ export default function AdminPage() {
                 step={60}
                 value={wEnd}
                 onChange={(e) => setWEnd(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
               />
             </div>
 
@@ -867,7 +865,7 @@ export default function AdminPage() {
               <select
                 value={slotSizeW}
                 onChange={(e) => setSlotSizeW(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none bg-white"
+                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none bg-white"
               >
                 <option value={15}>15 minutos</option>
                 <option value={20}>20 minutos</option>
@@ -879,7 +877,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={addWeekdayWindow}
-              className="px-6 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all transform hover:scale-105"
+              className="px-6 py-3 rounded-xl text-white font-medium bg-christmas-red hover:bg-red-700 shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all transform hover:scale-105"
             >
               ✅ Abrir Horario
             </button>
@@ -897,11 +895,10 @@ export default function AdminPage() {
           <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
             <h3 className="font-semibold text-lg text-slate-800">
               📋 Horarios para {dayjs(wDate).format("DD/MM/YYYY")}
-              <span className={`ml-3 px-3 py-1 rounded-full text-sm font-medium ${
-                wType === 'TRYOUT'
-                  ? 'bg-purple-100 text-purple-700'
-                  : 'bg-emerald-100 text-emerald-700'
-              }`}>
+              <span className={`ml-3 px-3 py-1 rounded-full text-sm font-medium ${wType === 'TRYOUT'
+                ? 'bg-red-100 text-red-700'
+                : 'bg-emerald-100 text-emerald-700'
+                }`}>
                 {wType === 'TRYOUT' ? '🔍 Ensayar' : '📦 Sin ensayar'}
               </span>
             </h3>
@@ -923,11 +920,10 @@ export default function AdminPage() {
                 {wSaved.map((r) => (
                   <div
                     key={r.id}
-                    className={`group relative rounded-xl border-2 transition-all ${
-                      wEditId === r.id
-                        ? 'border-blue-400 bg-blue-50 shadow-lg'
-                        : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
-                    }`}
+                    className={`group relative rounded-xl border-2 transition-all ${wEditId === r.id
+                      ? 'border-red-400 bg-red-50 shadow-lg'
+                      : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-md'
+                      }`}
                   >
                     {wEditId === r.id ? (
                       <div className="p-4">
@@ -942,7 +938,7 @@ export default function AdminPage() {
                             onChange={(e) =>
                               setWEdit((s) => ({ ...s, start: e.target.value }))
                             }
-                            className="w-full px-3 py-2 rounded-lg border-2 border-blue-300 focus:border-blue-500 outline-none"
+                            className="w-full px-3 py-2 rounded-lg border-2 border-red-300 focus:border-red-500 outline-none"
                           />
                         </div>
                         <div className="mb-4">
@@ -956,12 +952,12 @@ export default function AdminPage() {
                             onChange={(e) =>
                               setWEdit((s) => ({ ...s, end: e.target.value }))
                             }
-                            className="w-full px-3 py-2 rounded-lg border-2 border-blue-300 focus:border-blue-500 outline-none"
+                            className="w-full px-3 py-2 rounded-lg border-2 border-red-300 focus:border-red-500 outline-none"
                           />
                         </div>
                         <div className="flex gap-2">
                           <button
-                            className="flex-1 px-3 py-2 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700 transition-colors"
+                            className="flex-1 px-3 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors"
                             onClick={wSaveEdit}
                           >
                             💾 Guardar
@@ -1030,7 +1026,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl p-6 border border-slate-200">
+        <div className="bg-gradient-to-br from-slate-50 to-red-50 rounded-2xl p-6 border border-slate-200">
           <div className="flex gap-3 mb-6">
             <input
               type="text"
@@ -1038,11 +1034,11 @@ export default function AdminPage() {
               value={searchIdNumber}
               onChange={(e) => setSearchIdNumber(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && searchCustomer()}
-              className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all outline-none"
+              className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
             />
             <button
               onClick={searchCustomer}
-              className="px-6 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all transform hover:scale-105"
+              className="px-6 py-3 rounded-xl text-white font-medium bg-christmas-red hover:bg-red-700 shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all transform hover:scale-105"
             >
               🔎 Buscar
             </button>
@@ -1318,7 +1314,7 @@ export default function AdminPage() {
               <div className="px-6 py-4 border-b sticky top-0 bg-white z-10 flex items-center justify-between">
                 <h3 className="font-bold text-lg">
                   Cita —{" "}
-                  <span className="text-[var(--brand)]">
+                  <span className="text-christmas-red">
                     {mapTypeEs(form.type_code)}
                   </span>
                 </h3>
@@ -1440,7 +1436,7 @@ export default function AdminPage() {
                     </div>
 
                     {String(form.shipping_carrier || "").toUpperCase() ===
-                    "PICAP" ? (
+                      "PICAP" ? (
                       <>
                         <div className="md:col-span-2 text-sm text-slate-700">
                           <b>Transportadora:</b> PICAP
@@ -1502,7 +1498,7 @@ export default function AdminPage() {
                     </div>
 
                     {String(form.shipping_carrier || "").toUpperCase() ===
-                    "PICAP" ? (
+                      "PICAP" ? (
                       <>
                         <div className="md:col-span-2">
                           <label className="lbl">Link del viaje (PICAP)</label>
