@@ -105,8 +105,9 @@ export default function AdminPage() {
   const [slotSizeW, setSlotSizeW] = useState(15);
 
   // Estados para blacklist y buscador
-  const [searchIdNumber, setSearchIdNumber] = useState("");
-  const [searchResult, setSearchResult] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchCandidates, setSearchCandidates] = useState([]); // Para cuando hay múltiples coincidencias
+  const [searchResult, setSearchResult] = useState(null);       // Para el detalle del cliente seleccionado
   const [blacklistItems, setBlacklistItems] = useState([]);
   const [showBlacklist, setShowBlacklist] = useState(false);
 
@@ -484,21 +485,51 @@ export default function AdminPage() {
 
   // Funciones de Blacklist
   async function searchCustomer() {
-    if (!searchIdNumber || !token) return;
+    if (!searchQuery || !token) return;
     try {
-      const r = await fetch(`${API}/admin/search-customer?id_number=${searchIdNumber}`, {
+      // Limpiamos estados previos
+      setSearchResult(null);
+      setSearchCandidates([]);
+
+      const r = await fetch(`${API}/admin/search-customer?q=${encodeURIComponent(searchQuery)}`, {
         headers,
       });
       const j = await safeJson(r);
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
-      setSearchResult(j);
-      if (!j.found) {
-        setToast("Cliente no encontrado en el sistema.");
+
+      const items = j.items || [];
+
+      if (items.length === 0) {
+        // No encontrado
+        setSearchResult({ found: false });
+      } else if (items.length === 1) {
+        // Un solo resultado, lo mostramos directo
+        selectCandidate(items[0]);
+      } else {
+        // Múltiples resultados, mostramos lista
+        setSearchCandidates(items);
       }
     } catch (e) {
       console.error("searchCustomer", e);
       setToast("Error al buscar cliente.");
     }
+  }
+
+  function selectCandidate(item) {
+    // Mapeamos el item plano del backend a la estructura que espera la vista de detalle existing
+    setSearchResult({
+      found: true,
+      customer: item,
+      blacklisted: item.is_blacklisted,
+      blacklist_info: item.is_blacklisted
+        ? {
+          reason: item.blacklist_reason,
+          blocked_at: item.blacklist_date,
+          notes: item.blacklist_notes,
+        }
+        : null,
+    });
+    setSearchCandidates([]); // Limpiamos la lista de candidatos
   }
 
   async function addToBlacklist(reason, notes) {
@@ -737,12 +768,24 @@ export default function AdminPage() {
                         >
                           📧 {r.customer_email}
                         </a>
-                        <a
-                          className="text-blue-600 hover:text-blue-800 hover:underline text-xs"
-                          href={`tel:${r.customer_phone}`}
-                        >
-                          📱 {r.customer_phone}
-                        </a>
+                        <div className="flex items-center gap-2">
+                          <a
+                            className="text-blue-600 hover:text-blue-800 hover:underline text-xs"
+                            href={`tel:${r.customer_phone}`}
+                          >
+                            📱 {r.customer_phone}
+                          </a>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(r.customer_phone);
+                              setToast("📞 Teléfono copiado");
+                            }}
+                            className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300 hover:bg-slate-200 text-slate-600"
+                            title="Copiar número"
+                          >
+                            📋
+                          </button>
+                        </div>
                       </div>
                     </td>
 
@@ -1030,9 +1073,9 @@ export default function AdminPage() {
           <div className="flex gap-3 mb-6">
             <input
               type="text"
-              placeholder="Ingresa la cédula del cliente..."
-              value={searchIdNumber}
-              onChange={(e) => setSearchIdNumber(e.target.value)}
+              placeholder="Buscar por cédula, nombre o celular..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && searchCustomer()}
               className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
             />
@@ -1043,6 +1086,42 @@ export default function AdminPage() {
               🔎 Buscar
             </button>
           </div>
+
+          {/* Lista de candidatos (resultados múltiples) */}
+          {searchCandidates.length > 0 && (
+            <div className="bg-white rounded-xl border-2 border-slate-200 overflow-hidden mb-6">
+              <div className="bg-slate-50 px-6 py-3 border-b border-slate-200">
+                <h3 className="font-semibold text-slate-700">
+                  Resultados encontrados ({searchCandidates.length})
+                </h3>
+              </div>
+              <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto">
+                {searchCandidates.map((c, i) => (
+                  <button
+                    key={i}
+                    onClick={() => selectCandidate(c)}
+                    className="w-full text-left px-6 py-3 hover:bg-slate-50 transition-colors flex items-center justify-between group"
+                  >
+                    <div>
+                      <div className="font-bold text-slate-800">{c.customer_name}</div>
+                      <div className="text-xs text-slate-500 flex gap-2">
+                        <span>🆔 {c.customer_id_number}</span>
+                        <span>📱 {c.customer_phone}</span>
+                      </div>
+                    </div>
+                    {c.is_blacklisted && (
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold">
+                        BLOQUEADO
+                      </span>
+                    )}
+                    <div className="opacity-0 group-hover:opacity-100 text-slate-400 text-sm">
+                      Ver detalle →
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {searchResult && (
             <div className="bg-white rounded-xl border-2 border-slate-200 overflow-hidden">
