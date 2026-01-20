@@ -17,7 +17,7 @@ import {
     X,
     Home,
     Map,
-    Snowflake,
+    Loader2,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import HeroV2 from "../../components/v2/HeroV2";
@@ -819,11 +819,11 @@ export default function BookingV2() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2 }}
-                                className="card border-2 border-christmas-green/10 shadow-lg"
+                                className="card border-2 border-slate-200 shadow-lg"
                             >
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="lbl flex items-center gap-2 text-christmas-red">
+                                        <label className="lbl flex items-center gap-2 text-brand-indigo">
                                             <Calendar className="w-5 h-5" />
                                             Fecha <span className="text-rose-500">*</span>
                                         </label>
@@ -840,7 +840,7 @@ export default function BookingV2() {
                                             min={new Date().toISOString().split("T")[0]}
                                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.date
                                                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                : "border-slate-200 focus:border-christmas-green focus:ring-green-100"
+                                                : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"
                                                 }`}
                                         />
 
@@ -858,7 +858,7 @@ export default function BookingV2() {
 
                                     {method !== "SHIPPING" && (
                                         <div>
-                                            <label className="lbl flex items-center gap-2 text-christmas-red">
+                                            <label className="lbl flex items-center gap-2 text-brand-indigo">
                                                 <Clock className="w-5 h-5" />
                                                 Horario <span className="text-rose-500">*</span>
                                             </label>
@@ -881,7 +881,7 @@ export default function BookingV2() {
                                                         initial={{ opacity: 0 }}
                                                         animate={{ opacity: 1 }}
                                                         exit={{ opacity: 0 }}
-                                                        className="flex items-center justify-center gap-2 text-christmas-green text-sm bg-slate-50 rounded-xl p-4 border-2 border-christmas-green/20"
+                                                        className="flex items-center justify-center gap-2 text-brand-indigo text-sm bg-slate-50 rounded-xl p-4 border-2 border-indigo-100"
                                                     >
                                                         <motion.div
                                                             animate={{ rotate: 360 }}
@@ -891,9 +891,9 @@ export default function BookingV2() {
                                                                 ease: "linear",
                                                             }}
                                                         >
-                                                            <Snowflake className="w-6 h-6 text-christmas-red" />
+                                                            <Loader2 className="w-6 h-6 text-brand-indigo animate-spin" />
                                                         </motion.div>
-                                                        <span className="font-medium">Buscando horarios navideños...</span>
+                                                        <span className="font-medium">Buscando horarios disponibles...</span>
                                                     </motion.div>
                                                 ) : slotsError && slots.length === 0 ? (
                                                     <motion.div
@@ -940,7 +940,7 @@ export default function BookingV2() {
                                                                     }}
                                                                     whileHover={{ scale: 1.03 }}
                                                                     whileTap={{ scale: 0.97 }}
-                                                                    className={`slot ${isActive ? "bg-christmas-green text-white border-christmas-green" : "bg-white text-slate-700 border-slate-200 hover:border-christmas-green"
+                                                                    className={`slot ${isActive ? "bg-brand-indigo text-white border-brand-indigo" : "bg-white text-slate-700 border-slate-200 hover:border-brand-indigo"
                                                                         } py-2 px-3 rounded-lg border-2 font-medium transition-all`}
                                                                 >
                                                                     {label}
@@ -970,9 +970,9 @@ export default function BookingV2() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.3 }}
-                                className="card border-2 border-christmas-green/10 shadow-lg"
+                                className="card border-2 border-slate-200 shadow-lg"
                             >
-                                <h3 className="lbl flex items-center gap-2 mb-4 text-christmas-red">
+                                <h3 className="lbl flex items-center gap-2 mb-4 text-brand-indigo">
                                     <User className="w-5 h-5" />
                                     Datos personales
                                 </h3>
@@ -993,7 +993,7 @@ export default function BookingV2() {
                                             placeholder="Juan Pérez"
                                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.fullName
                                                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                : "border-slate-200 focus:border-christmas-green focus:ring-green-100"
+                                                : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"
                                                 }`}
                                         />
                                         {errors.fullName && (
@@ -1053,7 +1053,7 @@ export default function BookingV2() {
                                                 maxLength={20}
                                                 className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.idNumber
                                                     ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                    : "border-slate-200 focus:border-christmas-green focus:ring-green-100"
+                                                    : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"
                                                     }`}
                                             />
                                             {isSearchingCustomer && (
@@ -1127,7 +1127,7 @@ export default function BookingV2() {
                                             maxLength={15}
                                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.phone
                                                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                : "border-slate-200 focus:border-christmas-green focus:ring-green-100"
+                                                : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"
                                                 }`}
                                         />
                                         {errors.phone && (
@@ -1159,7 +1159,7 @@ export default function BookingV2() {
                                             placeholder="correo@ejemplo.com"
                                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.email
                                                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                : "border-slate-200 focus:border-christmas-green focus:ring-green-100"
+                                                : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"
                                                 }`}
                                         />
                                         {errors.email && (
@@ -1176,7 +1176,7 @@ export default function BookingV2() {
 
                                     <div>
                                         <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
-                                            <Package className="w-4 h-4 text-christmas-red" />
+                                            <Package className="w-4 h-4 text-brand-indigo" />
                                             Producto <span className="text-rose-500">*</span>
                                         </label>
                                         <motion.input
@@ -1190,7 +1190,7 @@ export default function BookingV2() {
                                             placeholder="ej. RTX 3070 EVGA XC3 ULTRA"
                                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.product
                                                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                : "border-slate-200 focus:border-christmas-green focus:ring-green-100"
+                                                : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"
                                                 }`}
                                         />
                                         {errors.product && (
@@ -1208,7 +1208,7 @@ export default function BookingV2() {
 
                                 <div>
                                     <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
-                                        <FileText className="w-4 h-4 text-christmas-red" />
+                                        <FileText className="w-4 h-4 text-brand-indigo" />
                                         Notas{" "}
                                         <span className="text-slate-400 text-xs font-normal">
                                             (opcional)
@@ -1220,7 +1220,7 @@ export default function BookingV2() {
                                         onChange={(e) => setNotes(e.target.value)}
                                         placeholder="Ej: Gráfica entregada RTX 2060, gráfica deseada RTX 3070, monto a encimar $500.000"
                                         rows={3}
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-christmas-green focus:ring-4 focus:ring-green-100 transition resize-none"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-brand-indigo focus:ring-4 focus:ring-indigo-100 transition resize-none"
                                     />
                                     <p className="text-xs text-slate-500 mt-1">
                                         Si das parte de pago con una gráfica, especifica: gráfica
@@ -1234,9 +1234,9 @@ export default function BookingV2() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.4 }}
-                                    className="card border-2 border-christmas-green/10 shadow-lg"
+                                    className="card border-2 border-brand-green/10 shadow-lg"
                                 >
-                                    <h3 className="lbl flex items-center gap-2 mb-4 text-christmas-red">
+                                    <h3 className="lbl flex items-center gap-2 mb-4 text-brand-green">
                                         <Truck className="w-5 h-5" />
                                         Datos de envío
                                     </h3>
@@ -1244,7 +1244,7 @@ export default function BookingV2() {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                         <div className="md:col-span-2">
                                             <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
-                                                <Home className="w-4 h-4 text-christmas-red" />
+                                                <Home className="w-4 h-4 text-brand-green" />
                                                 Dirección <span className="text-rose-500">*</span>
                                             </label>
                                             <motion.input
@@ -1258,7 +1258,7 @@ export default function BookingV2() {
                                                 placeholder="Calle 123 #45-67"
                                                 className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.shippingAddress
                                                     ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                    : "border-slate-200 focus:border-christmas-green focus:ring-green-100"
+                                                    : "border-slate-200 focus:border-brand-green focus:ring-green-100"
                                                     }`}
                                             />
                                             {errors.shippingAddress && (
@@ -1288,7 +1288,7 @@ export default function BookingV2() {
                                                 placeholder="Chapinero"
                                                 className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.shippingNeighborhood
                                                     ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                    : "border-slate-200 focus:border-christmas-green focus:ring-green-100"
+                                                    : "border-slate-200 focus:border-brand-green focus:ring-green-100"
                                                     }`}
                                             />
                                             {errors.shippingNeighborhood && (
@@ -1307,7 +1307,7 @@ export default function BookingV2() {
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
                                             <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
-                                                <Map className="w-4 h-4 text-christmas-red" />
+                                                <Map className="w-4 h-4 text-brand-green" />
                                                 Ciudad <span className="text-rose-500">*</span>
                                             </label>
                                             <motion.input
@@ -1321,7 +1321,7 @@ export default function BookingV2() {
                                                 placeholder="Bogotá"
                                                 className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.shippingCity
                                                     ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                    : "border-slate-200 focus:border-christmas-green focus:ring-green-100"
+                                                    : "border-slate-200 focus:border-brand-green focus:ring-green-100"
                                                     }`}
                                             />
                                             {errors.shippingCity && (
@@ -1349,7 +1349,7 @@ export default function BookingV2() {
                                                 }}
                                                 className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition bg-white ${errors.shippingCarrier
                                                     ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                    : "border-slate-200 focus:border-christmas-green focus:ring-green-100"
+                                                    : "border-slate-200 focus:border-brand-green focus:ring-green-100"
                                                     }`}
                                             >
                                                 <option value="">Selecciona transportadora</option>
@@ -1387,7 +1387,7 @@ export default function BookingV2() {
                                     type="submit"
                                     whileHover={{ scale: 1.01 }}
                                     whileTap={{ scale: 0.99 }}
-                                    className="w-full py-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 bg-christmas-red hover:bg-red-700 transition-all"
+                                    className={`w-full py-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all ${method === 'SHIPPING' ? 'bg-brand-green hover:bg-green-700' : 'bg-brand-indigo hover:bg-indigo-700'}`}
                                     disabled={loading}
                                 >
                                     <CheckCircle2 className="w-5 h-5" />
@@ -1406,7 +1406,7 @@ export default function BookingV2() {
                         >
                             <p className="text-center text-sm text-slate-500">
                                 ¿Tienes dudas? Escríbenos a{" "}
-                                <span className="text-christmas-red font-semibold">
+                                <span className="text-brand-indigo font-semibold">
                                     <a
                                         href="mailto:techventuresco@gmail.com"
                                         target="_blank"
@@ -1416,7 +1416,7 @@ export default function BookingV2() {
                                     </a>
                                 </span>{" "}
                                 ó{" "}
-                                <span className="text-christmas-green font-semibold">
+                                <span className="text-brand-green font-semibold">
                                     <a
                                         href="https://api.whatsapp.com/send/?phone=573108216274&text&type=phone_number&app_absent=0"
                                         target="_blank"
@@ -1440,11 +1440,11 @@ export default function BookingV2() {
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #165B33;
+          background: #cbd5e1;
           border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #D42426;
+          background: #94a3b8;
         }
       `}</style>
         </div>

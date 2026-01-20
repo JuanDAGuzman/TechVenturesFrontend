@@ -35,11 +35,7 @@ export default function FooterV2() {
     };
 
     return (
-        <footer className="relative bg-christmas-surface mt-auto overflow-hidden border-t-4 border-christmas-green">
-            {/* Decorative festive background */}
-            <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none"
-                style={{ backgroundImage: 'radial-gradient(#165B33 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
-            </div>
+        <footer className="relative bg-slate-50 mt-auto overflow-hidden border-t border-slate-200">
 
             <div className="container-page relative py-12">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
@@ -53,23 +49,23 @@ export default function FooterV2() {
                         >
                             <div className="flex items-center gap-3">
                                 <motion.img
-                                    src="/LOGO_TECHVENTURES.png"
+                                    src="/TECHVENT.png"
                                     alt="TechVenturesCO"
                                     className="w-12 h-12 object-contain"
                                     whileHover={{ rotate: [0, -10, 10, 0] }}
                                     transition={{ duration: 0.5 }}
                                 />
                                 <div>
-                                    <h3 className="font-black text-2xl text-christmas-red tracking-tight">
+                                    <h3 className="font-black text-2xl text-brand-indigo tracking-tight">
                                         TechVenturesCO
                                     </h3>
-                                    <p className="text-christmas-green font-bold text-xs uppercase tracking-wider">Tu aliado en tecnología</p>
+                                    <p className="text-slate-500 font-bold text-xs uppercase tracking-wider">Tu aliado en tecnología</p>
                                 </div>
                             </div>
 
                             <p className="text-slate-600 text-sm leading-relaxed max-w-md">
                                 Componentes tecnológicos de alta calidad con servicio único de
-                                ensayo presencial. <span className="text-christmas-red font-bold">¡Feliz Navidad! 🎄</span>
+                                ensayo presencial.
                             </p>
 
                             <div className="flex gap-3">
@@ -86,7 +82,7 @@ export default function FooterV2() {
                                             className="relative group"
                                             aria-label={social.label}
                                         >
-                                            <div className="w-10 h-10 rounded-full bg-white text-christmas-green hover:bg-christmas-red hover:text-white flex items-center justify-center transition-all shadow-sm hover:shadow-md border border-christmas-green/20">
+                                            <div className="w-10 h-10 rounded-full bg-white text-slate-500 hover:bg-brand-indigo hover:text-white flex items-center justify-center transition-all shadow-sm hover:shadow-md border border-slate-200">
                                                 <Icon className="w-5 h-5" />
                                             </div>
                                         </motion.a>
@@ -105,7 +101,6 @@ export default function FooterV2() {
                             transition={{ delay: 0.1 }}
                         >
                             <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-lg">
-                                <span className="text-christmas-red">❄️</span>
                                 Enlaces rápidos
                             </h4>
                             <ul className="space-y-3">
@@ -113,9 +108,9 @@ export default function FooterV2() {
                                     <li key={link.label}>
                                         <Link
                                             to={link.href}
-                                            className="text-slate-600 hover:text-christmas-red transition text-sm flex items-center gap-2 group font-medium"
+                                            className="text-slate-600 hover:text-brand-indigo transition text-sm flex items-center gap-2 group font-medium"
                                         >
-                                            <span className="w-1.5 h-1.5 rounded-full bg-christmas-green group-hover:bg-christmas-red transition-colors"></span>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-slate-300 group-hover:bg-brand-indigo transition-colors"></span>
                                             <span>{link.label}</span>
                                         </Link>
                                     </li>
@@ -132,23 +127,22 @@ export default function FooterV2() {
                         transition={{ delay: 0.2 }}
                     >
                         <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-lg">
-                            <span className="text-christmas-red">🎁</span>
                             Contacto
                         </h4>
                         <ul className="space-y-4 text-sm">
                             <li className="flex items-center gap-3 group">
-                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-christmas-green">
+                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-brand-indigo">
                                     <Mail className="w-4 h-4" />
                                 </div>
                                 <a
                                     href="mailto:techventuresco@gmail.com"
-                                    className="text-slate-600 hover:text-christmas-red transition font-medium"
+                                    className="text-slate-600 hover:text-brand-indigo transition font-medium"
                                 >
                                     techventuresco@gmail.com
                                 </a>
                             </li>
                             <li className="flex items-center gap-3 group">
-                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-christmas-green">
+                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm text-brand-indigo">
                                     <span className="text-sm">📍</span>
                                 </div>
                                 <span className="text-slate-600 font-medium">
@@ -176,7 +170,7 @@ export default function FooterV2() {
                             className="text-slate-600 text-sm flex items-center gap-2"
                             whileHover={{ scale: 1.05 }}
                         >
-                            Hecho con <Heart className="w-4 h-4 text-christmas-red fill-christmas-red animate-pulse" /> por Juan Arévalo
+                            Hecho con <Heart className="w-4 h-4 text-rose-500 fill-rose-500 animate-pulse" /> por Juan Arévalo
                         </motion.p>
                     </motion.div>
                 </div>

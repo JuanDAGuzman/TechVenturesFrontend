@@ -27,7 +27,7 @@ export default function NavbarV2() {
                             transition={{ duration: 0.5 }}
                         >
                             <img
-                                src="/LOGO_TECHVENTURES.png"
+                                src="/TECHVENT.png"
                                 alt="TechVenturesCO"
                                 className="w-12 h-12 object-contain"
                             />

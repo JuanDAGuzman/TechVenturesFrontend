@@ -135,7 +135,7 @@ export default function AdminGate() {
             const input = document.querySelector("input[type='password']");
             validateToken(input?.value || "", true); // renovar al autenticar
           }}
-          className="w-full mt-4 py-3 rounded-xl bg-brand-indigo text-white font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-xl transition-all"
+          className="w-full mt-4 py-3 rounded-xl bg-brand-indigo text-white font-bold shadow-lg shadow-indigo-200 hover:bg-brand-hover hover:shadow-xl transition-all"
         >
           Entrar
         </button>

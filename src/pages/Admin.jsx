@@ -920,7 +920,7 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={addWeekdayWindow}
-              className="px-6 py-3 rounded-xl text-white font-medium bg-christmas-red hover:bg-red-700 shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all transform hover:scale-105"
+              className="px-6 py-3 rounded-xl text-white font-medium bg-brand-indigo hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all transform hover:scale-105"
             >
               ✅ Abrir Horario
             </button>
@@ -1081,7 +1081,7 @@ export default function AdminPage() {
             />
             <button
               onClick={searchCustomer}
-              className="px-6 py-3 rounded-xl text-white font-medium bg-christmas-red hover:bg-red-700 shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all transform hover:scale-105"
+              className="px-6 py-3 rounded-xl text-white font-medium bg-brand-indigo hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all transform hover:scale-105"
             >
               🔎 Buscar
             </button>
@@ -1393,7 +1393,7 @@ export default function AdminPage() {
               <div className="px-6 py-4 border-b sticky top-0 bg-white z-10 flex items-center justify-between">
                 <h3 className="font-bold text-lg">
                   Cita —{" "}
-                  <span className="text-christmas-red">
+                  <span className="text-brand-indigo">
                     {mapTypeEs(form.type_code)}
                   </span>
                 </h3>
