@@ -595,13 +595,13 @@ export default function AdminPage() {
   return (
     <div className="container-page">
       {/* Header Principal */}
-      <div className="relative overflow-hidden rounded-2xl bg-christmas-red p-8 shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl bg-brand-indigo p-8 shadow-2xl">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
             🛠️ Panel de Administración
           </h1>
-          <p className="text-red-100 text-lg">
+          <p className="text-indigo-100 text-lg">
             TechVenturesCO — Gestión completa de citas y horarios
           </p>
         </div>
@@ -628,7 +628,7 @@ export default function AdminPage() {
                 placeholder="Ingresa tu token de admin"
                 autoComplete="new-password"
                 spellCheck={false}
-                className="w-full flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none font-mono text-sm"
+                className="w-full flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all outline-none font-mono text-sm"
               />
               <button
                 type="button"
@@ -652,7 +652,7 @@ export default function AdminPage() {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
+              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all outline-none"
             />
           </div>
         </div>
@@ -709,7 +709,7 @@ export default function AdminPage() {
                   <th className="py-4 px-4 text-left">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 rounded border-slate-300 text-christmas-red focus:ring-2 focus:ring-red-500"
+                      className="w-4 h-4 rounded border-slate-300 text-brand-indigo focus:ring-2 focus:ring-indigo-500"
                       onChange={(e) => {
                         const checked = e.target.checked;
                         const m = {};
@@ -735,7 +735,7 @@ export default function AdminPage() {
                     <td className="py-4 px-4">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 rounded border-slate-300 text-christmas-red focus:ring-2 focus:ring-red-500"
+                        className="w-4 h-4 rounded border-slate-300 text-brand-indigo focus:ring-2 focus:ring-indigo-500"
                         checked={!!selected[r.id]}
                         onChange={() => toggle(r.id)}
                       />

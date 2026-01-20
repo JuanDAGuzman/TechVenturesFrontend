@@ -82,9 +82,9 @@ function InfoModal({ open, onClose }) {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden mt-10 border-4 border-christmas-gold"
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden mt-10 border-4 border-amber-500"
             >
-                <div className="bg-christmas-red p-1" />
+                <div className="bg-amber-500 p-1" />
 
                 <div className="p-6 sm:p-8">
                     <div className="flex items-start gap-4 mb-6">
@@ -136,7 +136,7 @@ function InfoModal({ open, onClose }) {
                             whileTap={{ scale: countdown === 0 ? 0.98 : 1 }}
                             onClick={onClose}
                             disabled={countdown > 0}
-                            className="px-6 py-3 rounded-xl font-bold text-white bg-christmas-red hover:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed transition shadow-lg"
+                            className="px-6 py-3 rounded-xl font-bold text-white bg-brand-indigo hover:bg-indigo-800 disabled:opacity-60 disabled:cursor-not-allowed transition shadow-lg"
                         >
                             {countdown > 0 ? `Entendido (${countdown})` : "Entendido"}
                         </motion.button>
@@ -157,9 +157,9 @@ function CustomerDataModal({ open, onClose, customerData, onConfirm }) {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden border-2 border-christmas-green"
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden border-2 border-brand-green"
             >
-                <div className="bg-christmas-green p-1" />
+                <div className="bg-brand-green p-1" />
 
                 <div className="p-6 sm:p-8">
                     <div className="flex items-start gap-4 mb-6">
@@ -284,7 +284,7 @@ function CustomerDataModal({ open, onClose, customerData, onConfirm }) {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                             onClick={onConfirm}
-                            className="flex-1 px-6 py-3 rounded-xl font-bold text-white bg-christmas-green hover:bg-green-700 transition shadow-lg"
+                            className="flex-1 px-6 py-3 rounded-xl font-bold text-white bg-brand-green hover:bg-green-700 transition shadow-lg"
                         >
                             Sí, cargar datos
                         </motion.button>
@@ -676,9 +676,9 @@ export default function BookingV2() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="card border-2 border-christmas-green/10 shadow-lg"
+                                className="card border-2 border-slate-100 shadow-lg"
                             >
-                                <label className="lbl flex items-center gap-2 mb-4 text-christmas-red">
+                                <label className="lbl flex items-center gap-2 mb-4 text-brand-indigo">
                                     <Sparkles className="w-5 h-5" />
                                     Método
                                 </label>
@@ -704,7 +704,7 @@ export default function BookingV2() {
                                                 whileHover={{ scale: 1.02 }}
                                                 whileTap={{ scale: 0.98 }}
                                                 className={`pill relative overflow-hidden ${isActive
-                                                    ? "bg-christmas-red text-white shadow-md"
+                                                    ? "bg-brand-indigo text-white shadow-md"
                                                     : "bg-white text-slate-600 hover:bg-slate-50"
                                                     }`}
                                             >
@@ -735,8 +735,8 @@ export default function BookingV2() {
                                             transition={{ duration: 0.3 }}
                                             className="mt-4"
                                         >
-                                            <div className="p-4 rounded-xl bg-christmas-red/5 border border-christmas-red/20 border-l-4 border-l-christmas-red text-slate-700">
-                                                <div className="font-extrabold text-lg mb-2 text-christmas-red">Ensayo presencial</div>
+                                            <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200 border-l-4 border-l-brand-indigo text-slate-700">
+                                                <div className="font-extrabold text-lg mb-2 text-brand-indigo">Ensayo presencial</div>
                                                 <ul className="list-disc pl-5 space-y-1">
                                                     <li>
                                                         Los horarios se habilitan manualmente en bloques de{" "}
@@ -766,8 +766,8 @@ export default function BookingV2() {
                                             transition={{ duration: 0.3 }}
                                             className="mt-4"
                                         >
-                                            <div className="p-4 rounded-xl bg-christmas-green/5 border border-christmas-green/20 border-l-4 border-l-christmas-green text-slate-700">
-                                                <div className="font-extrabold text-lg mb-2 text-christmas-green">Sin ensayar</div>
+                                            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 border-l-4 border-l-blue-600 text-slate-700">
+                                                <div className="font-extrabold text-lg mb-2 text-blue-700">Sin ensayar</div>
                                                 <ul className="list-disc pl-5 space-y-1">
                                                     <li>
                                                         Verificamos con <strong>videos de prueba</strong> antes
@@ -791,8 +791,8 @@ export default function BookingV2() {
                                             transition={{ duration: 0.3 }}
                                             className="mt-4"
                                         >
-                                            <div className="p-4 rounded-xl bg-christmas-red/5 border border-christmas-red/20 border-l-4 border-l-christmas-red text-slate-700">
-                                                <div className="font-extrabold text-lg mb-2 text-christmas-red">
+                                            <div className="p-4 rounded-xl bg-green-50 border border-green-200 border-l-4 border-l-brand-green text-slate-700">
+                                                <div className="font-extrabold text-lg mb-2 text-brand-green">
                                                     Envío (no contraentrega)
                                                 </div>
                                                 <ul className="list-disc pl-5 space-y-1">

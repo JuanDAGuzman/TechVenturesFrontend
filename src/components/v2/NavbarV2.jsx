@@ -12,7 +12,7 @@ export default function NavbarV2() {
         <motion.header
             initial={{ y: -100 }}
             animate={{ y: 0 }}
-            className="sticky top-0 z-50 bg-white shadow-lg border-b-4 border-christmas-red"
+            className="sticky top-0 z-50 bg-white shadow-lg border-b-4 border-brand-indigo"
         >
             <div className="container-page">
                 <div className="flex items-center justify-between py-3">
@@ -31,21 +31,13 @@ export default function NavbarV2() {
                                 alt="TechVenturesCO"
                                 className="w-12 h-12 object-contain"
                             />
-                            {/* Simple snowflake decoration */}
-                            <motion.span
-                                className="absolute -top-1 -right-1 text-blue-300 text-xs"
-                                animate={{ opacity: [0.5, 1, 0.5] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                            >
-                                ❄️
-                            </motion.span>
                         </motion.div>
 
                         <div className="flex flex-col">
-                            <span className="font-extrabold text-xl text-christmas-red tracking-tight leading-tight drop-shadow-sm">
+                            <span className="font-extrabold text-xl text-brand-indigo tracking-tight leading-tight drop-shadow-sm">
                                 TechVenturesCO
                             </span>
-                            <span className="text-xs text-christmas-green font-bold tracking-wide uppercase">
+                            <span className="text-xs text-slate-500 font-bold tracking-wide uppercase">
                                 Agenda tu cita
                             </span>
                         </div>
@@ -57,8 +49,8 @@ export default function NavbarV2() {
                             <Link
                                 to="/"
                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm ${isBooking
-                                    ? "bg-christmas-red text-white shadow-red-200 ring-2 ring-red-100"
-                                    : "bg-christmas-surface text-christmas-text hover:bg-white hover:shadow-md border border-slate-200"
+                                    ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
+                                    : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
                                     }`}
                             >
                                 <Calendar className="w-4 h-4" />
@@ -68,8 +60,8 @@ export default function NavbarV2() {
                             <Link
                                 to="/admin"
                                 className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm ${isAdmin
-                                    ? "bg-christmas-green text-white shadow-green-200 ring-2 ring-green-100"
-                                    : "bg-christmas-surface text-christmas-text hover:bg-white hover:shadow-md border border-slate-200"
+                                    ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
+                                    : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
                                     }`}
                             >
                                 <Settings className="w-4 h-4" />
