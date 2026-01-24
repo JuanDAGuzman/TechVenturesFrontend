@@ -19,6 +19,7 @@ import {
     Map,
     Loader2,
 } from "lucide-react";
+
 import { toast, Toaster } from "sonner";
 import HeroV2 from "../../components/v2/HeroV2";
 
@@ -306,6 +307,7 @@ export default function BookingV2() {
     const [selectedSlot, setSelectedSlot] = useState(null);
 
     const [loading, setLoading] = useState(false);
+    const [showSuccessModal, setShowSuccessModal] = useState(false); // New state
 
     const [slotsError, setSlotsError] = useState(null);
 
@@ -534,15 +536,10 @@ export default function BookingV2() {
             }
 
             if (res.ok && responseBody?.ok) {
-                toast.success("¡Reserva confirmada!", {
-                    description:
-                        method === "SHIPPING"
-                            ? "Procesaremos tu envío y te confirmaremos por correo"
-                            : "Revisa tu correo para más detalles",
-                    icon: <CheckCircle2 className="w-5 h-5" />,
-                    duration: 5000,
-                });
+                // MOSTRAR MODAL DE ÉXITO
+                setShowSuccessModal(true);
 
+                // Limpiar formulario
                 setFullName("");
                 setIdNumber("");
                 setPhone("");
@@ -1428,6 +1425,50 @@ export default function BookingV2() {
                             </p>
                         </motion.div>
                     </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Modal de Éxito */}
+            <AnimatePresence>
+                {showSuccessModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center relative pointer-events-auto"
+                        >
+                            <button
+                                onClick={() => setShowSuccessModal(false)}
+                                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                <X className="w-6 h-6" />
+                            </button>
+
+                            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <CheckCircle2 className="w-10 h-10 text-green-600" />
+                            </div>
+
+                            <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                                ¡Solicitud Recibida!
+                            </h3>
+
+                            <p className="text-slate-600 mb-8 leading-relaxed">
+                                Hemos recibido tu solicitud correctamente.
+                                <br />
+                                <span className="font-semibold text-brand-indigo block mt-2">
+                                    Revisa tu correo para más detalles.
+                                </span>
+                            </p>
+
+                            <button
+                                onClick={() => setShowSuccessModal(false)}
+                                className="w-full py-3.5 rounded-xl font-bold text-white bg-slate-900 hover:bg-slate-800 transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98]"
+                            >
+                                Entendido
+                            </button>
+                        </motion.div>
+                    </div>
                 )}
             </AnimatePresence>
 
