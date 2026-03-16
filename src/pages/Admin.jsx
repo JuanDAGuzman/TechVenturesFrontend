@@ -641,13 +641,13 @@ export default function AdminPage() {
   return (
     <div className="container-page">
       {/* Header Principal */}
-      <div className="relative overflow-hidden rounded-2xl bg-brand-indigo p-8 shadow-2xl">
+      <div className="relative overflow-hidden rounded-2xl bg-brand-indigo p-5 sm:p-8 shadow-2xl">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
             🛠️ Panel de Administración
           </h1>
-          <p className="text-indigo-100 text-lg">
+          <p className="text-indigo-100 text-sm sm:text-lg hidden sm:block">
             TechVenturesCO — Gestión completa de citas y horarios
           </p>
         </div>
@@ -748,7 +748,48 @@ export default function AdminPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-xl border-2 border-slate-200">
+          <>
+          {/* Vista móvil — tarjetas */}
+          <div className="md:hidden space-y-3">
+            {rows.map((r) => (
+              <div key={r.id} className="bg-white border-2 border-slate-200 rounded-xl p-4">
+                <div className="flex items-start justify-between gap-2 mb-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="checkbox"
+                      className="w-5 h-5 rounded border-slate-300 text-brand-indigo"
+                      checked={!!selected[r.id]}
+                      onChange={() => toggle(r.id)}
+                    />
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${r.type_code === 'TRYOUT' ? 'bg-red-100 text-red-700' : r.type_code === 'PICKUP' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                      {mapTypeEs(r.type_code)}
+                    </span>
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(r.status)}`}>
+                      {mapStatusEs(r.status)}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => openEditor(r.id)}
+                    className="shrink-0 px-3 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-medium text-sm"
+                  >
+                    ✏️ Editar
+                  </button>
+                </div>
+                <div className="font-semibold text-slate-800">{r.customer_name}</div>
+                <div className="flex flex-wrap gap-x-3 text-sm text-slate-500 mt-0.5">
+                  {r.start_time && <span>🕐 {fmt(r.start_time)}–{fmt(r.end_time)}</span>}
+                  {r.product && <span>📦 {r.product}</span>}
+                </div>
+                <div className="mt-2 flex flex-col gap-1">
+                  <a href={`mailto:${r.customer_email}`} className="text-blue-600 text-sm">📧 {r.customer_email}</a>
+                  <a href={`tel:${r.customer_phone}`} className="text-blue-600 text-sm">📱 {r.customer_phone}</a>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Vista escritorio — tabla */}
+          <div className="hidden md:block overflow-x-auto rounded-xl border-2 border-slate-200">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
@@ -871,6 +912,7 @@ export default function AdminPage() {
               </tbody>
             </table>
           </div>
+          </>
         )}
 
         {toast && (
@@ -894,7 +936,7 @@ export default function AdminPage() {
         <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 mb-6 border border-red-100">
           <h3 className="font-semibold text-lg mb-4 text-slate-800">➕ Abrir Nuevo Horario</h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 📆 Fecha
@@ -1433,11 +1475,12 @@ export default function AdminPage() {
       </section>
 
       {open && form && (
-        <div className="fixed inset-0 z-50 bg-black/30 flex items-start justify-center p-4 overflow-y-auto">
-          <div className="w-full max-w-2xl my-6">
-            <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-              <div className="px-6 py-4 border-b sticky top-0 bg-white z-10 flex items-center justify-between">
-                <h3 className="font-bold text-lg">
+        <div className="fixed inset-0 z-50 bg-black/40 overflow-y-auto">
+          <div className="flex min-h-full sm:items-start sm:justify-center sm:p-4">
+          <div className="w-full sm:max-w-2xl sm:my-6">
+            <div className="bg-white sm:rounded-2xl shadow-xl overflow-hidden">
+              <div className="px-4 py-3 sm:px-6 sm:py-4 border-b sticky top-0 bg-white z-10 flex items-center justify-between gap-3">
+                <h3 className="font-bold text-base sm:text-lg truncate">
                   Cita —{" "}
                   <span className="text-brand-indigo">
                     {mapTypeEs(form.type_code)}
@@ -1445,13 +1488,13 @@ export default function AdminPage() {
                 </h3>
                 <button
                   onClick={() => setOpen(false)}
-                  className="px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200"
+                  className="shrink-0 flex items-center justify-center w-11 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-xl font-bold text-slate-600 leading-none"
                 >
                   ×
                 </button>
               </div>
 
-              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 max-h-[75vh] overflow-y-auto">
+              <div className="p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 <div>
                   <label className="lbl">Nombre</label>
                   <input
@@ -1816,21 +1859,22 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <div className="px-6 py-4 border-t sticky bottom-0 bg-white z-10 flex items-center justify-end gap-2">
+              <div className="px-4 py-3 sm:px-6 sm:py-4 border-t sticky bottom-0 bg-white z-10 flex items-center justify-end gap-2">
                 <button
                   onClick={() => setOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200"
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 font-medium"
                 >
                   Cerrar
                 </button>
                 <button
                   onClick={saveEditor}
-                  className="px-4 py-2 rounded-xl text-white bg-[var(--brand)] hover:bg-[var(--brand-hover)]"
+                  className="min-h-[44px] px-4 py-2 rounded-xl text-white font-medium bg-[var(--brand)] hover:bg-[var(--brand-hover)]"
                 >
                   Guardar cambios
                 </button>
               </div>
             </div>
+          </div>
           </div>
         </div>
       )}

@@ -34,12 +34,19 @@
   body {
     @apply bg-slate-50 text-slate-900 antialiased;
   }
+
+  /* Evita que iOS haga zoom al enfocar inputs con font-size < 16px */
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1rem);
+  }
 }
 
 /* =================== Contenedores =================== */
 @layer components {
   .container-page {
-    @apply max-w-5xl mx-auto p-6 sm:p-8;
+    @apply max-w-5xl mx-auto p-4 sm:p-6 lg:p-8;
   }
   .card {
     @apply bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow;
