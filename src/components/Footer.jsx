@@ -70,8 +70,7 @@ export default function Footer() {
               </div>
 
               <p className="text-slate-600 text-xs leading-relaxed max-w-md">
-                Componentes tecnológicos de alta calidad con servicio único de
-                ensayo presencial. <span className="text-purple-600 font-semibold">Prueba antes de comprar.</span>
+                Hardware que no necesita explicaciones.
               </p>
 
               <div className="flex gap-2">

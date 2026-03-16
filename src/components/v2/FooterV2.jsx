@@ -64,8 +64,7 @@ export default function FooterV2() {
                             </div>
 
                             <p className="text-slate-600 text-sm leading-relaxed max-w-md">
-                                Componentes tecnológicos de alta calidad con servicio único de
-                                ensayo presencial.
+                                Hardware que no necesita explicaciones.
                             </p>
 
                             <div className="flex gap-3">
