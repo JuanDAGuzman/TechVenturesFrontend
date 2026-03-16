@@ -104,6 +104,8 @@ export default function AdminPage() {
   const [form, setForm] = useState(null);
   const [slotSizeW, setSlotSizeW] = useState(15);
 
+  const [scanning, setScanning] = useState(false);
+
   // Estados para blacklist y buscador
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCandidates, setSearchCandidates] = useState([]); // Para cuando hay múltiples coincidencias
@@ -139,6 +141,50 @@ export default function AdminPage() {
       setToast("No se pudieron cargar las citas.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function scanGuide() {
+    if (!form?._guide_file) return;
+    setScanning(true);
+    try {
+      const fileData = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(",")[1]);
+        reader.onerror = () => reject(new Error("Error al leer archivo"));
+        reader.readAsDataURL(form._guide_file);
+      });
+
+      const res = await fetch(`${API}/admin/extract-guide`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-admin-token": token },
+        body: JSON.stringify({ imageBase64: fileData, filename: form._guide_file.name }),
+      });
+
+      const data = await safeJson(res);
+
+      if (data.ok) {
+        if (!data.tracking_number && !data.shipping_cost) {
+          setToast("No se detectaron datos en la imagen. Intenta con mejor iluminación o ingresa los datos manualmente.");
+          return;
+        }
+        setForm((prev) => ({
+          ...prev,
+          _tracking_number_tmp: data.tracking_number || prev._tracking_number_tmp,
+          _shipping_cost_tmp: data.shipping_cost || prev._shipping_cost_tmp,
+        }));
+        const partes = [];
+        if (data.tracking_number) partes.push(`Guía: ${data.tracking_number}`);
+        if (data.shipping_cost) partes.push(`Valor: $${data.shipping_cost}`);
+        setToast(`Datos detectados — ${partes.join(" | ")}`);
+      } else {
+        setToast("Error al procesar la imagen. Verifica que sea una foto clara de la guía.");
+      }
+    } catch (err) {
+      console.error("[scanGuide]", err);
+      setToast("No se pudo conectar con el servicio OCR.");
+    } finally {
+      setScanning(false);
     }
   }
 
@@ -1681,9 +1727,19 @@ export default function AdminPage() {
                             Se enviará al cliente por correo.
                           </p>
                           {form._guide_file && (
-                            <p className="text-sm text-emerald-600 mt-2">
-                              ✓ Archivo seleccionado: {form._guide_file.name}
-                            </p>
+                            <div className="mt-2 flex items-center gap-3 flex-wrap">
+                              <p className="text-sm text-emerald-600">
+                                ✓ {form._guide_file.name}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={scanGuide}
+                                disabled={scanning}
+                                className="px-3 py-1.5 rounded-lg text-sm font-semibold bg-violet-600 text-white hover:bg-violet-700 disabled:opacity-60 disabled:cursor-wait"
+                              >
+                                {scanning ? "Escaneando..." : "Escanear guía"}
+                              </button>
+                            </div>
                           )}
                         </div>
 
