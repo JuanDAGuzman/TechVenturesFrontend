@@ -50,7 +50,7 @@ function mapStatusEs(code) {
     case "SHIPPED":
       return "Enviada";
     case "NO_SHOW":
-      return "No apareció";
+      return "Inasistencia";
     default:
       return code || "-";
   }
@@ -1240,7 +1240,7 @@ export default function AdminPage() {
                           <div className="text-2xl font-bold text-red-700">
                             {searchResult.customer.no_shows || 0}
                           </div>
-                          <div className="text-xs text-red-500 mt-1">No apareció</div>
+                          <div className="text-xs text-red-500 mt-1">Inasistencia</div>
                         </div>
                         <div className="bg-amber-50 rounded-xl p-4 text-center">
                           <div className="text-2xl font-bold text-amber-700">
@@ -1534,7 +1534,7 @@ export default function AdminPage() {
                     <option value="CANCELLED">CANCELADA</option>
                     <option value="DONE">ATENDIDA</option>
                     <option value="SHIPPED">ENVIADA</option>
-                    <option value="NO_SHOW">NO APARECIÓ</option>
+                    <option value="NO_SHOW">INASISTENCIA</option>
                   </select>
                 </div>
 
