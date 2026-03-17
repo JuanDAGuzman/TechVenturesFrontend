@@ -70,7 +70,7 @@ export default function Footer() {
               </div>
 
               <p className="text-slate-600 text-xs leading-relaxed max-w-md">
-                Hardware que no necesita explicaciones.
+                Tú ya sabes lo que quieres. Nosotros solo nos aseguramos de que lo consigas — rápido, sin rodeos y sin sorpresas.
               </p>
 
               <div className="flex gap-2">

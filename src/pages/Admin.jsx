@@ -666,7 +666,7 @@ export default function AdminPage() {
             <label className="block text-sm font-medium text-slate-700 mb-2">
               🔐 Token de Administrador
             </label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <input
                 type={showToken ? "text" : "password"}
                 value={token}
@@ -674,12 +674,12 @@ export default function AdminPage() {
                 placeholder="Ingresa tu token de admin"
                 autoComplete="new-password"
                 spellCheck={false}
-                className="w-full flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all outline-none font-mono text-sm"
+                className="w-full flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all outline-none font-mono"
               />
               <button
                 type="button"
                 onClick={() => setShowToken((s) => !s)}
-                className="px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all font-medium whitespace-nowrap"
+                className="w-full sm:w-auto min-h-[44px] px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all font-medium"
                 title={showToken ? "Ocultar token" : "Mostrar token"}
               >
                 {showToken ? "👁️ Ocultar" : "👁️‍🗨️ Mostrar"}
@@ -933,10 +933,10 @@ export default function AdminPage() {
         </div>
 
         {/* Formulario de Apertura */}
-        <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-6 mb-6 border border-red-100">
+        <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-4 sm:p-6 mb-6 border border-red-100">
           <h3 className="font-semibold text-lg mb-4 text-slate-800">➕ Abrir Nuevo Horario</h3>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 📆 Fecha
@@ -1005,16 +1005,16 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={addWeekdayWindow}
-              className="px-6 py-3 rounded-xl text-white font-medium bg-brand-indigo hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all transform hover:scale-105"
+              className="w-full sm:w-auto min-h-[44px] px-6 py-3 rounded-xl text-white font-medium bg-brand-indigo hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all"
             >
               ✅ Abrir Horario
             </button>
             <button
               onClick={fetchWeekdayWindows}
-              className="px-5 py-3 rounded-xl bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-700"
+              className="w-full sm:w-auto min-h-[44px] px-5 py-3 rounded-xl bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-700"
             >
               🔄 Actualizar Lista
             </button>
@@ -1023,19 +1023,21 @@ export default function AdminPage() {
 
         {/* Lista de Horarios Abiertos */}
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <div className="bg-slate-50 px-6 py-4 border-b border-slate-200">
-            <h3 className="font-semibold text-lg text-slate-800">
-              📋 Horarios para {dayjs(wDate).format("DD/MM/YYYY")}
-              <span className={`ml-3 px-3 py-1 rounded-full text-sm font-medium ${wType === 'TRYOUT'
+          <div className="bg-slate-50 px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-semibold text-base sm:text-lg text-slate-800">
+                📋 Horarios para {dayjs(wDate).format("DD/MM/YYYY")}
+              </h3>
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${wType === 'TRYOUT'
                 ? 'bg-red-100 text-red-700'
                 : 'bg-emerald-100 text-emerald-700'
                 }`}>
                 {wType === 'TRYOUT' ? '🔍 Ensayar' : '📦 Sin ensayar'}
               </span>
-            </h3>
+            </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {wSaved.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-6xl mb-4">📭</div>
