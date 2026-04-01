@@ -765,8 +765,7 @@ export default function Booking() {
                     <div className="callout-title">Prueba remota + recogida presencial</div>
                     <ul>
                       <li>
-                        Verificamos con <strong>videos de prueba</strong> antes
-                        de la entrega (no presencial).
+                        Verificamos el producto y te enviamos <strong>videos de funcionamiento</strong> antes de tu cita.
                       </li>
                       <li>
                         Los horarios se habilitan manualmente en bloques de{" "}
