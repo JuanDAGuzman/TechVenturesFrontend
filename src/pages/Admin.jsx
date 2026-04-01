@@ -22,7 +22,7 @@ function mapTypeEs(code) {
     case "TRYOUT":
       return "Ensayar";
     case "PICKUP":
-      return "Sin ensayar";
+      return "Prueba remota";
     case "SHIPPING":
       return "Envío";
     default:
@@ -388,6 +388,12 @@ export default function AdminPage() {
 
       if (!ok) {
         setToast("Rango inválido. Revisa horas (HH:MM) y que inicio < fin.");
+        return;
+      }
+
+      const windowDuration = toMin(wEnd) - toMin(wStart);
+      if (Number(slotSizeW) > windowDuration) {
+        setToast(`El bloque de ${slotSizeW} min no cabe en el rango ${wStart}–${wEnd} (${windowDuration} min disponibles).`);
         return;
       }
 
@@ -959,7 +965,7 @@ export default function AdminPage() {
                 className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none bg-white"
               >
                 <option value="TRYOUT">🔍 Ensayar</option>
-                <option value="PICKUP">📦 Sin ensayar</option>
+                <option value="PICKUP">📦 Prueba remota</option>
               </select>
             </div>
 
@@ -1032,7 +1038,7 @@ export default function AdminPage() {
                 ? 'bg-red-100 text-red-700'
                 : 'bg-emerald-100 text-emerald-700'
                 }`}>
-                {wType === 'TRYOUT' ? '🔍 Ensayar' : '📦 Sin ensayar'}
+                {wType === 'TRYOUT' ? '🔍 Ensayar' : '📦 Prueba remota'}
               </span>
             </div>
           </div>

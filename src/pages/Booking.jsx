@@ -31,9 +31,9 @@ const METHODS = [
   },
   {
     key: "PICKUP",
-    label: "Sin ensayar",
+    label: "Prueba remota + recogida presencial",
     icon: MapPin,
-    desc: "Agenda tu cita sin prueba del producto; te enviaremos videos de funcionamiento.",
+    desc: "Verificamos el producto y te enviamos videos de funcionamiento. Tu cita es solo para llegar, pagar y llevártelo.",
     theme: "theme-pickup",
   },
   {
@@ -388,7 +388,7 @@ export default function Booking() {
         ) {
           toast.error("No hay horarios disponibles", {
             description:
-              'Intenta con otra fecha o prueba el método "Sin ensayar"',
+              'Intenta con otra fecha o prueba el método "Prueba remota"',
           });
         }
         setLoading(false);
@@ -405,7 +405,7 @@ export default function Booking() {
         setSlotsError("VACIO");
         toast.error("No hay horarios disponibles", {
           description:
-            'Intenta con otra fecha o prueba el método "Sin ensayar"',
+            'Intenta con otra fecha o prueba el método "Prueba remota"',
         });
       } else {
         setSlotsError(null);
@@ -762,7 +762,7 @@ export default function Booking() {
                   className="mt-4"
                 >
                   <div className="callout">
-                    <div className="callout-title">Sin ensayar</div>
+                    <div className="callout-title">Prueba remota + recogida presencial</div>
                     <ul>
                       <li>
                         Verificamos con <strong>videos de prueba</strong> antes

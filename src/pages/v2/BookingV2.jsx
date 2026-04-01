@@ -35,9 +35,9 @@ const METHODS = [
     },
     {
         key: "PICKUP",
-        label: "Sin ensayar",
+        label: "Prueba remota + recogida presencial",
         icon: MapPin,
-        desc: "Agenda tu cita sin prueba del producto; te enviaremos videos de funcionamiento.",
+        desc: "Verificamos el producto y te enviamos videos de funcionamiento. Tu cita es solo para llegar, pagar y llevártelo.",
         theme: "theme-pickup",
     },
     {
@@ -395,7 +395,7 @@ export default function BookingV2() {
                 ) {
                     toast.error("No hay horarios disponibles", {
                         description:
-                            'Intenta con otra fecha o prueba el método "Sin ensayar"',
+                            'Intenta con otra fecha o prueba el método "Prueba remota"',
                     });
                 }
                 setLoading(false);
@@ -412,7 +412,7 @@ export default function BookingV2() {
                 setSlotsError("VACIO");
                 toast.error("No hay horarios disponibles", {
                     description:
-                        'Intenta con otra fecha o prueba el método "Sin ensayar"',
+                        'Intenta con otra fecha o prueba el método "Prueba remota"',
                 });
             } else {
                 setSlotsError(null);
@@ -764,7 +764,7 @@ export default function BookingV2() {
                                             className="mt-4"
                                         >
                                             <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 border-l-4 border-l-blue-600 text-slate-700">
-                                                <div className="font-extrabold text-lg mb-2 text-blue-700">Sin ensayar</div>
+                                                <div className="font-extrabold text-lg mb-2 text-blue-700">Prueba remota + recogida presencial</div>
                                                 <ul className="list-disc pl-5 space-y-1">
                                                     <li>
                                                         Verificamos con <strong>videos de prueba</strong> antes
