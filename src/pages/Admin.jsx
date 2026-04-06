@@ -105,6 +105,8 @@ export default function AdminPage() {
   const [slotSizeW, setSlotSizeW] = useState(15);
 
   const [scanning, setScanning] = useState(false);
+  const [evidenceFiles, setEvidenceFiles] = useState([]);
+  const [uploadingEvidence, setUploadingEvidence] = useState(false);
 
   // Estados para blacklist y buscador
   const [searchQuery, setSearchQuery] = useState("");
@@ -266,8 +268,44 @@ export default function AdminPage() {
           return;
         }
         payload.shipping_trip_link = tripLink;
-        if (costVal !== null) {
-          payload.shipping_cost = costVal;
+        if (costVal !== null) payload.shipping_cost = costVal;
+
+        const code = (form._delivery_code_tmp || "").trim();
+        if (code) payload.delivery_code = code;
+
+        // Subir fotos de evidencia si hay
+        if (evidenceFiles.length > 0) {
+          setUploadingEvidence(true);
+          try {
+            const photos = await Promise.all(
+              evidenceFiles.map(
+                (file) =>
+                  new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () =>
+                      resolve({
+                        filename: file.name,
+                        data: reader.result.split(",")[1],
+                      });
+                    reader.onerror = reject;
+                    reader.readAsDataURL(file);
+                  })
+              )
+            );
+            const evRes = await fetch(
+              `${API}/admin/appointments/${editingId}/evidence`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "x-admin-token": token },
+                body: JSON.stringify({ photos }),
+              }
+            );
+            const evJson = await safeJson(evRes);
+            if (!evRes.ok || evJson?.ok === false)
+              throw new Error("EVIDENCE_UPLOAD_ERROR");
+          } finally {
+            setUploadingEvidence(false);
+          }
         }
       } else {
         const trackingNum = (form._tracking_number_tmp || "").trim();
@@ -307,8 +345,10 @@ export default function AdminPage() {
         _tracking_number_tmp: "",
         _shipping_cost_tmp: "",
         _shipping_trip_link_tmp: "",
+        _delivery_code_tmp: "",
         _guide_file: null,
       }));
+      setEvidenceFiles([]);
 
       setToast("✅ Envío marcado como enviado con guía adjunta.");
       console.log("[markAsShipped] Proceso completado exitosamente");
@@ -489,7 +529,9 @@ export default function AdminPage() {
         _shipping_cost_tmp:
           item.shipping_cost == null ? "" : String(item.shipping_cost),
         _shipping_trip_link_tmp: item.shipping_trip_link || "",
+        _delivery_code_tmp: item.delivery_code || "",
       });
+      setEvidenceFiles([]);
 
       setEditingId(id);
       setOpen(true);
@@ -1697,6 +1739,28 @@ export default function AdminPage() {
 
                         <div>
                           <label className="lbl">
+                            Código de entrega (opcional)
+                          </label>
+                          <input
+                            className="w-full px-3 py-3 rounded-xl border border-slate-300 text-center font-mono text-xl tracking-widest"
+                            placeholder="0000"
+                            maxLength={6}
+                            inputMode="numeric"
+                            value={form._delivery_code_tmp ?? ""}
+                            onChange={(e) =>
+                              setForm({
+                                ...form,
+                                _delivery_code_tmp: e.target.value.replace(/\D/g, ""),
+                              })
+                            }
+                          />
+                          <p className="muted mt-1">
+                            Código que el cliente entrega al mensajero (InDrive, etc.).
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="lbl">
                             Valor del envío (opcional)
                           </label>
                           <input
@@ -1714,11 +1778,40 @@ export default function AdminPage() {
                         </div>
 
                         <div className="md:col-span-2">
+                          <label className="lbl">
+                            Fotos de evidencia (opcional, máx. 5)
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={(e) => {
+                              const files = Array.from(e.target.files || []).slice(0, 5);
+                              setEvidenceFiles(files);
+                            }}
+                            className="w-full px-3 py-3 rounded-xl border border-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
+                          />
+                          <p className="muted mt-1">
+                            Placa, embalaje, producto — se adjuntarán al correo y se eliminan en 24h.
+                          </p>
+                          {evidenceFiles.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {evidenceFiles.map((f, i) => (
+                                <span key={i} className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg px-2 py-1">
+                                  📷 {f.name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="md:col-span-2">
                           <button
                             onClick={markAsShipped}
-                            className="mt-2 px-4 py-2 rounded-xl text-white bg-emerald-600 hover:bg-emerald-700"
+                            disabled={uploadingEvidence}
+                            className="mt-2 px-4 py-2 rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 disabled:cursor-wait"
                           >
-                            Marcar como enviado
+                            {uploadingEvidence ? "Subiendo fotos..." : `Marcar como enviado${evidenceFiles.length > 0 ? ` (${evidenceFiles.length} foto${evidenceFiles.length > 1 ? "s" : ""})` : ""}`}
                           </button>
                         </div>
                       </>
