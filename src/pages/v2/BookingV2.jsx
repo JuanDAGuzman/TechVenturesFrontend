@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -298,9 +299,17 @@ function CustomerDataModal({ open, onClose, customerData, onConfirm }) {
 }
 
 export default function BookingV2() {
-    const [method, setMethod] = useState("TRYOUT");
+    const [searchParams] = useSearchParams();
+    const paramType  = searchParams.get("type");
+    const paramDate  = searchParams.get("date");
+    const paramStart = searchParams.get("start");
+    const paramEnd   = searchParams.get("end");
 
-    const [date, setDate] = useState("");
+    const [method, setMethod] = useState(
+        ["TRYOUT", "PICKUP"].includes(paramType) ? paramType : "TRYOUT"
+    );
+
+    const [date, setDate] = useState(paramDate || "");
 
     const [slots, setSlots] = useState([]);
 
@@ -357,6 +366,14 @@ export default function BookingV2() {
 
         fetchSlots();
     }, [date, method]);
+
+    // Auto-seleccionar slot cuando viene desde un link generado por admin
+    useEffect(() => {
+        if (paramStart && paramEnd && slots.length > 0 && !selectedSlot) {
+            const match = slots.find(s => s.start === paramStart && s.end === paramEnd);
+            if (match) setSelectedSlot({ start: match.start, end: match.end });
+        }
+    }, [slots]);
 
     async function fetchSlots() {
         setLoading(true);

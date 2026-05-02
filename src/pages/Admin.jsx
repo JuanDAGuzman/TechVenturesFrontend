@@ -107,6 +107,7 @@ export default function AdminPage() {
   const [scanning, setScanning] = useState(false);
   const [evidenceFiles, setEvidenceFiles] = useState([]);
   const [uploadingEvidence, setUploadingEvidence] = useState(false);
+  const [lastCreatedLink, setLastCreatedLink] = useState(null);
 
   // Estados para blacklist y buscador
   const [searchQuery, setSearchQuery] = useState("");
@@ -448,6 +449,8 @@ export default function AdminPage() {
       const j = await adminCreateWindow(payload, token);
       if (j?.ok === false) throw new Error(j?.error || "CREATE_ERROR");
 
+      const link = `${window.location.origin}/?type=${wType}&date=${wDate}&start=${wStart}&end=${wEnd}`;
+      setLastCreatedLink(link);
       setToast("Horario abierto.");
       await fetchWeekdayWindows();
     } catch (e) {
@@ -1067,6 +1070,29 @@ export default function AdminPage() {
               🔄 Actualizar Lista
             </button>
           </div>
+
+          {lastCreatedLink && (
+            <div className="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
+              <p className="text-sm font-semibold text-indigo-700 mb-2">🔗 Link generado — compártelo con el cliente:</p>
+              <div className="flex gap-2 items-center">
+                <code className="text-xs bg-white border border-indigo-200 rounded-lg px-3 py-2 flex-1 truncate text-slate-700">
+                  {lastCreatedLink}
+                </code>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(lastCreatedLink);
+                    setToast("Link copiado al portapapeles.");
+                  }}
+                  className="shrink-0 min-h-[36px] px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
+                >
+                  Copiar
+                </button>
+              </div>
+              <p className="text-xs text-indigo-500 mt-2">
+                Al abrirlo, el cliente llega directamente al formulario con la fecha y hora seleccionadas.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Lista de Horarios Abiertos */}
@@ -1178,6 +1204,16 @@ export default function AdminPage() {
                             }}
                           >
                             ✏️ Editar
+                          </button>
+                          <button
+                            className="flex-1 px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-medium hover:bg-indigo-100 transition-colors"
+                            onClick={() => {
+                              const link = `${window.location.origin}/?type=${wType}&date=${wDate}&start=${r.start}&end=${r.end}`;
+                              navigator.clipboard.writeText(link);
+                              setToast("Link copiado al portapapeles.");
+                            }}
+                          >
+                            🔗 Copiar link
                           </button>
                           <button
                             className="flex-1 px-3 py-2 rounded-lg bg-rose-100 text-rose-700 text-sm font-medium hover:bg-rose-200 transition-colors"
