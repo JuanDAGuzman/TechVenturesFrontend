@@ -698,7 +698,7 @@ export default function BookingV2() {
                                 </label>
 
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    {METHODS.map((m) => {
+                                    {METHODS.filter((m) => !paramType || m.key === paramType).map((m) => {
                                         const Icon = m.icon;
                                         const isActive = method === m.key;
 
