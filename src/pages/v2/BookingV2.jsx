@@ -849,7 +849,7 @@ export default function BookingV2() {
                                                 clearError("date");
                                                 setSelectedSlot(null);
                                             }}
-                                            min={new Date().toISOString().split("T")[0]}
+                                            min={new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10)}
                                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.date
                                                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
                                                 : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"

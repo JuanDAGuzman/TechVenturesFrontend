@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
+import "dayjs/locale/es";
 import { getAdminToken } from "../lib/adminSession.js";
 import {
   adminListWindows,
@@ -357,6 +358,15 @@ export default function AdminPage() {
       console.error("[markAsShipped] ERROR GENERAL:", e);
       setToast(`❌ Error: ${e?.message || "No se pudo marcar como enviado"}`);
     }
+  }
+
+  function buildBookingMessage(type, date, start, end, link) {
+    const fechaFmt = dayjs(date).locale("es").format("dddd D [de] MMMM");
+    const horaFmt  = `${start} – ${end}`;
+    if (type === "TRYOUT") {
+      return `¡Hola! 😊 Te tenemos listo un horario para tu ensayo el ${fechaFmt} de ${horaFmt}. Entra al link, llena tus datos y confirma tu cita — la fecha y la hora ya están seleccionadas para ti:\n\n👉 ${link}\n\nCualquier duda, me avisas. 🚀`;
+    }
+    return `¡Hola! 😊 Te tenemos listo un horario para tu recogida el ${fechaFmt} de ${horaFmt}. Verificamos el producto y te enviamos los videos antes de que vengas — solo entra, llena tus datos y confirma:\n\n👉 ${link}\n\nCualquier duda, me avisas. 🚀`;
   }
 
   function toggle(id) {
@@ -1080,12 +1090,13 @@ export default function AdminPage() {
                 </code>
                 <button
                   onClick={() => {
-                    navigator.clipboard.writeText(lastCreatedLink);
-                    setToast("Link copiado al portapapeles.");
+                    const msg = buildBookingMessage(wType, wDate, wStart, wEnd, lastCreatedLink);
+                    navigator.clipboard.writeText(msg);
+                    setToast("Mensaje copiado al portapapeles.");
                   }}
                   className="shrink-0 min-h-[36px] px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
                 >
-                  Copiar
+                  Copiar mensaje
                 </button>
               </div>
               <p className="text-xs text-indigo-500 mt-2">
@@ -1209,11 +1220,12 @@ export default function AdminPage() {
                             className="flex-1 px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-medium hover:bg-indigo-100 transition-colors"
                             onClick={() => {
                               const link = `${window.location.origin}/?type=${wType}&date=${wDate}&start=${r.start}&end=${r.end}`;
-                              navigator.clipboard.writeText(link);
-                              setToast("Link copiado al portapapeles.");
+                              const msg = buildBookingMessage(wType, wDate, r.start, r.end, link);
+                              navigator.clipboard.writeText(msg);
+                              setToast("Mensaje copiado al portapapeles.");
                             }}
                           >
-                            🔗 Copiar link
+                            🔗 Copiar mensaje
                           </button>
                           <button
                             className="flex-1 px-3 py-2 rounded-lg bg-rose-100 text-rose-700 text-sm font-medium hover:bg-rose-200 transition-colors"
