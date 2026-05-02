@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -299,11 +298,11 @@ function CustomerDataModal({ open, onClose, customerData, onConfirm }) {
 }
 
 export default function BookingV2() {
-    const [searchParams] = useSearchParams();
-    const paramType  = searchParams.get("type");
-    const paramDate  = searchParams.get("date");
-    const paramStart = searchParams.get("start");
-    const paramEnd   = searchParams.get("end");
+    const _qp      = new URLSearchParams(window.location.search);
+    const paramType  = _qp.get("type");
+    const paramDate  = _qp.get("date");
+    const paramStart = _qp.get("start");
+    const paramEnd   = _qp.get("end");
 
     const [method, setMethod] = useState(
         ["TRYOUT", "PICKUP"].includes(paramType) ? paramType : "TRYOUT"
