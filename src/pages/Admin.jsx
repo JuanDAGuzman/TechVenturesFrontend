@@ -983,6 +983,30 @@ export default function AdminPage() {
         )}
       </section>
 
+      {/* Acceso rápido para envíos */}
+      <section className="card border-2 border-slate-200">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="font-bold text-xl mb-1">📦 Link de Envío</h2>
+            <p className="text-sm text-slate-500">
+              Comparte este link con clientes que van a hacer un envío — los lleva directo al formulario sin mostrar otros métodos.
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              const todayBogota = new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
+              const link = `${window.location.origin}/?type=SHIPPING&date=${todayBogota}`;
+              const msg = `¡Hola! 😊 Para gestionar tu envío solo entra al link, llena tus datos y la dirección de entrega — nosotros nos encargamos del resto:\n\n👉 ${link}\n\nCualquier duda, me avisas. 🚀`;
+              navigator.clipboard.writeText(msg);
+              setToast("Mensaje de envío copiado al portapapeles.");
+            }}
+            className="shrink-0 min-h-[44px] px-5 py-2.5 rounded-xl bg-slate-800 text-white text-sm font-semibold hover:bg-slate-700 transition-colors"
+          >
+            🔗 Copiar mensaje
+          </button>
+        </div>
+      </section>
+
       <section className="card">
         <div className="flex items-center justify-between mb-6">
           <div>

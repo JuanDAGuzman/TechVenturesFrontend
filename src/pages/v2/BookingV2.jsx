@@ -305,7 +305,7 @@ export default function BookingV2() {
     const paramEnd   = _qp.get("end");
 
     const [method, setMethod] = useState(
-        ["TRYOUT", "PICKUP"].includes(paramType) ? paramType : "TRYOUT"
+        ["TRYOUT", "PICKUP", "SHIPPING"].includes(paramType) ? paramType : "TRYOUT"
     );
 
     const [date, setDate] = useState(paramDate || "");
