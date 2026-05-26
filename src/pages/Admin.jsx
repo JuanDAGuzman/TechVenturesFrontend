@@ -1755,9 +1755,9 @@ export default function AdminPage() {
       </section>
 
       {open && form && (
-        <div className="fixed inset-0 z-50 bg-black/40 overflow-y-auto">
-          <div className="flex min-h-full sm:items-start sm:justify-center sm:p-4">
-          <div className="w-full sm:max-w-2xl sm:my-6">
+        <div className="fixed inset-0 z-[60] bg-black/40 overflow-y-auto">
+          <div className="flex min-h-full items-start justify-center p-4 pt-6">
+          <div className="w-full max-w-2xl mb-6">
             <div className="bg-white sm:rounded-2xl shadow-xl overflow-hidden">
               <div className="px-4 py-3 sm:px-6 sm:py-4 border-b sticky top-0 bg-white z-10 flex items-center justify-between gap-3">
                 <h3 className="font-bold text-base sm:text-lg truncate">
@@ -2223,8 +2223,8 @@ export default function AdminPage() {
 
       {/* Modal de Agenda Rápida */}
       {showQbModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 overflow-y-auto">
-          <div className="flex min-h-full items-start justify-center p-4 pt-20 sm:pt-10">
+        <div className="fixed inset-0 z-[60] bg-black/40 overflow-y-auto">
+          <div className="flex min-h-full items-start justify-center p-4 pt-6">
             <div className="w-full max-w-2xl mb-6">
               <div className="bg-white sm:rounded-2xl shadow-xl overflow-hidden">
                 <div className="px-4 py-3 sm:px-6 sm:py-4 border-b sticky top-0 bg-white z-10 flex items-center justify-between gap-3">
@@ -2405,7 +2405,7 @@ export default function AdminPage() {
 
       {/* Modal de Reagendamiento */}
       {rescheduleModal.open && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4 pt-20 sm:pt-4">
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
             <div className="px-6 py-4 border-b flex items-center justify-between">
               <div>
