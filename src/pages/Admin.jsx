@@ -1755,7 +1755,7 @@ export default function AdminPage() {
       </section>
 
       {open && form && (
-        <div className="fixed inset-0 z-[60] bg-black/40 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 overflow-y-auto" style={{ zIndex: 9999 }}>
           <div className="flex min-h-full items-start justify-center p-4 pt-6">
           <div className="w-full max-w-2xl mb-6">
             <div className="bg-white sm:rounded-2xl shadow-xl overflow-hidden">
@@ -2223,7 +2223,7 @@ export default function AdminPage() {
 
       {/* Modal de Agenda Rápida */}
       {showQbModal && (
-        <div className="fixed inset-0 z-[60] bg-black/40 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/40 overflow-y-auto" style={{ zIndex: 9999 }}>
           <div className="flex min-h-full items-start justify-center p-4 pt-6">
             <div className="w-full max-w-2xl mb-6">
               <div className="bg-white sm:rounded-2xl shadow-xl overflow-hidden">
@@ -2405,7 +2405,7 @@ export default function AdminPage() {
 
       {/* Modal de Reagendamiento */}
       {rescheduleModal.open && (
-        <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4 pt-20 sm:pt-4">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
             <div className="px-6 py-4 border-b flex items-center justify-between">
               <div>
