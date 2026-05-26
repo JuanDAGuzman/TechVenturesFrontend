@@ -355,11 +355,11 @@ export default function AdminPage() {
       }));
       setEvidenceFiles([]);
 
-      setToast("✅ Envío marcado como enviado con guía adjunta.");
+      setToast("Envío marcado correctamente.");
       console.log("[markAsShipped] Proceso completado exitosamente");
     } catch (e) {
       console.error("[markAsShipped] ERROR GENERAL:", e);
-      setToast(`❌ Error: ${e?.message || "No se pudo marcar como enviado"}`);
+      setToast(`Error: ${e?.message || "No se pudo marcar como enviado"}`);
     }
   }
 
@@ -709,7 +709,7 @@ export default function AdminPage() {
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
-            🛠️ Panel de Administración
+            Panel de Administración
           </h1>
           <p className="text-indigo-100 text-sm sm:text-lg hidden sm:block">
             TechVenturesCO — Gestión completa de citas y horarios
@@ -722,13 +722,13 @@ export default function AdminPage() {
       {/* Configuración */}
       <section className="card border-2 border-slate-200">
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          ⚙️ Configuración
+          Configuración
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              🔐 Token de Administrador
+              Token de Administrador
             </label>
             <div className="flex flex-col sm:flex-row gap-2">
               <input
@@ -746,17 +746,17 @@ export default function AdminPage() {
                 className="w-full sm:w-auto min-h-[44px] px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all font-medium"
                 title={showToken ? "Ocultar token" : "Mostrar token"}
               >
-                {showToken ? "👁️ Ocultar" : "👁️‍🗨️ Mostrar"}
+                {showToken ? "Ocultar" : "Mostrar"}
               </button>
             </div>
             <p className="text-sm text-slate-500 mt-2">
-              💾 Se guarda en tu navegador. Debe coincidir con <code className="px-2 py-0.5 bg-slate-100 rounded text-xs">ADMIN_TOKEN</code> del backend.
+              Se guarda en tu navegador. Debe coincidir con <code className="px-2 py-0.5 bg-slate-100 rounded text-xs">ADMIN_TOKEN</code> del backend.
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              📅 Fecha de Consulta
+              Fecha de Consulta
             </label>
             <input
               type="date"
@@ -773,7 +773,7 @@ export default function AdminPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
-              📋 Citas del Día
+              Citas del Día
             </h2>
             <p className="text-sm text-slate-500 mt-1">
               {dayjs(date).format("DD/MM/YYYY")} • {rows.length} cita{rows.length !== 1 ? 's' : ''}
@@ -784,26 +784,24 @@ export default function AdminPage() {
               onClick={fetchAppts}
               className="px-5 py-2.5 rounded-xl bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-700 flex items-center gap-2"
             >
-              🔄 Actualizar
+              Actualizar
             </button>
             <button
               onClick={delSelected}
               disabled={Object.keys(selected).filter(k => selected[k]).length === 0}
               className="px-5 py-2.5 rounded-xl text-white font-medium bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/30 transition-all flex items-center gap-2"
             >
-              🗑️ Eliminar ({Object.keys(selected).filter(k => selected[k]).length})
+              Eliminar ({Object.keys(selected).filter(k => selected[k]).length})
             </button>
           </div>
         </div>
 
         {loading ? (
           <div className="text-center py-12">
-            <div className="text-5xl mb-4">⏳</div>
             <p className="text-slate-500 font-medium">Cargando citas...</p>
           </div>
         ) : rows.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">📭</div>
             <p className="text-slate-500 text-lg font-medium mb-2">
               No hay citas para esta fecha
             </p>
@@ -836,17 +834,17 @@ export default function AdminPage() {
                     onClick={() => openEditor(r.id)}
                     className="shrink-0 px-3 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-medium text-sm"
                   >
-                    ✏️ Editar
+                    Editar
                   </button>
                 </div>
                 <div className="font-semibold text-slate-800">{r.customer_name}</div>
                 <div className="flex flex-wrap gap-x-3 text-sm text-slate-500 mt-0.5">
-                  {r.start_time && <span>🕐 {fmt(r.start_time)}–{fmt(r.end_time)}</span>}
-                  {r.product && <span>📦 {r.product}</span>}
+                  {r.start_time && <span>{fmt(r.start_time)}–{fmt(r.end_time)}</span>}
+                  {r.product && <span>{r.product}</span>}
                 </div>
                 <div className="mt-2 flex flex-col gap-1">
-                  <a href={`mailto:${r.customer_email}`} className="text-blue-600 text-sm">📧 {r.customer_email}</a>
-                  <a href={`tel:${r.customer_phone}`} className="text-blue-600 text-sm">📱 {r.customer_phone}</a>
+                  <a href={`mailto:${r.customer_email}`} className="text-blue-600 text-sm">{r.customer_email}</a>
+                  <a href={`tel:${r.customer_phone}`} className="text-blue-600 text-sm">{r.customer_phone}</a>
                 </div>
               </div>
             ))}
@@ -917,24 +915,24 @@ export default function AdminPage() {
                           className="text-blue-600 hover:text-blue-800 hover:underline text-xs"
                           href={`mailto:${r.customer_email}`}
                         >
-                          📧 {r.customer_email}
+                          {r.customer_email}
                         </a>
                         <div className="flex items-center gap-2">
                           <a
                             className="text-blue-600 hover:text-blue-800 hover:underline text-xs"
                             href={`tel:${r.customer_phone}`}
                           >
-                            📱 {r.customer_phone}
+                            {r.customer_phone}
                           </a>
                           <button
                             onClick={() => {
                               navigator.clipboard.writeText(r.customer_phone);
-                              setToast("📞 Teléfono copiado");
+                              setToast("Teléfono copiado");
                             }}
                             className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300 hover:bg-slate-200 text-slate-600"
                             title="Copiar número"
                           >
-                            📋
+                            Copiar
                           </button>
                         </div>
                       </div>
@@ -981,7 +979,7 @@ export default function AdminPage() {
 
         {toast && (
           <div className="mt-4 px-4 py-3 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 font-medium">
-            ℹ️ {toast}
+            {toast}
           </div>
         )}
       </section>
@@ -989,7 +987,7 @@ export default function AdminPage() {
       {/* Acceso rápido para envíos */}
       <section className="card border-2 border-slate-200">
         <div className="mb-4">
-          <h2 className="font-bold text-xl mb-1">📦 Link de Envío</h2>
+          <h2 className="font-bold text-xl mb-1">Link de Envío</h2>
           <p className="text-sm text-slate-500">
             Comparte este link con clientes que van a hacer un envío — los lleva directo al formulario sin mostrar otros métodos.
           </p>
@@ -1013,7 +1011,7 @@ export default function AdminPage() {
             }}
             className="sm:self-end min-h-[44px] px-5 py-2.5 rounded-xl bg-slate-800 text-white text-sm font-semibold hover:bg-slate-700 transition-colors"
           >
-            🔗 Copiar mensaje
+            Copiar mensaje
           </button>
         </div>
       </section>
@@ -1021,7 +1019,7 @@ export default function AdminPage() {
       <section className="card">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-bold text-2xl mb-1">📅 Gestión de Horarios</h2>
+            <h2 className="font-bold text-2xl mb-1">Gestión de Horarios</h2>
             <p className="text-sm text-slate-500">
               Administra la disponibilidad para cualquier día de la semana
             </p>
@@ -1030,12 +1028,12 @@ export default function AdminPage() {
 
         {/* Formulario de Apertura */}
         <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-4 sm:p-6 mb-6 border border-red-100">
-          <h3 className="font-semibold text-lg mb-4 text-slate-800">➕ Abrir Nuevo Horario</h3>
+          <h3 className="font-semibold text-lg mb-4 text-slate-800">Abrir nuevo horario</h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                📆 Fecha
+                Fecha
               </label>
               <input
                 type="date"
@@ -1047,21 +1045,21 @@ export default function AdminPage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                🎯 Tipo de Cita
+                Tipo de cita
               </label>
               <select
                 value={wType}
                 onChange={(e) => setWType(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none bg-white"
               >
-                <option value="TRYOUT">🔍 Ensayar</option>
-                <option value="PICKUP">📦 Prueba remota</option>
+                <option value="TRYOUT">Ensayar</option>
+                <option value="PICKUP">Prueba remota</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                🕐 Hora Inicio
+                Hora inicio
               </label>
               <input
                 type="time"
@@ -1074,7 +1072,7 @@ export default function AdminPage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                🕐 Hora Fin
+                Hora fin
               </label>
               <input
                 type="time"
@@ -1087,7 +1085,7 @@ export default function AdminPage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                ⏱️ Duración Bloques
+                Duración (min)
               </label>
               <select
                 value={slotSizeW}
@@ -1106,19 +1104,19 @@ export default function AdminPage() {
               onClick={addWeekdayWindow}
               className="w-full sm:w-auto min-h-[44px] px-6 py-3 rounded-xl text-white font-medium bg-brand-indigo hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all"
             >
-              ✅ Abrir Horario
+              Abrir horario
             </button>
             <button
               onClick={fetchWeekdayWindows}
               className="w-full sm:w-auto min-h-[44px] px-5 py-3 rounded-xl bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-700"
             >
-              🔄 Actualizar Lista
+              Actualizar lista
             </button>
           </div>
 
           {lastCreatedLink && (
             <div className="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
-              <p className="text-sm font-semibold text-indigo-700 mb-2">🔗 Link generado — compártelo con el cliente:</p>
+              <p className="text-sm font-semibold text-indigo-700 mb-2">Link generado — compártelo con el cliente:</p>
               <div className="flex gap-2 items-center">
                 <code className="text-xs bg-white border border-indigo-200 rounded-lg px-3 py-2 flex-1 truncate text-slate-700">
                   {lastCreatedLink}
@@ -1146,13 +1144,13 @@ export default function AdminPage() {
           <div className="bg-slate-50 px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-semibold text-base sm:text-lg text-slate-800">
-                📋 Horarios para {dayjs(wDate).format("DD/MM/YYYY")}
+                Horarios para {dayjs(wDate).format("DD/MM/YYYY")}
               </h3>
               <span className={`px-3 py-1 rounded-full text-xs font-medium ${wType === 'TRYOUT'
                 ? 'bg-red-100 text-red-700'
                 : 'bg-emerald-100 text-emerald-700'
                 }`}>
-                {wType === 'TRYOUT' ? '🔍 Ensayar' : '📦 Prueba remota'}
+                {wType === 'TRYOUT' ? 'Ensayar' : 'Prueba remota'}
               </span>
             </div>
           </div>
@@ -1160,7 +1158,6 @@ export default function AdminPage() {
           <div className="p-4 sm:p-6">
             {wSaved.length === 0 ? (
               <div className="text-center py-12">
-                <div className="text-6xl mb-4">📭</div>
                 <p className="text-slate-500 text-lg font-medium mb-2">
                   No hay horarios abiertos
                 </p>
@@ -1213,13 +1210,13 @@ export default function AdminPage() {
                             className="flex-1 px-3 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700 transition-colors"
                             onClick={wSaveEdit}
                           >
-                            💾 Guardar
+                            Guardar
                           </button>
                           <button
                             className="flex-1 px-3 py-2 rounded-lg bg-slate-200 text-slate-700 font-medium hover:bg-slate-300 transition-colors"
                             onClick={() => setWEditId(null)}
                           >
-                            ✖️ Cancelar
+                            Cancelar
                           </button>
                         </div>
                       </div>
@@ -1227,14 +1224,13 @@ export default function AdminPage() {
                       <div className="p-4">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center gap-2">
-                            <span className="text-2xl">🕐</span>
                             <div>
                               <div className="font-bold text-lg text-slate-800">
                                 {r.start} — {r.end}
                               </div>
                               {typeof r.slot === "number" && (
                                 <div className="text-xs text-slate-500 font-medium">
-                                  ⏱️ Bloques de {r.slot} min
+                                  Bloques de {r.slot} min
                                 </div>
                               )}
                             </div>
@@ -1260,13 +1256,13 @@ export default function AdminPage() {
                               setToast("Mensaje copiado al portapapeles.");
                             }}
                           >
-                            🔗 Copiar mensaje
+                            Copiar mensaje
                           </button>
                           <button
                             className="flex-1 px-3 py-2 rounded-lg bg-rose-100 text-rose-700 text-sm font-medium hover:bg-rose-200 transition-colors"
                             onClick={() => delWeekdayWindow(r.id)}
                           >
-                            🗑️ Eliminar
+                            Eliminar
                           </button>
                         </div>
                       </div>
@@ -1283,7 +1279,7 @@ export default function AdminPage() {
       <section className="card border-2 border-slate-200">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-bold text-2xl mb-1">🔍 Buscador de Clientes</h2>
+            <h2 className="font-bold text-2xl mb-1">Buscador de Clientes</h2>
             <p className="text-sm text-slate-500">
               Busca un cliente por cédula para ver su historial y estado de bloqueo
             </p>
@@ -1304,7 +1300,7 @@ export default function AdminPage() {
               onClick={searchCustomer}
               className="px-6 py-3 rounded-xl text-white font-medium bg-brand-indigo hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all transform hover:scale-105"
             >
-              🔎 Buscar
+              Buscar
             </button>
           </div>
 
@@ -1326,8 +1322,8 @@ export default function AdminPage() {
                     <div>
                       <div className="font-bold text-slate-800">{c.customer_name}</div>
                       <div className="text-xs text-slate-500 flex gap-2">
-                        <span>🆔 {c.customer_id_number}</span>
-                        <span>📱 {c.customer_phone}</span>
+                        <span>CC {c.customer_id_number}</span>
+                        <span>{c.customer_phone}</span>
                       </div>
                     </div>
                     {c.is_blacklisted && (
@@ -1348,7 +1344,6 @@ export default function AdminPage() {
             <div className="bg-white rounded-xl border-2 border-slate-200 overflow-hidden">
               {!searchResult.found ? (
                 <div className="p-8 text-center">
-                  <div className="text-6xl mb-4">❓</div>
                   <p className="text-slate-600 font-medium">
                     Cliente no encontrado en el sistema
                   </p>
@@ -1367,11 +1362,11 @@ export default function AdminPage() {
                       </div>
                       {searchResult.blacklisted ? (
                         <span className="px-4 py-2 rounded-full bg-red-100 text-red-800 font-semibold text-sm">
-                          🚫 Bloqueado
+                          Bloqueado
                         </span>
                       ) : (
                         <span className="px-4 py-2 rounded-full bg-green-100 text-green-800 font-semibold text-sm">
-                          ✅ Activo
+                          Activo
                         </span>
                       )}
                     </div>
@@ -1381,7 +1376,7 @@ export default function AdminPage() {
                     {/* Información de Contacto */}
                     <div>
                       <h4 className="font-semibold text-sm text-slate-600 mb-3">
-                        📧 Información de Contacto
+                        Información de Contacto
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="flex items-center gap-2 text-sm">
@@ -1402,7 +1397,7 @@ export default function AdminPage() {
                     {/* Estadísticas */}
                     <div>
                       <h4 className="font-semibold text-sm text-slate-600 mb-3">
-                        📊 Historial de Citas
+                        Historial de Citas
                       </h4>
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         <div className="bg-slate-50 rounded-xl p-4 text-center">
@@ -1442,7 +1437,7 @@ export default function AdminPage() {
                     {searchResult.blacklisted && searchResult.blacklist_info && (
                       <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4">
                         <h4 className="font-semibold text-red-800 mb-2">
-                          ⚠️ Detalles del Bloqueo
+                          Detalles del Bloqueo
                         </h4>
                         <div className="space-y-2 text-sm">
                           <div>
@@ -1480,7 +1475,7 @@ export default function AdminPage() {
                           }
                           className="px-6 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all transform hover:scale-105"
                         >
-                          ✅ Desbloquear Cliente
+                          Desbloquear cliente
                         </button>
                       ) : (
                         <button
@@ -1492,7 +1487,7 @@ export default function AdminPage() {
                           }}
                           className="px-6 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all transform hover:scale-105"
                         >
-                          🚫 Bloquear Cliente
+                          Bloquear cliente
                         </button>
                       )}
                     </div>
