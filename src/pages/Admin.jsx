@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import dayjs from "dayjs";
 import "dayjs/locale/es";
 import { getAdminToken } from "../lib/adminSession.js";
@@ -1754,9 +1755,9 @@ export default function AdminPage() {
         )}
       </section>
 
-      {open && form && (
+      {open && form && createPortal(
         <div className="fixed inset-0 bg-black/40 overflow-y-auto" style={{ zIndex: 9999 }}>
-          <div className="flex min-h-full items-start justify-center p-4 pt-6">
+          <div className="flex min-h-full items-start justify-center p-4 pt-24">
           <div className="w-full max-w-2xl mb-6">
             <div className="bg-white sm:rounded-2xl shadow-xl overflow-hidden">
               <div className="px-4 py-3 sm:px-6 sm:py-4 border-b sticky top-0 bg-white z-10 flex items-center justify-between gap-3">
@@ -2218,13 +2219,14 @@ export default function AdminPage() {
             </div>
           </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal de Agenda Rápida */}
-      {showQbModal && (
+      {showQbModal && createPortal(
         <div className="fixed inset-0 bg-black/40 overflow-y-auto" style={{ zIndex: 9999 }}>
-          <div className="flex min-h-full items-start justify-center p-4 pt-6">
+          <div className="flex min-h-full items-start justify-center p-4 pt-24">
             <div className="w-full max-w-2xl mb-6">
               <div className="bg-white sm:rounded-2xl shadow-xl overflow-hidden">
                 <div className="px-4 py-3 sm:px-6 sm:py-4 border-b sticky top-0 bg-white z-10 flex items-center justify-between gap-3">
@@ -2400,11 +2402,12 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal de Reagendamiento */}
-      {rescheduleModal.open && (
+      {rescheduleModal.open && createPortal(
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
           <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
             <div className="px-6 py-4 border-b flex items-center justify-between">
@@ -2483,7 +2486,8 @@ export default function AdminPage() {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
