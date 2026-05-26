@@ -141,6 +141,7 @@ export default function AdminPage() {
   const [qbLoadingSlots, setQbLoadingSlots] = useState(false);
   const [qbErrors, setQbErrors] = useState({});
   const [qbSubmitting, setQbSubmitting] = useState(false);
+  const [qbLookingUp, setQbLookingUp] = useState(false);
 
   // Estados para blacklist y buscador
   const [searchQuery, setSearchQuery] = useState("");
@@ -656,6 +657,26 @@ export default function AdminPage() {
       console.error("[reschedule]", e);
       setToast("No se pudo reagendar la cita.");
     }
+  }
+
+  async function lookupQbCustomer(idNumber) {
+    const q = idNumber.trim();
+    if (!q) return;
+    setQbLookingUp(true);
+    try {
+      const res = await fetch(`${API}/admin/search-customer?q=${encodeURIComponent(q)}`, { headers });
+      const data = await res.json();
+      if (data.ok && data.customers?.length > 0) {
+        const c = data.customers[0];
+        setQbForm((f) => ({
+          ...f,
+          customer_name: c.customer_name || f.customer_name,
+          customer_phone: c.customer_phone || f.customer_phone,
+          customer_email: c.customer_email || f.customer_email,
+        }));
+      }
+    } catch (_) {}
+    setQbLookingUp(false);
   }
 
   async function fetchQbSlots(date, type) {
@@ -2307,11 +2328,17 @@ export default function AdminPage() {
                       { key: "customer_email", label: "Correo", required: true, placeholder: "correo@ejemplo.com" },
                     ].map(({ key, label, required, placeholder }) => (
                       <div key={key}>
-                        <label className="block text-sm font-medium text-slate-700 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">
+                          {label} {required && <span className="text-red-500">*</span>}
+                          {key === "customer_id_number" && qbLookingUp && (
+                            <span className="ml-2 text-xs text-indigo-500 font-normal">Buscando...</span>
+                          )}
+                        </label>
                         <input
                           type="text"
                           value={qbForm[key]}
                           onChange={(e) => { setQbForm((f) => ({ ...f, [key]: e.target.value })); setQbErrors((er) => ({ ...er, [key]: undefined })); }}
+                          onBlur={key === "customer_id_number" ? (e) => lookupQbCustomer(e.target.value) : undefined}
                           placeholder={placeholder}
                           className={`w-full px-3 py-2.5 rounded-xl border-2 outline-none transition ${qbErrors[key] ? "border-red-400" : "border-slate-200 focus:border-indigo-400"}`}
                         />
