@@ -113,6 +113,10 @@ export default function AdminPage() {
     new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10)
   );
 
+  const [notifyOnSave, setNotifyOnSave] = useState(false);
+  const [rescheduleModal, setRescheduleModal] = useState({ open: false, id: null, date: "", start: "", end: "", apptRow: null });
+  const [notifyReschedule, setNotifyReschedule] = useState(true);
+
   // Estados para blacklist y buscador
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCandidates, setSearchCandidates] = useState([]); // Para cuando hay múltiples coincidencias
@@ -548,7 +552,7 @@ export default function AdminPage() {
         _delivery_code_tmp: item.delivery_code || "",
       });
       setEvidenceFiles([]);
-
+      setNotifyOnSave(false);
       setEditingId(id);
       setOpen(true);
       setToast("");
@@ -561,6 +565,7 @@ export default function AdminPage() {
   async function saveEditor() {
     try {
       const payload = {
+        notify: notifyOnSave,
         customer_name: form.customer_name,
         customer_id_number: form.customer_id_number,
         customer_email: form.customer_email,
@@ -590,6 +595,41 @@ export default function AdminPage() {
     } catch (e) {
       console.error("saveEditor", e);
       setToast("No se pudo actualizar la cita.");
+    }
+  }
+
+  function openRescheduleModal(row) {
+    setRescheduleModal({
+      open: true,
+      id: row.id,
+      date: row.date,
+      start: fmt(row.start_time),
+      end: fmt(row.end_time),
+      apptRow: row,
+    });
+    setNotifyReschedule(true);
+  }
+
+  async function submitReschedule() {
+    const { id, date, start, end } = rescheduleModal;
+    if (!date || !start || !end) {
+      setToast("Completa todos los campos del nuevo horario.");
+      return;
+    }
+    try {
+      const r = await fetch(`${API}/admin/appointments/${id}/reschedule`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ date, start_time: start, end_time: end, notify: notifyReschedule }),
+      });
+      const j = await safeJson(r);
+      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
+      setRescheduleModal({ open: false, id: null, date: "", start: "", end: "", apptRow: null });
+      await fetchAppts();
+      setToast(notifyReschedule ? "Cita reagendada. Se notificó al cliente por correo." : "Cita reagendada.");
+    } catch (e) {
+      console.error("[reschedule]", e);
+      setToast("No se pudo reagendar la cita.");
     }
   }
 
@@ -830,12 +870,22 @@ export default function AdminPage() {
                       {mapStatusEs(r.status)}
                     </span>
                   </div>
-                  <button
-                    onClick={() => openEditor(r.id)}
-                    className="shrink-0 px-3 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-medium text-sm"
-                  >
-                    Editar
-                  </button>
+                  <div className="flex gap-2 shrink-0">
+                    <button
+                      onClick={() => openEditor(r.id)}
+                      className="px-3 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-medium text-sm"
+                    >
+                      Editar
+                    </button>
+                    {(r.type_code === "TRYOUT" || r.type_code === "PICKUP") && (
+                      <button
+                        onClick={() => openRescheduleModal(r)}
+                        className="px-3 py-2 rounded-xl bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-medium text-sm"
+                      >
+                        Reagendar
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="font-semibold text-slate-800">{r.customer_name}</div>
                 <div className="flex flex-wrap gap-x-3 text-sm text-slate-500 mt-0.5">
@@ -962,12 +1012,22 @@ export default function AdminPage() {
                     </td>
 
                     <td className="py-4 px-4">
-                      <button
-                        onClick={() => openEditor(r.id)}
-                        className="px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium transition-colors"
-                      >
-                        Editar
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => openEditor(r.id)}
+                          className="px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium transition-colors"
+                        >
+                          Editar
+                        </button>
+                        {(r.type_code === "TRYOUT" || r.type_code === "PICKUP") && (
+                          <button
+                            onClick={() => openRescheduleModal(r)}
+                            className="px-4 py-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-medium transition-colors"
+                          >
+                            Reagendar
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -2038,22 +2098,116 @@ export default function AdminPage() {
                 )}
               </div>
 
-              <div className="px-4 py-3 sm:px-6 sm:py-4 border-t sticky bottom-0 bg-white z-10 flex items-center justify-end gap-2">
-                <button
-                  onClick={() => setOpen(false)}
-                  className="min-h-[44px] px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 font-medium"
-                >
-                  Cerrar
-                </button>
-                <button
-                  onClick={saveEditor}
-                  className="min-h-[44px] px-4 py-2 rounded-xl text-white font-medium bg-[var(--brand)] hover:bg-[var(--brand-hover)]"
-                >
-                  Guardar cambios
-                </button>
+              <div className="px-4 py-3 sm:px-6 sm:py-4 border-t sticky bottom-0 bg-white z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                    checked={notifyOnSave}
+                    onChange={(e) => setNotifyOnSave(e.target.checked)}
+                  />
+                  Notificar cambios al cliente por correo
+                </label>
+                <div className="flex gap-2 self-end sm:self-auto">
+                  <button
+                    onClick={() => setOpen(false)}
+                    className="min-h-[44px] px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 font-medium"
+                  >
+                    Cerrar
+                  </button>
+                  <button
+                    onClick={saveEditor}
+                    className="min-h-[44px] px-4 py-2 rounded-xl text-white font-medium bg-[var(--brand)] hover:bg-[var(--brand-hover)]"
+                  >
+                    Guardar cambios
+                  </button>
+                </div>
               </div>
             </div>
           </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Reagendamiento */}
+      {rescheduleModal.open && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+            <div className="px-6 py-4 border-b flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-lg">Reagendar cita</h3>
+                {rescheduleModal.apptRow && (
+                  <p className="text-sm text-slate-500 mt-0.5">
+                    {rescheduleModal.apptRow.customer_name} · Actual: {fmt(rescheduleModal.apptRow.start_time)}–{fmt(rescheduleModal.apptRow.end_time)}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => setRescheduleModal({ open: false, id: null, date: "", start: "", end: "", apptRow: null })}
+                className="flex items-center justify-center w-10 h-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-xl font-bold text-slate-600"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Nueva fecha</label>
+                <input
+                  type="date"
+                  value={rescheduleModal.date}
+                  onChange={(e) => setRescheduleModal((s) => ({ ...s, date: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Hora inicio</label>
+                  <input
+                    type="time"
+                    step={60}
+                    value={rescheduleModal.start}
+                    onChange={(e) => setRescheduleModal((s) => ({ ...s, start: e.target.value }))}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Hora fin</label>
+                  <input
+                    type="time"
+                    step={60}
+                    value={rescheduleModal.end}
+                    onChange={(e) => setRescheduleModal((s) => ({ ...s, end: e.target.value }))}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none pt-1">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                  checked={notifyReschedule}
+                  onChange={(e) => setNotifyReschedule(e.target.checked)}
+                />
+                Notificar al cliente por correo con el nuevo horario
+              </label>
+            </div>
+
+            <div className="px-6 py-4 border-t flex justify-end gap-2">
+              <button
+                onClick={() => setRescheduleModal({ open: false, id: null, date: "", start: "", end: "", apptRow: null })}
+                className="min-h-[44px] px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={submitReschedule}
+                className="min-h-[44px] px-5 py-2 rounded-xl text-white font-medium bg-indigo-600 hover:bg-indigo-700 transition-colors"
+              >
+                Confirmar reagendamiento
+              </button>
+            </div>
           </div>
         </div>
       )}
