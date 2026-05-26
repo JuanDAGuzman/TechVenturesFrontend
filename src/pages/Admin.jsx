@@ -109,6 +109,9 @@ export default function AdminPage() {
   const [evidenceFiles, setEvidenceFiles] = useState([]);
   const [uploadingEvidence, setUploadingEvidence] = useState(false);
   const [lastCreatedLink, setLastCreatedLink] = useState(null);
+  const [shippingLinkDate, setShippingLinkDate] = useState(
+    new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10)
+  );
 
   // Estados para blacklist y buscador
   const [searchQuery, setSearchQuery] = useState("");
@@ -985,22 +988,30 @@ export default function AdminPage() {
 
       {/* Acceso rápido para envíos */}
       <section className="card border-2 border-slate-200">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="font-bold text-xl mb-1">📦 Link de Envío</h2>
-            <p className="text-sm text-slate-500">
-              Comparte este link con clientes que van a hacer un envío — los lleva directo al formulario sin mostrar otros métodos.
-            </p>
+        <div className="mb-4">
+          <h2 className="font-bold text-xl mb-1">📦 Link de Envío</h2>
+          <p className="text-sm text-slate-500">
+            Comparte este link con clientes que van a hacer un envío — los lleva directo al formulario sin mostrar otros métodos.
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-slate-600">Fecha del envío</label>
+            <input
+              type="date"
+              value={shippingLinkDate}
+              onChange={(e) => setShippingLinkDate(e.target.value)}
+              className="px-3 py-2.5 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
+            />
           </div>
           <button
             onClick={() => {
-              const todayBogota = new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10);
-              const link = `${window.location.origin}/?type=SHIPPING&date=${todayBogota}`;
+              const link = `${window.location.origin}/?type=SHIPPING&date=${shippingLinkDate}`;
               const msg = `¡Hola! 😊 Para gestionar tu envío solo entra al link, llena tus datos y la dirección de entrega — nosotros nos encargamos del resto:\n\n👉 ${link}\n\nCualquier duda, me avisas. 🚀`;
               navigator.clipboard.writeText(msg);
               setToast("Mensaje de envío copiado al portapapeles.");
             }}
-            className="shrink-0 min-h-[44px] px-5 py-2.5 rounded-xl bg-slate-800 text-white text-sm font-semibold hover:bg-slate-700 transition-colors"
+            className="sm:self-end min-h-[44px] px-5 py-2.5 rounded-xl bg-slate-800 text-white text-sm font-semibold hover:bg-slate-700 transition-colors"
           >
             🔗 Copiar mensaje
           </button>
