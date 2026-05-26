@@ -966,7 +966,7 @@ export default function AdminPage() {
                         onClick={() => openEditor(r.id)}
                         className="px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium transition-colors"
                       >
-                        ✏️ Editar
+                        Editar
                       </button>
                     </td>
                   </tr>
@@ -1245,7 +1245,7 @@ export default function AdminPage() {
                               setWEdit({ start: r.start, end: r.end });
                             }}
                           >
-                            ✏️ Editar
+                            Editar
                           </button>
                           <button
                             className="flex-1 px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-medium hover:bg-indigo-100 transition-colors"
