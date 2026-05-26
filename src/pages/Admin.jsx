@@ -666,8 +666,8 @@ export default function AdminPage() {
     try {
       const res = await fetch(`${API}/admin/search-customer?q=${encodeURIComponent(q)}`, { headers });
       const data = await res.json();
-      if (data.ok && data.customers?.length > 0) {
-        const c = data.customers[0];
+      if (data.ok && data.items?.length > 0) {
+        const c = data.items[0];
         setQbForm((f) => ({
           ...f,
           customer_name: c.customer_name || f.customer_name,
