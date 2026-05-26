@@ -117,6 +117,30 @@ export default function AdminPage() {
   const [rescheduleModal, setRescheduleModal] = useState({ open: false, id: null, date: "", start: "", end: "", apptRow: null });
   const [notifyReschedule, setNotifyReschedule] = useState(true);
 
+  const QB_EMPTY = {
+    type_code: "SHIPPING",
+    date: dayjs().format("YYYY-MM-DD"),
+    start_time: "",
+    end_time: "",
+    customer_name: "",
+    customer_email: "",
+    customer_phone: "",
+    customer_id_number: "",
+    product: "",
+    notes: "",
+    shipping_address: "",
+    shipping_neighborhood: "",
+    shipping_city: "",
+    shipping_carrier: "",
+    send_email: true,
+  };
+  const [showQbModal, setShowQbModal] = useState(false);
+  const [qbForm, setQbForm] = useState(QB_EMPTY);
+  const [qbSlots, setQbSlots] = useState([]);
+  const [qbLoadingSlots, setQbLoadingSlots] = useState(false);
+  const [qbErrors, setQbErrors] = useState({});
+  const [qbSubmitting, setQbSubmitting] = useState(false);
+
   // Estados para blacklist y buscador
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCandidates, setSearchCandidates] = useState([]); // Para cuando hay múltiples coincidencias
@@ -633,6 +657,68 @@ export default function AdminPage() {
     }
   }
 
+  async function fetchQbSlots(date, type) {
+    if (!date || type === "SHIPPING") { setQbSlots([]); return; }
+    setQbLoadingSlots(true);
+    try {
+      const r = await fetch(`${API}/availability?date=${date}&type=${type}`);
+      const j = await r.json();
+      setQbSlots(Array.isArray(j?.data?.slots) ? j.data.slots : []);
+    } catch { setQbSlots([]); }
+    finally { setQbLoadingSlots(false); }
+  }
+
+  function validateQbForm() {
+    const e = {};
+    if (!qbForm.customer_name.trim()) e.customer_name = "Nombre obligatorio";
+    if (!qbForm.customer_email.trim()) e.customer_email = "Correo obligatorio";
+    if (!qbForm.product.trim()) e.product = "Producto obligatorio";
+    if (!qbForm.date) e.date = "Fecha obligatoria";
+    if (qbForm.type_code !== "SHIPPING" && !qbForm.start_time) e.slot = "Selecciona un horario";
+    if (qbForm.type_code === "SHIPPING") {
+      if (!qbForm.shipping_address.trim()) e.shipping_address = "Dirección obligatoria";
+      if (!qbForm.shipping_neighborhood.trim()) e.shipping_neighborhood = "Barrio obligatorio";
+      if (!qbForm.shipping_city.trim()) e.shipping_city = "Ciudad obligatoria";
+      if (!qbForm.shipping_carrier) e.shipping_carrier = "Transportadora obligatoria";
+    }
+    setQbErrors(e);
+    return e;
+  }
+
+  async function submitQuickBook() {
+    const errs = validateQbForm();
+    if (Object.keys(errs).length > 0) {
+      const labels = {
+        customer_name: "Nombre", customer_email: "Correo", product: "Producto",
+        date: "Fecha", slot: "Horario", shipping_address: "Dirección",
+        shipping_neighborhood: "Barrio", shipping_city: "Ciudad", shipping_carrier: "Transportadora",
+      };
+      setToast("Faltan: " + Object.keys(errs).map(k => labels[k] || k).join(", "));
+      return;
+    }
+    setQbSubmitting(true);
+    try {
+      const r = await fetch(`${API}/admin/appointments`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(qbForm),
+      });
+      const j = await safeJson(r);
+      if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
+      setShowQbModal(false);
+      setQbForm(QB_EMPTY);
+      setQbSlots([]);
+      setQbErrors({});
+      await fetchAppts();
+      setToast("Cita agendada correctamente.");
+    } catch (e) {
+      console.error("[quickBook]", e);
+      setToast("No se pudo agendar: " + (e?.message || "error"));
+    } finally {
+      setQbSubmitting(false);
+    }
+  }
+
   // Funciones de Blacklist
   async function searchCustomer() {
     if (!searchQuery || !token) return;
@@ -820,6 +906,12 @@ export default function AdminPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
+            <button
+              onClick={() => { setShowQbModal(true); setQbForm({ ...QB_EMPTY, date }); setQbSlots([]); setQbErrors({}); }}
+              className="px-5 py-2.5 rounded-xl text-white font-medium bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all"
+            >
+              Agendar cita
+            </button>
             <button
               onClick={fetchAppts}
               className="px-5 py-2.5 rounded-xl bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-700 flex items-center gap-2"
@@ -2125,6 +2217,188 @@ export default function AdminPage() {
               </div>
             </div>
           </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Agenda Rápida */}
+      {showQbModal && (
+        <div className="fixed inset-0 z-50 bg-black/40 overflow-y-auto">
+          <div className="flex min-h-full sm:items-start sm:justify-center sm:p-4">
+            <div className="w-full sm:max-w-2xl sm:my-6">
+              <div className="bg-white sm:rounded-2xl shadow-xl overflow-hidden">
+                <div className="px-4 py-3 sm:px-6 sm:py-4 border-b sticky top-0 bg-white z-10 flex items-center justify-between gap-3">
+                  <h3 className="font-bold text-base sm:text-lg">Agendar cita</h3>
+                  <button onClick={() => setShowQbModal(false)} className="flex items-center justify-center w-11 h-11 rounded-xl bg-slate-100 hover:bg-slate-200 text-xl font-bold text-slate-600">×</button>
+                </div>
+
+                <div className="p-4 sm:p-6 space-y-4">
+                  {/* Tipo */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {["TRYOUT", "PICKUP", "SHIPPING"].map((t) => (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => {
+                          setQbForm((f) => ({ ...f, type_code: t, start_time: "", end_time: "" }));
+                          fetchQbSlots(qbForm.date, t);
+                        }}
+                        className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${qbForm.type_code === t ? "bg-indigo-600 text-white border-indigo-600" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}
+                      >
+                        {t === "TRYOUT" ? "Ensayar" : t === "PICKUP" ? "Prueba remota" : "Envío"}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Fecha + Horario */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1">Fecha <span className="text-red-500">*</span></label>
+                      <input
+                        type="date"
+                        value={qbForm.date}
+                        onChange={(e) => {
+                          setQbForm((f) => ({ ...f, date: e.target.value, start_time: "", end_time: "" }));
+                          fetchQbSlots(e.target.value, qbForm.type_code);
+                          setQbErrors((er) => ({ ...er, date: undefined }));
+                        }}
+                        className={`w-full px-3 py-2.5 rounded-xl border-2 outline-none transition ${qbErrors.date ? "border-red-400" : "border-slate-200 focus:border-indigo-400"}`}
+                      />
+                      {qbErrors.date && <p className="text-red-500 text-xs mt-1">{qbErrors.date}</p>}
+                    </div>
+
+                    {qbForm.type_code !== "SHIPPING" && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Horario <span className="text-red-500">*</span></label>
+                        {qbLoadingSlots ? (
+                          <p className="text-sm text-slate-500 py-2">Cargando horarios...</p>
+                        ) : qbSlots.length === 0 ? (
+                          <p className="text-sm text-slate-400 py-2">No hay horarios disponibles para esta fecha</p>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-1.5 max-h-32 overflow-y-auto">
+                            {qbSlots.map((s) => {
+                              const active = qbForm.start_time === s.start && qbForm.end_time === s.end;
+                              return (
+                                <button
+                                  key={`${s.start}-${s.end}`}
+                                  type="button"
+                                  onClick={() => { setQbForm((f) => ({ ...f, start_time: s.start, end_time: s.end })); setQbErrors((er) => ({ ...er, slot: undefined })); }}
+                                  className={`py-1.5 px-2 rounded-lg text-xs font-medium border-2 transition-all ${active ? "bg-indigo-600 text-white border-indigo-600" : "border-slate-200 hover:border-indigo-300"}`}
+                                >
+                                  {s.start} – {s.end}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                        {qbErrors.slot && <p className="text-red-500 text-xs mt-1">{qbErrors.slot}</p>}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Datos del cliente */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {[
+                      { key: "customer_name", label: "Nombre completo", required: true, placeholder: "Juan Pérez" },
+                      { key: "customer_id_number", label: "Cédula", placeholder: "123456789" },
+                      { key: "customer_phone", label: "Celular", placeholder: "3001234567" },
+                      { key: "customer_email", label: "Correo", required: true, placeholder: "correo@ejemplo.com" },
+                    ].map(({ key, label, required, placeholder }) => (
+                      <div key={key}>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">{label} {required && <span className="text-red-500">*</span>}</label>
+                        <input
+                          type="text"
+                          value={qbForm[key]}
+                          onChange={(e) => { setQbForm((f) => ({ ...f, [key]: e.target.value })); setQbErrors((er) => ({ ...er, [key]: undefined })); }}
+                          placeholder={placeholder}
+                          className={`w-full px-3 py-2.5 rounded-xl border-2 outline-none transition ${qbErrors[key] ? "border-red-400" : "border-slate-200 focus:border-indigo-400"}`}
+                        />
+                        {qbErrors[key] && <p className="text-red-500 text-xs mt-1">{qbErrors[key]}</p>}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Producto <span className="text-red-500">*</span></label>
+                    <input
+                      type="text"
+                      value={qbForm.product}
+                      onChange={(e) => { setQbForm((f) => ({ ...f, product: e.target.value })); setQbErrors((er) => ({ ...er, product: undefined })); }}
+                      placeholder="ej. RTX 3070"
+                      className={`w-full px-3 py-2.5 rounded-xl border-2 outline-none transition ${qbErrors.product ? "border-red-400" : "border-slate-200 focus:border-indigo-400"}`}
+                    />
+                    {qbErrors.product && <p className="text-red-500 text-xs mt-1">{qbErrors.product}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Notas <span className="text-slate-400 text-xs font-normal">(opcional)</span></label>
+                    <textarea rows={2} value={qbForm.notes} onChange={(e) => setQbForm((f) => ({ ...f, notes: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition resize-none" />
+                  </div>
+
+                  {/* Campos de envío */}
+                  {qbForm.type_code === "SHIPPING" && (
+                    <div className="space-y-3 pt-2 border-t border-slate-100">
+                      <p className="text-sm font-semibold text-slate-700">Datos de envío</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {[
+                          { key: "shipping_address", label: "Dirección", placeholder: "Calle 123 #45-67", span: 2 },
+                          { key: "shipping_neighborhood", label: "Barrio", placeholder: "Chapinero" },
+                          { key: "shipping_city", label: "Ciudad", placeholder: "Bogotá" },
+                        ].map(({ key, label, placeholder, span }) => (
+                          <div key={key} className={span === 2 ? "sm:col-span-2" : ""}>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">{label} <span className="text-red-500">*</span></label>
+                            <input
+                              type="text"
+                              value={qbForm[key]}
+                              onChange={(e) => { setQbForm((f) => ({ ...f, [key]: e.target.value })); setQbErrors((er) => ({ ...er, [key]: undefined })); }}
+                              placeholder={placeholder}
+                              className={`w-full px-3 py-2.5 rounded-xl border-2 outline-none transition ${qbErrors[key] ? "border-red-400" : "border-slate-200 focus:border-indigo-400"}`}
+                            />
+                            {qbErrors[key] && <p className="text-red-500 text-xs mt-1">{qbErrors[key]}</p>}
+                          </div>
+                        ))}
+                        <div className="sm:col-span-2">
+                          <label className="block text-sm font-medium text-slate-700 mb-1">Transportadora <span className="text-red-500">*</span></label>
+                          <select
+                            value={qbForm.shipping_carrier}
+                            onChange={(e) => { setQbForm((f) => ({ ...f, shipping_carrier: e.target.value })); setQbErrors((er) => ({ ...er, shipping_carrier: undefined })); }}
+                            className={`w-full px-3 py-2.5 rounded-xl border-2 outline-none bg-white transition ${qbErrors.shipping_carrier ? "border-red-400" : "border-slate-200 focus:border-indigo-400"}`}
+                          >
+                            <option value="">Selecciona...</option>
+                            <option value="PICAP">PICAP</option>
+                            <option value="INTERRAPIDISIMO">INTERRAPIDISIMO</option>
+                          </select>
+                          {qbErrors.shipping_carrier && <p className="text-red-500 text-xs mt-1">{qbErrors.shipping_carrier}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none pt-1">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                      checked={qbForm.send_email}
+                      onChange={(e) => setQbForm((f) => ({ ...f, send_email: e.target.checked }))}
+                    />
+                    Enviar correo de confirmación al cliente
+                  </label>
+                </div>
+
+                <div className="px-4 py-3 sm:px-6 sm:py-4 border-t sticky bottom-0 bg-white z-10 flex justify-end gap-2">
+                  <button onClick={() => setShowQbModal(false)} className="min-h-[44px] px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 font-medium">
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={submitQuickBook}
+                    disabled={qbSubmitting}
+                    className="min-h-[44px] px-5 py-2 rounded-xl text-white font-medium bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+                  >
+                    {qbSubmitting ? "Agendando..." : "Agendar"}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}

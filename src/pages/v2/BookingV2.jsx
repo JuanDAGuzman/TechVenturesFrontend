@@ -485,14 +485,38 @@ export default function BookingV2() {
         }
 
         setErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        return newErrors;
     }
+
+    const FIELD_LABELS = {
+        fullName: "Nombre completo",
+        idNumber: "Cédula",
+        phone: "Celular",
+        email: "Correo",
+        product: "Producto",
+        date: "Fecha",
+        slot: "Horario",
+        shippingAddress: "Dirección",
+        shippingNeighborhood: "Barrio",
+        shippingCity: "Ciudad",
+        shippingCarrier: "Transportadora",
+    };
 
     async function handleSubmit(e) {
         e.preventDefault();
 
-        if (!validateForm()) {
-            toast.error("Por favor completa todos los campos obligatorios");
+        const validationErrors = validateForm();
+        if (Object.keys(validationErrors).length > 0) {
+            const missing = Object.keys(validationErrors).map((k) => FIELD_LABELS[k] || k);
+            toast.error("Faltan campos por completar", {
+                description: missing.join(" · "),
+                icon: <AlertCircle className="w-5 h-5" />,
+                duration: 6000,
+            });
+            // Scroll al primer campo con error
+            setTimeout(() => {
+                document.querySelector(".err")?.scrollIntoView({ behavior: "smooth", block: "center" });
+            }, 100);
             return;
         }
 
@@ -501,11 +525,8 @@ export default function BookingV2() {
 
         if (method === "TRYOUT" || method === "PICKUP") {
             if (!selectedSlot) {
-                toast.error("Selecciona un horario disponible");
-                setErrors((prev) => ({
-                    ...prev,
-                    slot: "Selecciona un horario",
-                }));
+                toast.error("Selecciona un horario disponible", { icon: <AlertCircle className="w-5 h-5" /> });
+                setErrors((prev) => ({ ...prev, slot: "Selecciona un horario" }));
                 return;
             }
             start_time = selectedSlot.start;
