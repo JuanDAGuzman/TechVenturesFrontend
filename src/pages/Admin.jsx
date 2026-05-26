@@ -142,6 +142,7 @@ export default function AdminPage() {
   const [qbErrors, setQbErrors] = useState({});
   const [qbSubmitting, setQbSubmitting] = useState(false);
   const [qbLookingUp, setQbLookingUp] = useState(false);
+  const [qbFoundCustomer, setQbFoundCustomer] = useState(null);
 
   // Estados para blacklist y buscador
   const [searchQuery, setSearchQuery] = useState("");
@@ -662,21 +663,31 @@ export default function AdminPage() {
   async function lookupQbCustomer(idNumber) {
     const q = idNumber.trim();
     if (!q) return;
+    setQbFoundCustomer(null);
     setQbLookingUp(true);
     try {
-      const res = await fetch(`${API}/admin/search-customer?q=${encodeURIComponent(q)}`, { headers });
+      const res = await fetch(`${API}/admin/customer-latest/${encodeURIComponent(q)}`, { headers });
       const data = await res.json();
-      if (data.ok && data.items?.length > 0) {
-        const c = data.items[0];
-        setQbForm((f) => ({
-          ...f,
-          customer_name: c.customer_name || f.customer_name,
-          customer_phone: c.customer_phone || f.customer_phone,
-          customer_email: c.customer_email || f.customer_email,
-        }));
+      if (data.ok && data.customer) {
+        setQbFoundCustomer(data.customer);
       }
     } catch (_) {}
     setQbLookingUp(false);
+  }
+
+  function applyQbFoundCustomer() {
+    if (!qbFoundCustomer) return;
+    setQbForm((f) => ({
+      ...f,
+      customer_name: qbFoundCustomer.customer_name || f.customer_name,
+      customer_phone: qbFoundCustomer.customer_phone || f.customer_phone,
+      customer_email: qbFoundCustomer.customer_email || f.customer_email,
+      shipping_address: qbFoundCustomer.shipping_address || f.shipping_address,
+      shipping_neighborhood: qbFoundCustomer.shipping_neighborhood || f.shipping_neighborhood,
+      shipping_city: qbFoundCustomer.shipping_city || f.shipping_city,
+      shipping_carrier: qbFoundCustomer.shipping_carrier || f.shipping_carrier,
+    }));
+    setQbFoundCustomer(null);
   }
 
   async function fetchQbSlots(date, type) {
@@ -729,6 +740,7 @@ export default function AdminPage() {
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
       setShowQbModal(false);
       setQbForm(QB_EMPTY);
+      setQbFoundCustomer(null);
       setQbSlots([]);
       setQbErrors({});
       await fetchAppts();
@@ -2318,6 +2330,33 @@ export default function AdminPage() {
                       </div>
                     )}
                   </div>
+
+                  {/* Banner de confirmación de datos encontrados */}
+                  {qbFoundCustomer && (
+                    <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50 p-3 flex items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-indigo-800">Cliente encontrado</p>
+                        <p className="text-sm text-indigo-700 truncate">{qbFoundCustomer.customer_name}</p>
+                        <p className="text-xs text-indigo-500 mt-0.5">{qbFoundCustomer.customer_email} · {qbFoundCustomer.customer_phone}</p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setQbFoundCustomer(null)}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
+                        >
+                          Ignorar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={applyQbFoundCustomer}
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700"
+                        >
+                          Cargar datos
+                        </button>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Datos del cliente */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
