@@ -12,11 +12,11 @@ const CATEGORIES     = ["Todos", "NVIDIA", "AMD", "Intel", "Componentes", "Celul
 const CATEGORY_ORDER = ["NVIDIA", "AMD", "Intel", "Componentes", "Celulares"];
 
 const BRAND = {
-  NVIDIA:      { dot: "#76B900", badge: { background: "rgba(118,185,0,0.15)",   color: "#4a7a00" } },
-  AMD:         { dot: "#ED1C24", badge: { background: "rgba(237,28,36,0.12)",   color: "#c0111a" } },
-  Intel:       { dot: "#0068B5", badge: { background: "rgba(0,104,181,0.12)",   color: "#005da0" } },
-  Componentes: { dot: "#64748b", badge: { background: "rgba(100,116,139,0.12)", color: "#475569" } },
-  Celulares:   { dot: "#8B5CF6", badge: { background: "rgba(139,92,246,0.12)",  color: "#6d28d9" } },
+  NVIDIA:      { dot: "#76B900", hover: "#5d9000", ring: "rgba(118,185,0,0.22)",   badge: { background: "rgba(118,185,0,0.15)",   color: "#4a7a00" } },
+  AMD:         { dot: "#ED1C24", hover: "#c0111a", ring: "rgba(237,28,36,0.2)",    badge: { background: "rgba(237,28,36,0.12)",   color: "#c0111a" } },
+  Intel:       { dot: "#0068B5", hover: "#004d87", ring: "rgba(0,104,181,0.2)",    badge: { background: "rgba(0,104,181,0.12)",   color: "#005da0" } },
+  Componentes: { dot: "#64748b", hover: "#475569", ring: "rgba(100,116,139,0.2)",  badge: { background: "rgba(100,116,139,0.12)", color: "#475569" } },
+  Celulares:   { dot: "#8B5CF6", hover: "#6d28d9", ring: "rgba(139,92,246,0.22)",  badge: { background: "rgba(139,92,246,0.12)",  color: "#6d28d9" } },
 };
 
 function formatPrice(p) {
@@ -84,13 +84,13 @@ function ProductCard({ product, waLink }) {
 
         {/* Precio + botón siempre pegados al fondo del card */}
         <div className="mt-auto pt-2">
-          <p className="text-sm font-extrabold text-brand-indigo">{formatPrice(product.price)}</p>
+          <p className="text-sm font-extrabold brand-text">{formatPrice(product.price)}</p>
           {product.available ? (
             <a
               href={waLink(product.name)}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1.5 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl bg-brand-indigo hover:bg-brand-hover text-white text-xs font-bold transition-colors"
+              className="mt-1.5 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl btn-primary text-xs"
             >
               <MessageCircle className="w-3 h-3" />
               Consultar
@@ -166,24 +166,30 @@ export default function CatalogoV2() {
     setMaxPrice("");
   }
 
+  // CSS variables que se aplican dinámicamente según la categoría activa
+  const themeVars = useMemo(() => {
+    const b = BRAND[category];
+    if (!b) return {};                      // "Todos" → usa el indigo del root
+    return { "--brand": b.dot, "--brand-hover": b.hover, "--brand-ring": b.ring };
+  }, [category]);
+
   const trade   = settings.trade_in_note;
   const payment = settings.payment_methods;
   const price   = settings.prices_note;
 
   return (
-    <div className="container-page pb-8">
+    <div className="container-page pb-8" style={themeVars}>
 
       {/* Cabecera */}
       <div className="mb-4">
-        <h1 className="text-2xl font-extrabold text-brand-indigo">Catálogo</h1>
+        <h1 className="text-2xl font-extrabold brand-text">Catálogo</h1>
         <p className="text-sm text-slate-500 mt-0.5">Hardware usado · GPUs y más</p>
       </div>
 
-      {/* ── Banner de información — fondo limpio, acento sutil ── */}
+      {/* ── Banner de información ── */}
       {(trade || payment || price) && (
         <div className="mb-5 rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-          {/* Franja delgada de acento en la marca */}
-          <div className="h-1 bg-brand-indigo" />
+          <div className="h-1" style={{ background: "var(--brand)" }} />
           <div className="px-4 py-2 border-b border-slate-100">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
               📋 Antes de comprar — léelo
@@ -192,8 +198,8 @@ export default function CatalogoV2() {
           <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
             {trade && (
               <div className="flex items-start gap-3 px-5 py-4">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 mt-0.5">
-                  <Repeat2 className="w-4 h-4 text-brand-indigo" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: "var(--brand-ring)" }}>
+                  <Repeat2 className="w-4 h-4 brand-text" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-slate-800">¿Tienes una gráfica usada?</p>
@@ -203,8 +209,8 @@ export default function CatalogoV2() {
             )}
             {payment && (
               <div className="flex items-start gap-3 px-5 py-4">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 mt-0.5">
-                  <CreditCard className="w-4 h-4 text-brand-indigo" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: "var(--brand-ring)" }}>
+                  <CreditCard className="w-4 h-4 brand-text" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-slate-800">Formas de pago</p>
@@ -214,8 +220,8 @@ export default function CatalogoV2() {
             )}
             {price && (
               <div className="flex items-start gap-3 px-5 py-4">
-                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 mt-0.5">
-                  <Tag className="w-4 h-4 text-brand-indigo" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: "var(--brand-ring)" }}>
+                  <Tag className="w-4 h-4 brand-text" />
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-bold text-slate-800">Precios fijos</p>
@@ -238,7 +244,7 @@ export default function CatalogoV2() {
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
-                style={active && b ? { background: b.dot, color: "#fff", borderColor: "transparent" } : {}}
+                style={active ? { background: "var(--brand)", color: "#fff", borderColor: "transparent" } : {}}
                 className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide border transition-all ${
                   active ? "shadow-sm" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
                 }`}
@@ -257,7 +263,7 @@ export default function CatalogoV2() {
             placeholder="Buscar producto..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none text-sm bg-white"
+            className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-slate-200 input-themed outline-none text-sm bg-white"
           />
         </div>
 
@@ -265,11 +271,11 @@ export default function CatalogoV2() {
         <div className="flex gap-2">
           <input type="number" min="0" placeholder="Precio mín" value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
-            className="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none text-sm bg-white"
+            className="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-200 input-themed outline-none text-sm bg-white"
           />
           <input type="number" min="0" placeholder="Precio máx" value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
-            className="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none text-sm bg-white"
+            className="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-200 input-themed outline-none text-sm bg-white"
           />
         </div>
       </div>
@@ -280,7 +286,7 @@ export default function CatalogoV2() {
           {loading ? "Cargando..." : `${availableCount} disponible${availableCount !== 1 ? "s" : ""} · ${filtered.length} en total`}
         </p>
         {hasActiveFilters && (
-          <button onClick={clearFilters} className="text-xs text-indigo-600 font-semibold hover:underline">
+          <button onClick={clearFilters} className="text-xs brand-text font-semibold hover:underline">
             Limpiar filtros
           </button>
         )}
@@ -301,7 +307,7 @@ export default function CatalogoV2() {
             {hasActiveFilters ? "Prueba con otros filtros" : "No hay productos por el momento"}
           </p>
           {hasActiveFilters && (
-            <button onClick={clearFilters} className="mt-3 text-sm text-indigo-600 font-semibold hover:underline">
+            <button onClick={clearFilters} className="mt-3 text-sm brand-text font-semibold hover:underline">
               Limpiar filtros
             </button>
           )}
