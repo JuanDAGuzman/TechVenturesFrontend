@@ -2,7 +2,7 @@ import { createPortal } from "react-dom";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { getAdminToken } from "../lib/adminSession.js";
 import {
-  Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown,
+  Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X,
 } from "lucide-react";
 
 const API = (
@@ -103,8 +103,12 @@ export default function AdminCatalogo() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState("");
 
-  // Imagen pendiente de subir
-  const [pendingImage, setPendingImage] = useState(null); // { base64, ext, preview }
+  // Imagen pendiente de subir (archivo local)
+  const [pendingImage, setPendingImage] = useState(null);      // { base64, ext, preview }
+  // Imagen pendiente de URL externa (búsqueda Google)
+  const [pendingImageUrl, setPendingImageUrl] = useState(null);
+  const [imageSearchResults, setImageSearchResults] = useState([]);
+  const [imageSearchLoading, setImageSearchLoading] = useState(false);
   const fileInputRef = useRef(null);
 
   // Confirmar eliminación
@@ -167,6 +171,8 @@ export default function AdminCatalogo() {
   function closeModal() {
     setModal({ open: false, product: null });
     setPendingImage(null);
+    setPendingImageUrl(null);
+    setImageSearchResults([]);
     setFormError("");
   }
 
@@ -185,6 +191,29 @@ export default function AdminCatalogo() {
     reader.readAsDataURL(file);
     // reset so re-selecting same file triggers onChange
     e.target.value = "";
+  }
+
+  // ── Búsqueda de imagen con Google ─────────────────────────────────────────
+
+  async function searchImages() {
+    if (!form.name.trim()) return;
+    setImageSearchLoading(true);
+    setImageSearchResults([]);
+    try {
+      const r = await fetch(
+        `${API}/admin/image-search?q=${encodeURIComponent(form.name)}`,
+        { headers }
+      );
+      const d = await r.json();
+      if (d.ok) setImageSearchResults(d.images || []);
+    } catch {}
+    setImageSearchLoading(false);
+  }
+
+  function selectSearchImage(imgUrl) {
+    setPendingImageUrl(imgUrl);
+    setPendingImage(null);       // descarta subida manual si había
+    setImageSearchResults([]);
   }
 
   // ── Guardar producto ───────────────────────────────────────────────────────
@@ -224,12 +253,20 @@ export default function AdminCatalogo() {
         savedProduct = d.product;
       }
 
-      // Subir imagen si hay una pendiente
+      // Subir imagen: base64 (archivo local) tiene prioridad sobre URL de búsqueda
       if (pendingImage) {
         const r = await fetch(`${API}/admin/products/${savedProduct.id}/image`, {
           method: "POST",
           headers,
           body: JSON.stringify({ image: pendingImage.base64, ext: pendingImage.ext }),
+        });
+        const d = await r.json();
+        if (d.ok) savedProduct = { ...savedProduct, image_url: d.image_url };
+      } else if (pendingImageUrl) {
+        const r = await fetch(`${API}/admin/products/${savedProduct.id}/image-url`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ url: pendingImageUrl }),
         });
         const d = await r.json();
         if (d.ok) savedProduct = { ...savedProduct, image_url: d.image_url };
@@ -305,6 +342,7 @@ export default function AdminCatalogo() {
   // ── Imagen del modal (preview actual) ─────────────────────────────────────
 
   const currentImageSrc = pendingImage?.preview
+    ?? pendingImageUrl
     ?? (modal.product?.image_url || null);
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -521,6 +559,51 @@ export default function AdminCatalogo() {
                       className="hidden"
                       onChange={handleFileChange}
                     />
+                  </div>
+
+                  {/* Búsqueda automática con Google */}
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={searchImages}
+                        disabled={imageSearchLoading || !form.name.trim()}
+                        className="flex items-center gap-1.5 text-xs font-semibold text-brand-indigo hover:underline disabled:opacity-40 disabled:no-underline transition-opacity"
+                      >
+                        <Search className="w-3.5 h-3.5" />
+                        {imageSearchLoading ? "Buscando..." : "Buscar imagen con Google"}
+                      </button>
+                      {imageSearchResults.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setImageSearchResults([])}
+                          className="text-slate-400 hover:text-slate-600"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Grid de resultados */}
+                    {imageSearchResults.length > 0 && (
+                      <div className="mt-2 grid grid-cols-4 gap-1.5">
+                        {imageSearchResults.map((img, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => selectSearchImage(img.url)}
+                            className="aspect-square rounded-xl overflow-hidden border-2 border-slate-200 hover:border-brand-indigo transition-all"
+                            title={img.title}
+                          >
+                            <img
+                              src={img.thumb}
+                              alt={img.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   {/* Nombre */}
