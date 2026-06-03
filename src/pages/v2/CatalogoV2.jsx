@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Search, MessageCircle, Cpu, Smartphone, Package, ArrowLeftRight, CreditCard, Tag } from "lucide-react";
+import { Search, MessageCircle, Cpu, Smartphone, Package, CreditCard, Tag, Repeat2 } from "lucide-react";
 
 const API = (
   import.meta.env.VITE_API_BASE ??
@@ -190,29 +190,35 @@ export default function CatalogoV2() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
             {trade && (
-              <div className="flex items-start gap-3 px-4 py-4">
-                <span className="text-xl shrink-0 mt-0.5">🎮</span>
-                <div>
+              <div className="flex items-start gap-3 px-5 py-4">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 mt-0.5">
+                  <Repeat2 className="w-4 h-4 text-brand-indigo" />
+                </div>
+                <div className="min-w-0">
                   <p className="text-sm font-bold text-slate-800">¿Tienes una gráfica usada?</p>
-                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{trade}</p>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">{trade}</p>
                 </div>
               </div>
             )}
             {payment && (
-              <div className="flex items-start gap-3 px-4 py-4">
-                <span className="text-xl shrink-0 mt-0.5">💳</span>
-                <div>
+              <div className="flex items-start gap-3 px-5 py-4">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 mt-0.5">
+                  <CreditCard className="w-4 h-4 text-brand-indigo" />
+                </div>
+                <div className="min-w-0">
                   <p className="text-sm font-bold text-slate-800">Formas de pago</p>
-                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{payment}</p>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">{payment}</p>
                 </div>
               </div>
             )}
             {price && (
-              <div className="flex items-start gap-3 px-4 py-4">
-                <span className="text-xl shrink-0 mt-0.5">💎</span>
-                <div>
+              <div className="flex items-start gap-3 px-5 py-4">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0 mt-0.5">
+                  <Tag className="w-4 h-4 text-brand-indigo" />
+                </div>
+                <div className="min-w-0">
                   <p className="text-sm font-bold text-slate-800">Precios fijos</p>
-                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{price}</p>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">{price}</p>
                 </div>
               </div>
             )}
