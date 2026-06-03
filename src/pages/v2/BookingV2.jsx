@@ -137,7 +137,7 @@ function InfoModal({ open, onClose }) {
                             whileTap={{ scale: countdown === 0 ? 0.98 : 1 }}
                             onClick={onClose}
                             disabled={countdown > 0}
-                            className="px-6 py-3 rounded-xl font-bold text-white bg-brand-indigo hover:bg-indigo-800 disabled:opacity-60 disabled:cursor-not-allowed transition shadow-lg"
+                            className="btn-primary px-6 py-3 disabled:opacity-60 disabled:cursor-not-allowed"
                         >
                             {countdown > 0 ? `Entendido (${countdown})` : "Entendido"}
                         </motion.button>
@@ -712,7 +712,7 @@ export default function BookingV2() {
                                 transition={{ delay: 0.1 }}
                                 className="card border-2 border-slate-100 shadow-lg"
                             >
-                                <label className="lbl flex items-center gap-2 mb-4 text-brand-indigo">
+                                <label className="lbl flex items-center gap-2 mb-4 brand-text">
                                     <Sparkles className="w-5 h-5" />
                                     Método
                                 </label>
@@ -738,7 +738,7 @@ export default function BookingV2() {
                                                 whileHover={{ scale: 1.02 }}
                                                 whileTap={{ scale: 0.98 }}
                                                 className={`pill relative overflow-hidden ${isActive
-                                                    ? "bg-brand-indigo text-white shadow-md"
+                                                    ? "pill-on-i shadow-md"
                                                     : "bg-white text-slate-600 hover:bg-slate-50"
                                                     }`}
                                             >
@@ -769,8 +769,8 @@ export default function BookingV2() {
                                             transition={{ duration: 0.3 }}
                                             className="mt-4"
                                         >
-                                            <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200 border-l-4 border-l-brand-indigo text-slate-700">
-                                                <div className="font-extrabold text-lg mb-2 text-brand-indigo">Ensayo presencial</div>
+                                            <div className="callout">
+                                                <div className="callout-title text-lg">Ensayo presencial</div>
                                                 <ul className="list-disc pl-5 space-y-1">
                                                     <li>
                                                         Los horarios se habilitan manualmente en bloques de{" "}
@@ -800,8 +800,8 @@ export default function BookingV2() {
                                             transition={{ duration: 0.3 }}
                                             className="mt-4"
                                         >
-                                            <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 border-l-4 border-l-blue-600 text-slate-700">
-                                                <div className="font-extrabold text-lg mb-2 text-blue-700">Prueba remota + recogida presencial</div>
+                                            <div className="callout">
+                                                <div className="callout-title text-lg">Prueba remota + recogida presencial</div>
                                                 <ul className="list-disc pl-5 space-y-1">
                                                     <li>
                                                         Verificamos el producto y te enviamos <strong>videos de funcionamiento</strong> antes de tu cita.
@@ -824,8 +824,8 @@ export default function BookingV2() {
                                             transition={{ duration: 0.3 }}
                                             className="mt-4"
                                         >
-                                            <div className="p-4 rounded-xl bg-green-50 border border-green-200 border-l-4 border-l-brand-green text-slate-700">
-                                                <div className="font-extrabold text-lg mb-2 text-brand-green">
+                                            <div className="callout">
+                                                <div className="callout-title text-lg">
                                                     Envío (no contraentrega)
                                                 </div>
                                                 <ul className="list-disc pl-5 space-y-1">
@@ -856,7 +856,7 @@ export default function BookingV2() {
                             >
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <div>
-                                        <label className="lbl flex items-center gap-2 text-brand-indigo">
+                                        <label className="lbl flex items-center gap-2 brand-text">
                                             <Calendar className="w-5 h-5" />
                                             Fecha <span className="text-rose-500">*</span>
                                         </label>
@@ -873,7 +873,7 @@ export default function BookingV2() {
                                             min={new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString().slice(0, 10)}
                                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.date
                                                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"
+                                                : "border-slate-200 input-themed"
                                                 }`}
                                         />
 
@@ -891,7 +891,7 @@ export default function BookingV2() {
 
                                     {method !== "SHIPPING" && (
                                         <div>
-                                            <label className="lbl flex items-center gap-2 text-brand-indigo">
+                                            <label className="lbl flex items-center gap-2 brand-text">
                                                 <Clock className="w-5 h-5" />
                                                 Horario <span className="text-rose-500">*</span>
                                             </label>
@@ -914,7 +914,7 @@ export default function BookingV2() {
                                                         initial={{ opacity: 0 }}
                                                         animate={{ opacity: 1 }}
                                                         exit={{ opacity: 0 }}
-                                                        className="flex items-center justify-center gap-2 text-brand-indigo text-sm bg-slate-50 rounded-xl p-4 border-2 border-indigo-100"
+                                                        className="flex items-center justify-center gap-2 brand-text text-sm bg-slate-50 rounded-xl p-4 border-2 border-indigo-100"
                                                     >
                                                         <motion.div
                                                             animate={{ rotate: 360 }}
@@ -924,7 +924,7 @@ export default function BookingV2() {
                                                                 ease: "linear",
                                                             }}
                                                         >
-                                                            <Loader2 className="w-6 h-6 text-brand-indigo animate-spin" />
+                                                            <Loader2 className="w-6 h-6 brand-text animate-spin" />
                                                         </motion.div>
                                                         <span className="font-medium">Buscando horarios disponibles...</span>
                                                     </motion.div>
@@ -973,7 +973,7 @@ export default function BookingV2() {
                                                                     }}
                                                                     whileHover={{ scale: 1.03 }}
                                                                     whileTap={{ scale: 0.97 }}
-                                                                    className={`slot ${isActive ? "bg-brand-indigo text-white border-brand-indigo" : "bg-white text-slate-700 border-slate-200 hover:border-brand-indigo"
+                                                                    className={`slot ${isActive ? "slot-active-fill" : "bg-white text-slate-700 border-slate-200"
                                                                         } py-2 px-3 rounded-lg border-2 font-medium transition-all`}
                                                                 >
                                                                     {label}
@@ -1005,7 +1005,7 @@ export default function BookingV2() {
                                 transition={{ delay: 0.3 }}
                                 className="card border-2 border-slate-200 shadow-lg"
                             >
-                                <h3 className="lbl flex items-center gap-2 mb-4 text-brand-indigo">
+                                <h3 className="lbl flex items-center gap-2 mb-4 brand-text">
                                     <User className="w-5 h-5" />
                                     Datos personales
                                 </h3>
@@ -1026,7 +1026,7 @@ export default function BookingV2() {
                                             placeholder="Juan Pérez"
                                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.fullName
                                                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"
+                                                : "border-slate-200 input-themed"
                                                 }`}
                                         />
                                         {errors.fullName && (
@@ -1086,7 +1086,7 @@ export default function BookingV2() {
                                                 maxLength={20}
                                                 className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.idNumber
                                                     ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                    : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"
+                                                    : "border-slate-200 input-themed"
                                                     }`}
                                             />
                                             {isSearchingCustomer && (
@@ -1160,7 +1160,7 @@ export default function BookingV2() {
                                             maxLength={15}
                                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.phone
                                                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"
+                                                : "border-slate-200 input-themed"
                                                 }`}
                                         />
                                         {errors.phone && (
@@ -1192,7 +1192,7 @@ export default function BookingV2() {
                                             placeholder="correo@ejemplo.com"
                                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.email
                                                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"
+                                                : "border-slate-200 input-themed"
                                                 }`}
                                         />
                                         {errors.email && (
@@ -1209,7 +1209,7 @@ export default function BookingV2() {
 
                                     <div>
                                         <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
-                                            <Package className="w-4 h-4 text-brand-indigo" />
+                                            <Package className="w-4 h-4 brand-text" />
                                             Producto <span className="text-rose-500">*</span>
                                         </label>
                                         <motion.input
@@ -1223,7 +1223,7 @@ export default function BookingV2() {
                                             placeholder="ej. RTX 3070 EVGA XC3 ULTRA"
                                             className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-4 transition ${errors.product
                                                 ? "border-rose-500 focus:border-rose-500 focus:ring-rose-100"
-                                                : "border-slate-200 focus:border-brand-indigo focus:ring-indigo-100"
+                                                : "border-slate-200 input-themed"
                                                 }`}
                                         />
                                         {errors.product && (
@@ -1241,7 +1241,7 @@ export default function BookingV2() {
 
                                 <div>
                                     <label className="block text-sm font-semibold mb-2 text-slate-700 flex items-center gap-2">
-                                        <FileText className="w-4 h-4 text-brand-indigo" />
+                                        <FileText className="w-4 h-4 brand-text" />
                                         Notas{" "}
                                         <span className="text-slate-400 text-xs font-normal">
                                             (opcional)
@@ -1253,7 +1253,7 @@ export default function BookingV2() {
                                         onChange={(e) => setNotes(e.target.value)}
                                         placeholder="Ej: Gráfica entregada RTX 2060, gráfica deseada RTX 3070, monto a encimar $500.000"
                                         rows={3}
-                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-brand-indigo focus:ring-4 focus:ring-indigo-100 transition resize-none"
+                                        className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none input-themed transition resize-none"
                                     />
                                     <p className="text-xs text-slate-500 mt-1">
                                         Si das parte de pago con una gráfica, especifica: gráfica
@@ -1420,7 +1420,7 @@ export default function BookingV2() {
                                     type="submit"
                                     whileHover={{ scale: 1.01 }}
                                     whileTap={{ scale: 0.99 }}
-                                    className={`w-full py-4 rounded-xl font-bold text-white shadow-lg flex items-center justify-center gap-2 transition-all ${method === 'SHIPPING' ? 'bg-brand-green hover:bg-green-700' : 'bg-brand-indigo hover:bg-indigo-700'}`}
+                                    className="btn-primary w-full py-4 text-lg"
                                     disabled={loading}
                                 >
                                     <CheckCircle2 className="w-5 h-5" />
@@ -1439,7 +1439,7 @@ export default function BookingV2() {
                         >
                             <p className="text-center text-sm text-slate-500">
                                 ¿Tienes dudas? Escríbenos a{" "}
-                                <span className="text-brand-indigo font-semibold">
+                                <span className="brand-text font-semibold">
                                     <a
                                         href="mailto:techventuresco@gmail.com"
                                         target="_blank"
@@ -1492,7 +1492,7 @@ export default function BookingV2() {
                             <p className="text-slate-600 mb-8 leading-relaxed">
                                 Hemos recibido tu solicitud correctamente.
                                 <br />
-                                <span className="font-semibold text-brand-indigo block mt-2">
+                                <span className="font-semibold brand-text block mt-2">
                                     Revisa tu correo para más detalles.
                                 </span>
                             </p>

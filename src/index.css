@@ -148,3 +148,17 @@
   padding-left: 1.25rem;
   list-style: disc;
 }
+
+/* Input focus que responde al tema activo */
+.input-themed:focus {
+  border-color: var(--brand) !important;
+  box-shadow: 0 0 0 4px var(--brand-ring) !important;
+  outline: none;
+}
+
+/* Slot activo que responde al tema */
+.slot-active-fill {
+  background: var(--brand) !important;
+  border-color: var(--brand) !important;
+  color: #fff !important;
+}

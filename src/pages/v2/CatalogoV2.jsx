@@ -90,7 +90,7 @@ function ProductCard({ product, waLink }) {
               href={waLink(product.name)}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1.5 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe5d] text-white text-xs font-bold transition-colors"
+              className="mt-1.5 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl bg-brand-indigo hover:bg-brand-hover text-white text-xs font-bold transition-colors"
             >
               <MessageCircle className="w-3 h-3" />
               Consultar
@@ -130,6 +130,7 @@ export default function CatalogoV2() {
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
+      if (!p.available) return false;                                                    // ocultar agotados
       if (category !== "Todos" && p.category !== category) return false;
       if (search.trim() && !p.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
       if (minPrice !== "" && p.price < Number(minPrice)) return false;
