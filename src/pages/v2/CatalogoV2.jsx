@@ -67,8 +67,8 @@ function ProductCard({ product, waLink }) {
 
       {/* Parte inferior: información */}
       <div className="p-2.5 flex flex-col flex-1">
+        {/* Nombre y badges — crecen hacia arriba */}
         <p className="font-bold text-slate-900 text-xs leading-snug line-clamp-2">{product.name}</p>
-
         <div className="flex flex-wrap gap-1 mt-1.5">
           {product.memory_capacity && (
             <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
@@ -82,23 +82,25 @@ function ProductCard({ product, waLink }) {
           )}
         </div>
 
-        <p className="text-sm font-extrabold text-brand-indigo mt-2">{formatPrice(product.price)}</p>
-
-        {product.available ? (
-          <a
-            href={waLink(product.name)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe5d] text-white text-xs font-bold transition-colors"
-          >
-            <MessageCircle className="w-3 h-3" />
-            Consultar
-          </a>
-        ) : (
-          <div className="mt-2 py-1.5 rounded-xl bg-slate-100 text-center text-xs text-slate-400 font-medium">
-            No disponible
-          </div>
-        )}
+        {/* Precio + botón siempre pegados al fondo del card */}
+        <div className="mt-auto pt-2">
+          <p className="text-sm font-extrabold text-brand-indigo">{formatPrice(product.price)}</p>
+          {product.available ? (
+            <a
+              href={waLink(product.name)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1.5 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe5d] text-white text-xs font-bold transition-colors"
+            >
+              <MessageCircle className="w-3 h-3" />
+              Consultar
+            </a>
+          ) : (
+            <div className="mt-1.5 py-1.5 rounded-xl bg-slate-100 text-center text-xs text-slate-400 font-medium">
+              No disponible
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -176,45 +178,45 @@ export default function CatalogoV2() {
         <p className="text-sm text-slate-500 mt-0.5">Hardware usado · GPUs y más</p>
       </div>
 
-      {/* ── Banner de información de compra — prominente, siempre visible ── */}
+      {/* ── Banner de información de compra — usa el color de marca de la app ── */}
       {(trade || payment || price) && (
-        <div className="mb-5 rounded-2xl bg-slate-900 overflow-hidden">
-          <div className="px-4 py-3 border-b border-white/10">
-            <p className="text-xs font-bold text-white/50 uppercase tracking-widest">
+        <div className="mb-5 rounded-2xl bg-brand-indigo overflow-hidden shadow-lg shadow-indigo-200">
+          <div className="px-4 py-2.5 border-b border-white/20">
+            <p className="text-xs font-bold text-indigo-200 uppercase tracking-widest">
               Antes de comprar — léelo
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/10">
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/20">
             {trade && (
               <div className="flex items-start gap-3 px-4 py-3.5">
-                <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0 mt-0.5">
                   <ArrowLeftRight className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-white">Permuta</p>
-                  <p className="text-xs text-white/60 mt-0.5 leading-relaxed">{trade}</p>
+                  <p className="text-xs text-indigo-200 mt-0.5 leading-relaxed">{trade}</p>
                 </div>
               </div>
             )}
             {payment && (
               <div className="flex items-start gap-3 px-4 py-3.5">
-                <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0 mt-0.5">
                   <CreditCard className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-white">Medios de pago</p>
-                  <p className="text-xs text-white/60 mt-0.5 leading-relaxed">{payment}</p>
+                  <p className="text-xs text-indigo-200 mt-0.5 leading-relaxed">{payment}</p>
                 </div>
               </div>
             )}
             {price && (
               <div className="flex items-start gap-3 px-4 py-3.5">
-                <div className="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center shrink-0 mt-0.5">
+                <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0 mt-0.5">
                   <Tag className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-white">Precios</p>
-                  <p className="text-xs text-white/60 mt-0.5 leading-relaxed">{price}</p>
+                  <p className="text-xs text-indigo-200 mt-0.5 leading-relaxed">{price}</p>
                 </div>
               </div>
             )}
