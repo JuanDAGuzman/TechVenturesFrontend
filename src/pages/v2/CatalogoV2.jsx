@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Search, MessageCircle, Cpu, Package, X } from "lucide-react";
+import { Search, MessageCircle, Cpu, Package, X, Smartphone } from "lucide-react";
 
 const API = (
   import.meta.env.VITE_API_BASE ??
@@ -8,22 +8,42 @@ const API = (
   "http://localhost:4000/api"
 ).replace(/\/+$/, "");
 
-const CATEGORIES = ["Todos", "NVIDIA", "AMD", "Intel", "Componentes", "Electrónica"];
+// Orden de categorías en la vista agrupada
+const CATEGORIES     = ["Todos", "NVIDIA", "AMD", "Intel", "Componentes", "Celulares"];
+const CATEGORY_ORDER = ["NVIDIA", "AMD", "Intel", "Componentes", "Celulares"];
 
-const CAT_BADGE = {
-  NVIDIA:      "bg-green-100 text-green-700",
-  AMD:         "bg-red-100 text-red-700",
-  Intel:       "bg-blue-100 text-blue-700",
-  Componentes: "bg-slate-100 text-slate-600",
-  Electrónica: "bg-purple-100 text-purple-700",
-};
-
-const CAT_GRADIENT = {
-  NVIDIA:      "from-green-400 to-green-600",
-  AMD:         "from-red-400 to-red-600",
-  Intel:       "from-blue-400 to-blue-600",
-  Componentes: "from-slate-400 to-slate-500",
-  Electrónica: "from-purple-400 to-purple-600",
+// Colores exactos de cada marca
+const BRAND = {
+  NVIDIA: {
+    badge:    { background: "rgba(118,185,0,0.15)", color: "#4a7a00" },
+    dot:      "#76B900",
+    grad:     ["#76B900", "#4d7a00"],
+    icon:     "cpu",
+  },
+  AMD: {
+    badge:    { background: "rgba(237,28,36,0.12)", color: "#c0111a" },
+    dot:      "#ED1C24",
+    grad:     ["#ED1C24", "#a30e16"],
+    icon:     "cpu",
+  },
+  Intel: {
+    badge:    { background: "rgba(0,104,181,0.12)", color: "#005da0" },
+    dot:      "#0068B5",
+    grad:     ["#0068B5", "#004d87"],
+    icon:     "cpu",
+  },
+  Componentes: {
+    badge:    { background: "rgba(100,116,139,0.12)", color: "#475569" },
+    dot:      "#64748b",
+    grad:     ["#64748b", "#475569"],
+    icon:     "cpu",
+  },
+  Celulares: {
+    badge:    { background: "rgba(139,92,246,0.12)", color: "#6d28d9" },
+    dot:      "#8B5CF6",
+    grad:     ["#8B5CF6", "#6d28d9"],
+    icon:     "phone",
+  },
 };
 
 function formatPrice(p) {
@@ -34,9 +54,22 @@ function formatPrice(p) {
   }).format(p);
 }
 
+function CategoryBadge({ category, small = false }) {
+  const b = BRAND[category] ?? BRAND.Componentes;
+  return (
+    <span
+      style={b.badge}
+      className={`font-semibold rounded-full ${small ? "text-xs px-2 py-0.5" : "text-xs px-2.5 py-1"}`}
+    >
+      {category}
+    </span>
+  );
+}
+
 function ProductThumb({ imageUrl, category, name }) {
   const [imgErr, setImgErr] = useState(false);
-  const gradient = CAT_GRADIENT[category] || "from-indigo-400 to-indigo-600";
+  const b = BRAND[category] ?? BRAND.Componentes;
+  const isPhone = category === "Celulares";
 
   if (imageUrl && !imgErr) {
     return (
@@ -49,30 +82,90 @@ function ProductThumb({ imageUrl, category, name }) {
     );
   }
   return (
-    <div className={`w-full h-full bg-gradient-to-br ${gradient} flex items-center justify-center`}>
-      <Cpu className="w-7 h-7 text-white opacity-60" />
+    <div
+      className="w-full h-full flex items-center justify-center"
+      style={{ background: `linear-gradient(135deg, ${b.grad[0]}, ${b.grad[1]})` }}
+    >
+      {isPhone
+        ? <Smartphone className="w-7 h-7 text-white opacity-60" />
+        : <Cpu className="w-7 h-7 text-white opacity-60" />}
     </div>
   );
 }
 
-function ProductCard({ product, waLink }) {
-  const badge = CAT_BADGE[product.category] || "bg-indigo-100 text-indigo-700";
-
+// Tarjeta compacta para la cuadrícula (vista "Todos" agrupada)
+function ProductGridCard({ product, waLink }) {
   return (
     <div
-      className={`bg-white border rounded-2xl overflow-hidden shadow-sm transition-all ${
+      className={`bg-white border rounded-2xl overflow-hidden shadow-sm flex flex-col ${
+        product.available ? "border-slate-200" : "border-slate-100 opacity-60"
+      }`}
+    >
+      {/* Imagen cuadrada */}
+      <div className="aspect-square relative">
+        <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
+        {!product.available && (
+          <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
+            <span className="text-xs font-bold text-slate-600 bg-white/90 px-2 py-0.5 rounded-full shadow-sm">
+              Agotado
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="p-2.5 flex flex-col flex-1">
+        <p className="font-bold text-slate-900 text-xs leading-snug line-clamp-2">{product.name}</p>
+
+        <div className="flex flex-wrap gap-1 mt-1.5">
+          {product.memory_capacity && (
+            <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
+              {product.memory_capacity}
+            </span>
+          )}
+          {product.condition && (
+            <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
+              {product.condition}
+            </span>
+          )}
+        </div>
+
+        <p className="text-sm font-extrabold text-brand-indigo mt-2">{formatPrice(product.price)}</p>
+
+        {product.available ? (
+          <a
+            href={waLink(product.name)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl bg-[#25D366] hover:bg-[#1ebe5d] text-white text-xs font-bold transition-colors"
+          >
+            <MessageCircle className="w-3 h-3" />
+            Consultar
+          </a>
+        ) : (
+          <div className="mt-2 py-1.5 rounded-xl bg-slate-100 text-center text-xs text-slate-400 font-medium">
+            No disponible
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Tarjeta horizontal para la vista filtrada (una sola categoría)
+function ProductListCard({ product, waLink }) {
+  return (
+    <div
+      className={`bg-white border rounded-2xl overflow-hidden shadow-sm ${
         product.available ? "border-slate-200" : "border-slate-100"
       }`}
     >
       <div className={`flex gap-3 p-3 ${!product.available ? "opacity-50" : ""}`}>
-        {/* Imagen */}
         <div className="w-[72px] h-[72px] rounded-xl overflow-hidden shrink-0">
           <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
         </div>
 
-        {/* Info */}
         <div className="flex-1 min-w-0">
-          {/* Nombre + disponibilidad */}
           <div className="flex items-start gap-2 justify-between">
             <p className="font-bold text-slate-900 text-sm leading-snug">{product.name}</p>
             {product.available ? (
@@ -87,11 +180,7 @@ function ProductCard({ product, waLink }) {
             )}
           </div>
 
-          {/* Badges */}
           <div className="flex flex-wrap gap-1.5 mt-1">
-            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${badge}`}>
-              {product.category}
-            </span>
             {product.memory_capacity && (
               <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
                 {product.memory_capacity}
@@ -108,7 +197,6 @@ function ProductCard({ product, waLink }) {
             <p className="text-xs text-slate-400 mt-1 line-clamp-1">{product.description}</p>
           )}
 
-          {/* Precio + botón */}
           <div className="flex items-center justify-between mt-2">
             <p className="text-base font-extrabold text-brand-indigo">{formatPrice(product.price)}</p>
             {product.available ? (
@@ -132,15 +220,13 @@ function ProductCard({ product, waLink }) {
 }
 
 export default function CatalogoV2() {
-  const [products, setProducts] = useState([]);
-  const [settings, setSettings] = useState({});
-  const [loading, setLoading] = useState(true);
-
-  // Filtros
-  const [category, setCategory] = useState("Todos");
-  const [search, setSearch] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
+  const [products, setProducts]         = useState([]);
+  const [settings, setSettings]         = useState({});
+  const [loading, setLoading]           = useState(true);
+  const [category, setCategory]         = useState("Todos");
+  const [search, setSearch]             = useState("");
+  const [minPrice, setMinPrice]         = useState("");
+  const [maxPrice, setMaxPrice]         = useState("");
   const [infoDismissed, setInfoDismissed] = useState(false);
 
   useEffect(() => {
@@ -166,6 +252,16 @@ export default function CatalogoV2() {
     });
   }, [products, category, search, minPrice, maxPrice]);
 
+  // Mostrar cuadrícula agrupada cuando no hay filtros activos
+  const isGroupedView = category === "Todos" && !search.trim() && minPrice === "" && maxPrice === "";
+
+  const groups = useMemo(() => {
+    if (!isGroupedView) return [];
+    return CATEGORY_ORDER
+      .map((cat) => ({ cat, items: filtered.filter((p) => p.category === cat) }))
+      .filter((g) => g.items.length > 0);
+  }, [filtered, isGroupedView]);
+
   const availableCount = filtered.filter((p) => p.available).length;
 
   function waLink(productName) {
@@ -183,11 +279,7 @@ export default function CatalogoV2() {
     setMaxPrice("");
   }
 
-  const infoItems = [
-    settings.trade_in_note,
-    settings.payment_methods,
-    settings.prices_note,
-  ].filter(Boolean);
+  const infoItems = [settings.trade_in_note, settings.payment_methods, settings.prices_note].filter(Boolean);
 
   return (
     <div className="container-page pb-8">
@@ -197,18 +289,14 @@ export default function CatalogoV2() {
         <p className="text-sm text-slate-500 mt-0.5">Hardware usado · GPUs y más</p>
       </div>
 
-      {/* Banner de información del negocio */}
+      {/* Banner info del negocio */}
       {!infoDismissed && infoItems.length > 0 && (
         <div className="mb-4 rounded-2xl bg-indigo-50 border border-indigo-100 overflow-hidden">
           <div className="px-4 pt-3 pb-1 flex items-center justify-between">
             <span className="text-xs font-bold text-indigo-500 uppercase tracking-wider">
               Información de compra
             </span>
-            <button
-              onClick={() => setInfoDismissed(true)}
-              className="p-1 text-indigo-300 hover:text-indigo-500 transition-colors"
-              aria-label="Cerrar"
-            >
+            <button onClick={() => setInfoDismissed(true)} className="p-1 text-indigo-300 hover:text-indigo-500">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -225,21 +313,26 @@ export default function CatalogoV2() {
 
       {/* Filtros */}
       <div className="mb-4 space-y-2.5">
-        {/* Chips de categoría — scroll horizontal en mobile */}
+        {/* Chips de categoría */}
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategory(cat)}
-              className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
-                category === cat
-                  ? "bg-brand-indigo text-white border-transparent shadow-sm"
-                  : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
+          {CATEGORIES.map((cat) => {
+            const b = BRAND[cat];
+            const active = category === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setCategory(cat)}
+                style={active && b ? { background: b.dot, color: "#fff", borderColor: "transparent" } : {}}
+                className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+                  active
+                    ? "shadow-sm"
+                    : "bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                {cat}
+              </button>
+            );
+          })}
         </div>
 
         {/* Búsqueda */}
@@ -257,46 +350,35 @@ export default function CatalogoV2() {
         {/* Rango de precio */}
         <div className="flex gap-2">
           <input
-            type="number"
-            min="0"
-            placeholder="Precio mín"
-            value={minPrice}
+            type="number" min="0" placeholder="Precio mín" value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
             className="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none text-sm bg-white"
           />
           <input
-            type="number"
-            min="0"
-            placeholder="Precio máx"
-            value={maxPrice}
+            type="number" min="0" placeholder="Precio máx" value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
             className="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none text-sm bg-white"
           />
         </div>
       </div>
 
-      {/* Contador + limpiar filtros */}
+      {/* Contador */}
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm text-slate-500">
-          {loading
-            ? "Cargando..."
-            : `${availableCount} disponible${availableCount !== 1 ? "s" : ""} · ${filtered.length} en total`}
+          {loading ? "Cargando..." : `${availableCount} disponible${availableCount !== 1 ? "s" : ""} · ${filtered.length} en total`}
         </p>
         {hasActiveFilters && (
-          <button
-            onClick={clearFilters}
-            className="text-xs text-indigo-600 font-semibold hover:underline"
-          >
+          <button onClick={clearFilters} className="text-xs text-indigo-600 font-semibold hover:underline">
             Limpiar filtros
           </button>
         )}
       </div>
 
-      {/* Lista de productos */}
+      {/* Contenido */}
       {loading ? (
-        <div className="space-y-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-24 bg-slate-100 rounded-2xl animate-pulse" />
+            <div key={i} className="aspect-square bg-slate-100 rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -307,23 +389,51 @@ export default function CatalogoV2() {
             {hasActiveFilters ? "Prueba con otros filtros" : "No hay productos por el momento"}
           </p>
           {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              className="mt-3 text-sm text-indigo-600 font-semibold hover:underline"
-            >
+            <button onClick={clearFilters} className="mt-3 text-sm text-indigo-600 font-semibold hover:underline">
               Limpiar filtros
             </button>
           )}
         </div>
+      ) : isGroupedView ? (
+        /* Vista agrupada por categoría — cuadrícula */
+        <div className="space-y-6">
+          {groups.map(({ cat, items }) => {
+            const b = BRAND[cat] ?? BRAND.Componentes;
+            const avail = items.filter((p) => p.available).length;
+            return (
+              <section key={cat}>
+                {/* Encabezado de categoría */}
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div
+                    className="w-1 h-6 rounded-full shrink-0"
+                    style={{ background: b.dot }}
+                  />
+                  <h2 className="font-extrabold text-slate-800 text-base">{cat}</h2>
+                  <span className="text-xs text-slate-400 font-medium">
+                    {avail} disponible{avail !== 1 ? "s" : ""} · {items.length} total
+                  </span>
+                </div>
+
+                {/* Cuadrícula 2→3 columnas */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                  {items.map((product) => (
+                    <ProductGridCard key={product.id} product={product} waLink={waLink} />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
+        </div>
       ) : (
+        /* Vista lista filtrada */
         <div className="space-y-2.5">
           {filtered.map((product) => (
-            <ProductCard key={product.id} product={product} waLink={waLink} />
+            <ProductListCard key={product.id} product={product} waLink={waLink} />
           ))}
         </div>
       )}
 
-      {/* Banner de info al final (si lo cerraron arriba, se muestra aquí compacto) */}
+      {/* Info compacta al final si se cerró el banner */}
       {infoDismissed && infoItems.length > 0 && (
         <div className="mt-6 rounded-2xl bg-slate-50 border border-slate-200 p-4">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Información</p>

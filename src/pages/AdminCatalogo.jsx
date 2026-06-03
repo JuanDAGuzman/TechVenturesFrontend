@@ -13,7 +13,16 @@ const API = (
   "http://localhost:4000/api"
 ).replace(/\/+$/, "");
 
-const CATEGORIES = ["NVIDIA", "AMD", "Intel", "Componentes", "Electrónica"];
+const CATEGORIES      = ["NVIDIA", "AMD", "Intel", "Componentes", "Celulares"];
+const FILTER_CATS     = ["Todos", ...CATEGORIES];
+
+const BRAND = {
+  NVIDIA:      { bg: "rgba(118,185,0,0.15)",    text: "#4a7a00", dot: "#76B900"  },
+  AMD:         { bg: "rgba(237,28,36,0.12)",    text: "#c0111a", dot: "#ED1C24"  },
+  Intel:       { bg: "rgba(0,104,181,0.12)",    text: "#005da0", dot: "#0068B5"  },
+  Componentes: { bg: "rgba(100,116,139,0.12)",  text: "#475569", dot: "#64748b"  },
+  Celulares:   { bg: "rgba(139,92,246,0.12)",   text: "#6d28d9", dot: "#8B5CF6"  },
+};
 
 const EMPTY_FORM = {
   name: "",
@@ -25,13 +34,6 @@ const EMPTY_FORM = {
   available: true,
 };
 
-const CAT_BADGE = {
-  NVIDIA:      "bg-green-100 text-green-700",
-  AMD:         "bg-red-100 text-red-700",
-  Intel:       "bg-blue-100 text-blue-700",
-  Componentes: "bg-slate-100 text-slate-600",
-  Electrónica: "bg-purple-100 text-purple-700",
-};
 
 function formatPrice(p) {
   return new Intl.NumberFormat("es-CO", {
@@ -48,8 +50,9 @@ export default function AdminCatalogo() {
     [token]
   );
 
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts]     = useState([]);
+  const [loading, setLoading]       = useState(true);
+  const [categoryFilter, setCategoryFilter] = useState("Todos");
 
   // Modal agregar / editar
   const [modal, setModal] = useState({ open: false, product: null });
@@ -69,6 +72,13 @@ export default function AdminCatalogo() {
   const [settingsForm, setSettingsForm] = useState({});
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
+
+  const visibleProducts = useMemo(() =>
+    categoryFilter === "Todos"
+      ? products
+      : products.filter((p) => p.category === categoryFilter),
+    [products, categoryFilter]
+  );
 
   useEffect(() => { loadAll(); }, []);
 
@@ -260,11 +270,11 @@ export default function AdminCatalogo() {
     <div className="container-page pb-10">
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-extrabold text-brand-indigo">Catálogo</h1>
           <p className="text-sm text-slate-500 mt-0.5">
-            {products.length} producto{products.length !== 1 ? "s" : ""}
+            {visibleProducts.length} de {products.length} producto{products.length !== 1 ? "s" : ""}
           </p>
         </div>
         <button
@@ -276,6 +286,26 @@ export default function AdminCatalogo() {
         </button>
       </div>
 
+      {/* Filtro por categoría */}
+      <div className="flex gap-2 overflow-x-auto pb-1 mb-5">
+        {FILTER_CATS.map((cat) => {
+          const b = BRAND[cat];
+          const active = categoryFilter === cat;
+          return (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              style={active && b ? { background: b.dot, color: "#fff", borderColor: "transparent" } : {}}
+              className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+                active ? "shadow-sm" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+              }`}
+            >
+              {cat}
+            </button>
+          );
+        })}
+      </div>
+
       {/* ── Lista de productos ─────────────────────────────────────────────── */}
 
       {loading ? (
@@ -284,11 +314,15 @@ export default function AdminCatalogo() {
             <div key={i} className="h-20 bg-slate-100 rounded-2xl animate-pulse" />
           ))}
         </div>
-      ) : products.length === 0 ? (
+      ) : visibleProducts.length === 0 ? (
         <div className="card text-center py-12 mb-6">
           <Package className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-          <p className="text-slate-500 font-medium">Sin productos</p>
-          <p className="text-slate-400 text-sm mt-1">Agrega tu primer producto arriba</p>
+          <p className="text-slate-500 font-medium">
+            {products.length === 0 ? "Sin productos" : `Sin productos en ${categoryFilter}`}
+          </p>
+          <p className="text-slate-400 text-sm mt-1">
+            {products.length === 0 ? "Agrega tu primer producto arriba" : "Prueba con otra categoría"}
+          </p>
         </div>
       ) : (
         <>
@@ -306,7 +340,7 @@ export default function AdminCatalogo() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {products.map((p) => (
+                {visibleProducts.map((p) => (
                   <tr key={p.id} className={`hover:bg-slate-50 transition-colors ${!p.available ? "opacity-50" : ""}`}>
                     <td className="px-4 py-3">
                       <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0">
@@ -324,7 +358,12 @@ export default function AdminCatalogo() {
                       {p.condition && <p className="text-xs text-slate-400 mt-0.5">{p.condition}</p>}
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${CAT_BADGE[p.category] || "bg-indigo-100 text-indigo-700"}`}>
+                      <span
+                        style={BRAND[p.category]
+                          ? { background: BRAND[p.category].bg, color: BRAND[p.category].text }
+                          : { background: "rgba(99,102,241,0.12)", color: "#4338ca" }}
+                        className="text-xs font-semibold px-2 py-1 rounded-full"
+                      >
                         {p.category}
                       </span>
                     </td>
@@ -366,7 +405,7 @@ export default function AdminCatalogo() {
 
           {/* Mobile: tarjetas */}
           <div className="sm:hidden space-y-2.5 mb-6">
-            {products.map((p) => (
+            {visibleProducts.map((p) => (
               <div
                 key={p.id}
                 className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm ${!p.available ? "opacity-60" : ""}`}
