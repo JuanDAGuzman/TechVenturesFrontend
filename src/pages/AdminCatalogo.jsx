@@ -331,69 +331,62 @@ export default function AdminCatalogo() {
             <table className="w-full text-sm">
               <thead className="border-b bg-slate-50">
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600 w-10" />
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Producto</th>
-                  <th className="text-left px-4 py-3 font-semibold text-slate-600">Categoría</th>
-                  <th className="text-right px-4 py-3 font-semibold text-slate-600">Precio</th>
-                  <th className="text-center px-4 py-3 font-semibold text-slate-600">Disponible</th>
-                  <th className="px-4 py-3 w-24" />
+                  <th className="text-left px-3 py-2.5 font-semibold text-slate-600 w-10" />
+                  <th className="text-left px-3 py-2.5 font-semibold text-slate-600">Producto</th>
+                  <th className="text-left px-3 py-2.5 font-semibold text-slate-600">Categoría</th>
+                  <th className="text-right px-3 py-2.5 font-semibold text-slate-600">Precio</th>
+                  <th className="text-center px-3 py-2.5 font-semibold text-slate-600">Disponible</th>
+                  <th className="px-3 py-2.5 w-20" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {visibleProducts.map((p) => (
                   <tr key={p.id} className={`hover:bg-slate-50 transition-colors ${!p.available ? "opacity-50" : ""}`}>
-                    <td className="px-4 py-3">
-                      <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                    <td className="px-3 py-2">
+                      <div className="w-9 h-9 rounded-lg overflow-hidden bg-slate-100 shrink-0">
                         {p.image_url ? (
                           <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-slate-300">
-                            <Package className="w-5 h-5" />
+                          <div
+                            className="w-full h-full flex items-center justify-center"
+                            style={BRAND[p.category] ? { background: `linear-gradient(135deg, ${BRAND[p.category].dot}, ${BRAND[p.category].text})` } : { background: "#94a3b8" }}
+                          >
+                            <Package className="w-4 h-4 text-white opacity-60" />
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <p className="font-semibold text-slate-800">{p.name}</p>
-                      {p.condition && <p className="text-xs text-slate-400 mt-0.5">{p.condition}</p>}
+                    <td className="px-3 py-2">
+                      <p className="font-semibold text-slate-800 text-sm">{p.name}</p>
+                      {p.condition && <p className="text-xs text-slate-400">{p.condition}</p>}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2">
                       <span
                         style={BRAND[p.category]
                           ? { background: BRAND[p.category].bg, color: BRAND[p.category].text }
                           : { background: "rgba(99,102,241,0.12)", color: "#4338ca" }}
-                        className="text-xs font-semibold px-2 py-1 rounded-full"
+                        className="text-xs font-semibold px-2 py-0.5 rounded-full"
                       >
                         {p.category}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right font-bold text-brand-indigo whitespace-nowrap">
+                    <td className="px-3 py-2 text-right font-bold text-brand-indigo whitespace-nowrap text-sm">
                       {formatPrice(p.price)}
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => toggleAvailable(p)}
-                        title={p.available ? "Marcar agotado" : "Marcar disponible"}
-                        className="mx-auto block"
-                      >
+                    <td className="px-3 py-2 text-center">
+                      <button onClick={() => toggleAvailable(p)} title={p.available ? "Marcar agotado" : "Marcar disponible"} className="mx-auto block">
                         {p.available
-                          ? <ToggleRight className="w-6 h-6 text-emerald-500" />
-                          : <ToggleLeft  className="w-6 h-6 text-slate-300" />}
+                          ? <ToggleRight className="w-5 h-5 text-emerald-500" />
+                          : <ToggleLeft  className="w-5 h-5 text-slate-300" />}
                       </button>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => openEdit(p)}
-                          className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors"
-                        >
-                          <Pencil className="w-4 h-4" />
+                    <td className="px-3 py-2">
+                      <div className="flex items-center justify-end gap-0.5">
+                        <button onClick={() => openEdit(p)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-slate-700 transition-colors">
+                          <Pencil className="w-3.5 h-3.5" />
                         </button>
-                        <button
-                          onClick={() => setDeleteTarget(p)}
-                          className="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
+                        <button onClick={() => setDeleteTarget(p)} className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
@@ -403,54 +396,61 @@ export default function AdminCatalogo() {
             </table>
           </div>
 
-          {/* Mobile: tarjetas */}
-          <div className="sm:hidden space-y-2.5 mb-6">
+          {/* Mobile: cuadrícula 2 columnas */}
+          <div className="sm:hidden grid grid-cols-2 gap-2.5 mb-6">
             {visibleProducts.map((p) => (
               <div
                 key={p.id}
-                className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm ${!p.available ? "opacity-60" : ""}`}
+                className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col ${!p.available ? "opacity-60" : ""}`}
               >
-                <div className="flex gap-3 p-3">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 bg-slate-100">
-                    {p.image_url ? (
-                      <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-300">
-                        <Package className="w-6 h-6" />
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-slate-800 text-sm leading-snug">{p.name}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{p.condition}</p>
-                    <p className="text-sm font-extrabold text-brand-indigo mt-1">{formatPrice(p.price)}</p>
-                  </div>
+                {/* Imagen */}
+                <div className="h-24 overflow-hidden">
+                  {p.image_url ? (
+                    <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div
+                      className="w-full h-full flex items-center justify-center"
+                      style={BRAND[p.category]
+                        ? { background: `linear-gradient(135deg, ${BRAND[p.category].dot}, ${BRAND[p.category].text})` }
+                        : { background: "#94a3b8" }}
+                    >
+                      <Package className="w-5 h-5 text-white opacity-50" />
+                    </div>
+                  )}
                 </div>
-                <div className="border-t border-slate-100 px-3 py-2 flex gap-2">
+
+                {/* Info */}
+                <div className="p-2 flex-1">
+                  <p className="font-bold text-slate-800 text-xs leading-snug line-clamp-2">{p.name}</p>
+                  {p.condition && <p className="text-xs text-slate-400 mt-0.5 truncate">{p.condition}</p>}
+                  <p className="text-xs font-extrabold text-brand-indigo mt-1">{formatPrice(p.price)}</p>
+                </div>
+
+                {/* Acciones */}
+                <div className="border-t border-slate-100 px-2 py-1.5 flex items-center justify-between">
                   <button
                     onClick={() => toggleAvailable(p)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 ${
-                      p.available
-                        ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100"
-                        : "bg-slate-50 text-slate-500 hover:bg-slate-100"
+                    className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-lg transition-colors ${
+                      p.available ? "bg-emerald-50 text-emerald-600" : "bg-slate-100 text-slate-500"
                     }`}
                   >
-                    {p.available
-                      ? <><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" /> Disponible</>
-                      : <><span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" /> Agotado</>}
+                    <span className={`w-1.5 h-1.5 rounded-full inline-block ${p.available ? "bg-emerald-500" : "bg-slate-400"}`} />
+                    {p.available ? "Disp." : "Agot."}
                   </button>
-                  <button
-                    onClick={() => openEdit(p)}
-                    className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-semibold transition-colors"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => setDeleteTarget(p)}
-                    className="px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 text-xs font-semibold transition-colors"
-                  >
-                    Eliminar
-                  </button>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={() => openEdit(p)}
+                      className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(p)}
+                      className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

@@ -87,8 +87,8 @@ function ProductThumb({ imageUrl, category, name }) {
       style={{ background: `linear-gradient(135deg, ${b.grad[0]}, ${b.grad[1]})` }}
     >
       {isPhone
-        ? <Smartphone className="w-7 h-7 text-white opacity-60" />
-        : <Cpu className="w-7 h-7 text-white opacity-60" />}
+        ? <Smartphone className="w-5 h-5 text-white opacity-50" />
+        : <Cpu className="w-5 h-5 text-white opacity-50" />}
     </div>
   );
 }
@@ -101,8 +101,8 @@ function ProductGridCard({ product, waLink }) {
         product.available ? "border-slate-200" : "border-slate-100 opacity-60"
       }`}
     >
-      {/* Imagen cuadrada */}
-      <div className="aspect-square relative">
+      {/* Imagen altura fija */}
+      <div className="h-28 relative overflow-hidden">
         <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
         {!product.available && (
           <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
@@ -378,7 +378,7 @@ export default function CatalogoV2() {
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="aspect-square bg-slate-100 rounded-2xl animate-pulse" />
+            <div key={i} className="h-48 bg-slate-100 rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
