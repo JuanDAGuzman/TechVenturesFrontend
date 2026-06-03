@@ -339,7 +339,7 @@ export default function AdminCatalogo() {
               key={cat}
               onClick={() => setCategoryFilter(cat)}
               style={active && b ? { background: b.dot, color: "#fff", borderColor: "transparent" } : {}}
-              className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+              className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide border transition-all ${
                 active ? "shadow-sm" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
               }`}
             >

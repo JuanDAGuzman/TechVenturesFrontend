@@ -178,45 +178,41 @@ export default function CatalogoV2() {
         <p className="text-sm text-slate-500 mt-0.5">Hardware usado · GPUs y más</p>
       </div>
 
-      {/* ── Banner de información de compra — usa el color de marca de la app ── */}
+      {/* ── Banner de información — fondo limpio, acento sutil ── */}
       {(trade || payment || price) && (
-        <div className="mb-5 rounded-2xl bg-brand-indigo overflow-hidden shadow-lg shadow-indigo-200">
-          <div className="px-4 py-2.5 border-b border-white/20">
-            <p className="text-xs font-bold text-indigo-200 uppercase tracking-widest">
-              Antes de comprar — léelo
+        <div className="mb-5 rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
+          {/* Franja delgada de acento en la marca */}
+          <div className="h-1 bg-brand-indigo" />
+          <div className="px-4 py-2 border-b border-slate-100">
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+              📋 Antes de comprar — léelo
             </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/20">
+          <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
             {trade && (
-              <div className="flex items-start gap-3 px-4 py-3.5">
-                <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0 mt-0.5">
-                  <ArrowLeftRight className="w-4 h-4 text-white" />
-                </div>
+              <div className="flex items-start gap-3 px-4 py-4">
+                <span className="text-xl shrink-0 mt-0.5">🎮</span>
                 <div>
-                  <p className="text-sm font-bold text-white">Permuta</p>
-                  <p className="text-xs text-indigo-200 mt-0.5 leading-relaxed">{trade}</p>
+                  <p className="text-sm font-bold text-slate-800">¿Tienes una gráfica usada?</p>
+                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{trade}</p>
                 </div>
               </div>
             )}
             {payment && (
-              <div className="flex items-start gap-3 px-4 py-3.5">
-                <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0 mt-0.5">
-                  <CreditCard className="w-4 h-4 text-white" />
-                </div>
+              <div className="flex items-start gap-3 px-4 py-4">
+                <span className="text-xl shrink-0 mt-0.5">💳</span>
                 <div>
-                  <p className="text-sm font-bold text-white">Medios de pago</p>
-                  <p className="text-xs text-indigo-200 mt-0.5 leading-relaxed">{payment}</p>
+                  <p className="text-sm font-bold text-slate-800">Formas de pago</p>
+                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{payment}</p>
                 </div>
               </div>
             )}
             {price && (
-              <div className="flex items-start gap-3 px-4 py-3.5">
-                <div className="w-8 h-8 rounded-xl bg-white/15 flex items-center justify-center shrink-0 mt-0.5">
-                  <Tag className="w-4 h-4 text-white" />
-                </div>
+              <div className="flex items-start gap-3 px-4 py-4">
+                <span className="text-xl shrink-0 mt-0.5">💎</span>
                 <div>
-                  <p className="text-sm font-bold text-white">Precios</p>
-                  <p className="text-xs text-indigo-200 mt-0.5 leading-relaxed">{price}</p>
+                  <p className="text-sm font-bold text-slate-800">Precios fijos</p>
+                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{price}</p>
                 </div>
               </div>
             )}
@@ -236,7 +232,7 @@ export default function CatalogoV2() {
                 key={cat}
                 onClick={() => setCategory(cat)}
                 style={active && b ? { background: b.dot, color: "#fff", borderColor: "transparent" } : {}}
-                className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
+                className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide border transition-all ${
                   active ? "shadow-sm" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
                 }`}
               >
