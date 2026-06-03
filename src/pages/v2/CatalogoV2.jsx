@@ -73,22 +73,22 @@ function ProductThumb({ imageUrl, category, name }) {
 
   if (imageUrl && !imgErr) {
     return (
-      <img
-        src={imageUrl}
-        alt={name}
-        className="w-full h-full object-cover"
-        onError={() => setImgErr(true)}
-      />
+      <div className="w-full h-full bg-white flex items-center justify-center p-2">
+        <img
+          src={imageUrl}
+          alt={name}
+          className="w-full h-full object-contain"
+          onError={() => setImgErr(true)}
+        />
+      </div>
     );
   }
+  // Sin foto: fondo blanco + ícono pequeño con color de marca
   return (
-    <div
-      className="w-full h-full flex items-center justify-center"
-      style={{ background: `linear-gradient(135deg, ${b.grad[0]}, ${b.grad[1]})` }}
-    >
+    <div className="w-full h-full bg-white flex items-center justify-center">
       {isPhone
-        ? <Smartphone className="w-5 h-5 text-white opacity-50" />
-        : <Cpu className="w-5 h-5 text-white opacity-50" />}
+        ? <Smartphone className="w-8 h-8" style={{ color: b.dot }} />
+        : <Cpu        className="w-8 h-8" style={{ color: b.dot }} />}
     </div>
   );
 }
@@ -101,8 +101,8 @@ function ProductGridCard({ product, waLink }) {
         product.available ? "border-slate-200" : "border-slate-100 opacity-60"
       }`}
     >
-      {/* Imagen altura fija */}
-      <div className="h-28 relative overflow-hidden">
+      {/* Parte superior: imagen sobre fondo blanco */}
+      <div className="h-28 relative overflow-hidden border-b border-slate-100">
         <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
         {!product.available && (
           <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
@@ -161,7 +161,7 @@ function ProductListCard({ product, waLink }) {
       }`}
     >
       <div className={`flex gap-3 p-3 ${!product.available ? "opacity-50" : ""}`}>
-        <div className="w-[72px] h-[72px] rounded-xl overflow-hidden shrink-0">
+        <div className="w-[72px] h-[72px] rounded-xl overflow-hidden shrink-0 border border-slate-100">
           <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
         </div>
 
