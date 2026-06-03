@@ -83,12 +83,18 @@ export default function AdminGate() {
       <div>
         <div className="bg-amber-50 border-b border-amber-200 text-amber-800 text-sm">
           <div className="container-page py-2 flex items-center justify-between">
-            <span>
-              Sesión admin expira en:{" "}
-              <b>
-                {h}:{mm}:{ss}
-              </b>
-            </span>
+            <div className="flex items-center gap-4 flex-wrap">
+              <span>
+                Sesión admin expira en:{" "}
+                <b>{h}:{mm}:{ss}</b>
+              </span>
+              <a
+                href="/admin/catalogo"
+                className="text-amber-700 hover:text-amber-900 font-semibold underline underline-offset-2"
+              >
+                Gestión de catálogo →
+              </a>
+            </div>
             <button
               onClick={() => {
                 clearAdminSession();

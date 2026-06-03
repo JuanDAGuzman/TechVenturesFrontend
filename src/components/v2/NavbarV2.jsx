@@ -1,12 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, Settings } from "lucide-react";
+import { Calendar, Settings, ShoppingBag } from "lucide-react";
 
 export default function NavbarV2() {
     const location = useLocation();
-    const isBooking = location.pathname === "/";
-    const isAdmin = location.pathname === "/admin";
-    const isContact = location.pathname === "/contact";
+    const isBooking  = location.pathname === "/";
+    const isCatalogo = location.pathname === "/catalogo";
+    const isAdmin    = location.pathname.startsWith("/admin");
+    const isContact  = location.pathname === "/contact";
 
     return (
         <motion.header
@@ -55,6 +56,17 @@ export default function NavbarV2() {
                             >
                                 <Calendar className="w-4 h-4" />
                                 <span>Agendar</span>
+                            </Link>
+
+                            <Link
+                                to="/catalogo"
+                                className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm ${isCatalogo
+                                    ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
+                                    : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
+                                    }`}
+                            >
+                                <ShoppingBag className="w-4 h-4" />
+                                <span>Catálogo</span>
                             </Link>
 
                             <Link
