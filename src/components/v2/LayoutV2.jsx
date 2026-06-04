@@ -5,7 +5,7 @@ import AnimatedBackground from "./AnimatedBackground";
 
 export default function LayoutV2() {
     return (
-        <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900 selection:bg-brand-indigo selection:text-white relative">
+        <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900 selection:bg-brand-indigo selection:text-white relative overflow-x-hidden w-full">
             <AnimatedBackground />
             <NavbarV2 />
             <main className="flex-1 flex flex-col relative z-10">
