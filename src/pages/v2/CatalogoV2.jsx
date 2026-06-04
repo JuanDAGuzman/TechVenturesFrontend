@@ -67,20 +67,29 @@ function ProductCard({ product, waLink }) {
 
       {/* Parte inferior: información */}
       <div className="p-2.5 flex flex-col flex-1">
-        {/* Nombre y badges — crecen hacia arriba */}
         <p className="font-bold text-slate-900 text-xs leading-snug line-clamp-2">{product.name}</p>
+
+        {/* Badges: memoria + condición (separada por comas = múltiples tags) */}
         <div className="flex flex-wrap gap-1 mt-1.5">
           {product.memory_capacity && (
             <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
               {product.memory_capacity}
             </span>
           )}
-          {product.condition && (
-            <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
-              {product.condition}
-            </span>
-          )}
+          {product.condition &&
+            product.condition.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag, i) => (
+              <span key={i} className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                {tag}
+              </span>
+            ))}
         </div>
+
+        {/* Descripción (si existe) */}
+        {product.description && (
+          <p className="text-xs text-slate-400 mt-1.5 leading-relaxed line-clamp-2">
+            {product.description}
+          </p>
+        )}
 
         {/* Precio + botón siempre pegados al fondo del card */}
         <div className="mt-auto pt-2">

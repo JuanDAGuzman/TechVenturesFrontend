@@ -58,7 +58,15 @@ function AdminProductCard({ p, onToggle, onEdit, onDelete }) {
       {/* Info */}
       <div className="p-2 flex-1 flex flex-col">
         <p className="font-bold text-slate-800 text-xs leading-snug line-clamp-2">{p.name}</p>
-        {p.condition && <p className="text-xs text-slate-400 mt-0.5 truncate">{p.condition}</p>}
+        {p.condition && (
+          <div className="flex flex-wrap gap-1 mt-0.5">
+            {p.condition.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag, i) => (
+              <span key={i} className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
         <p className="text-xs font-extrabold text-brand-indigo mt-auto pt-1.5">{formatPrice(p.price)}</p>
       </div>
 
@@ -655,7 +663,7 @@ export default function AdminCatalogo() {
                         type="text"
                         value={form.condition}
                         onChange={(e) => setForm((f) => ({ ...f, condition: e.target.value }))}
-                        placeholder="Con caja, open box..."
+                        placeholder="Con caja, open box, coil whine... (separa con comas)"
                         className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm"
                       />
                     </div>
