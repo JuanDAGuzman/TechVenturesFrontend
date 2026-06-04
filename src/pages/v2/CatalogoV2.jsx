@@ -50,7 +50,7 @@ function ProductThumb({ imageUrl, category, name }) {
 // Única tarjeta — se usa tanto en vista agrupada como en vista filtrada
 function ProductCard({ product, waLink }) {
   return (
-    <div className={`bg-white border rounded-2xl overflow-hidden shadow-sm flex flex-col ${
+    <div className={`bg-white border rounded-2xl overflow-hidden shadow-sm flex flex-col min-w-0 w-full ${
       product.available ? "border-slate-200" : "border-slate-100 opacity-60"
     }`}>
       {/* Parte superior: fondo blanco + ícono centrado */}
@@ -192,7 +192,7 @@ export default function CatalogoV2() {
   const price   = settings.prices_note;
 
   return (
-    <div className="container-page pb-8 overflow-x-hidden" style={themeVars}>
+    <div className="container-page pb-8 w-full min-w-0" style={themeVars}>
 
       {/* Cabecera */}
       <div className="mb-4">
@@ -211,35 +211,35 @@ export default function CatalogoV2() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
             {trade && (
-              <div className="flex items-start gap-3 px-5 py-4">
+              <div className="flex items-start gap-3 px-3 py-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: "var(--brand-ring)" }}>
                   <Repeat2 className="w-4 h-4 brand-text" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 overflow-hidden">
                   <p className="text-sm font-bold text-slate-800">¿Tienes una gráfica usada?</p>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">{trade}</p>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed break-words">{trade}</p>
                 </div>
               </div>
             )}
             {payment && (
-              <div className="flex items-start gap-3 px-5 py-4">
+              <div className="flex items-start gap-3 px-3 py-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: "var(--brand-ring)" }}>
                   <CreditCard className="w-4 h-4 brand-text" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 overflow-hidden">
                   <p className="text-sm font-bold text-slate-800">Formas de pago</p>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">{payment}</p>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed break-words">{payment}</p>
                 </div>
               </div>
             )}
             {price && (
-              <div className="flex items-start gap-3 px-5 py-4">
+              <div className="flex items-start gap-3 px-3 py-3">
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: "var(--brand-ring)" }}>
                   <Tag className="w-4 h-4 brand-text" />
                 </div>
-                <div className="min-w-0">
+                <div className="min-w-0 overflow-hidden">
                   <p className="text-sm font-bold text-slate-800">Precios fijos</p>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">{price}</p>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed break-words">{price}</p>
                 </div>
               </div>
             )}
@@ -348,7 +348,7 @@ export default function CatalogoV2() {
                   </span>
                 </div>
                 {/* Cuadrícula — igual para todas las categorías */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 w-full min-w-0">
                   {items.map((p) => (
                     <ProductCard key={p.id} product={p} waLink={waLink} />
                   ))}
