@@ -608,9 +608,9 @@ export default function AdminCatalogo() {
                     <input
                       type="text"
                       value={form.name}
-                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value.toUpperCase() }))}
                       placeholder="ej. RTX 3080 10GB EVGA XC3"
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm"
+                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm uppercase"
                     />
                   </div>
 
@@ -635,9 +635,9 @@ export default function AdminCatalogo() {
                       <input
                         type="text"
                         value={form.memory_capacity}
-                        onChange={(e) => setForm((f) => ({ ...f, memory_capacity: e.target.value }))}
+                        onChange={(e) => setForm((f) => ({ ...f, memory_capacity: e.target.value.toUpperCase() }))}
                         placeholder="8GB, 1TB, 256GB..."
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm"
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm uppercase"
                       />
                     </div>
                   </div>
@@ -662,9 +662,9 @@ export default function AdminCatalogo() {
                       <input
                         type="text"
                         value={form.condition}
-                        onChange={(e) => setForm((f) => ({ ...f, condition: e.target.value }))}
-                        placeholder="Con caja, open box, coil whine... (separa con comas)"
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm"
+                        onChange={(e) => setForm((f) => ({ ...f, condition: e.target.value.toUpperCase() }))}
+                        placeholder="CON CAJA, OPEN BOX, COIL WHINE... (SEPARA CON COMAS)"
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm uppercase"
                       />
                     </div>
                   </div>
@@ -678,9 +678,9 @@ export default function AdminCatalogo() {
                     <textarea
                       rows={2}
                       value={form.description}
-                      onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                      placeholder="Detalles adicionales, estado de la batería, notas..."
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition resize-none text-sm"
+                      onChange={(e) => setForm((f) => ({ ...f, description: e.target.value.toUpperCase() }))}
+                      placeholder="DETALLES ADICIONALES, ESTADO DE LA BATERÍA, NOTAS..."
+                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition resize-none text-sm uppercase"
                     />
                   </div>
 
