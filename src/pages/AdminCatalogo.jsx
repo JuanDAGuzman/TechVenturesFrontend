@@ -2,7 +2,7 @@ import { createPortal } from "react-dom";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { getAdminToken } from "../lib/adminSession.js";
 import {
-  Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X,
+  Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X, Copy, Check,
 } from "lucide-react";
 
 const API = (
@@ -342,6 +342,47 @@ export default function AdminCatalogo() {
     setSavingSettings(false);
   }
 
+  // ── Copiar inventario ─────────────────────────────────────────────────────
+
+  const [copied, setCopied] = useState(false);
+
+  function copyInventory() {
+    const available = products.filter((p) => p.available);
+    if (!available.length) return;
+
+    const EMOJI = {
+      NVIDIA: "⬛", AMD: "⬜", Intel: "🟦", Componentes: "⚪", Celulares: "📱",
+    };
+
+    const lines = ["🛒 CATÁLOGO TECHVENTURESCO\n"];
+
+    CATEGORIES.forEach((cat) => {
+      const items = available.filter((p) => p.category === cat);
+      if (!items.length) return;
+      const emoji = EMOJI[cat] ?? "▪️";
+      lines.push(`${emoji} ${cat}`);
+      items
+        .sort((a, b) => a.price - b.price)
+        .forEach((p) => {
+          const parts = [p.name];
+          if (p.memory_capacity) parts.push(p.memory_capacity);
+          if (p.condition) parts.push(p.condition);
+          const price = new Intl.NumberFormat("es-CO", {
+            style: "currency", currency: "COP", maximumFractionDigits: 0,
+          }).format(p.price);
+          lines.push(`• ${parts.join(" | ")}: ${price}`);
+        });
+      lines.push("");
+    });
+
+    lines.push("📩 Escríbenos por WhatsApp para consultar disponibilidad.");
+
+    navigator.clipboard.writeText(lines.join("\n")).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    });
+  }
+
   // ── Imagen del modal (preview actual) ─────────────────────────────────────
 
   const currentImageSrc = removeImage
@@ -361,13 +402,24 @@ export default function AdminCatalogo() {
             {visibleProducts.length} de {products.length} producto{products.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-indigo text-white font-semibold hover:bg-brand-hover transition-colors shadow-sm"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Agregar</span>
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={copyInventory}
+            disabled={!products.filter(p => p.available).length}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 transition-colors disabled:opacity-40"
+            title="Copiar listado de inventario disponible"
+          >
+            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+            <span className="hidden sm:inline">{copied ? "¡Copiado!" : "Copiar lista"}</span>
+          </button>
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-indigo text-white font-semibold hover:bg-brand-hover transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Agregar</span>
+          </button>
+        </div>
       </div>
 
       {/* Filtro por categoría */}
