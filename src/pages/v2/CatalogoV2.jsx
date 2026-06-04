@@ -96,7 +96,7 @@ function ProductCard({ product, waLink }) {
           <p className="text-sm font-extrabold brand-text">{formatPrice(product.price)}</p>
           {product.available ? (
             <a
-              href={waLink(product.name)}
+              href={waLink(product)}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-1.5 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl btn-primary text-xs"
@@ -160,9 +160,14 @@ export default function CatalogoV2() {
 
   const availableCount = filtered.filter((p) => p.available).length;
 
-  function waLink(productName) {
+  function waLink(product) {
     const num = (settings.whatsapp_number || "573108216274").replace(/\D/g, "");
-    const msg = `Hola, me interesa ${productName}, ¿sigue disponible?`;
+    const parts = [product.name];
+    if (product.memory_capacity) parts.push(product.memory_capacity);
+    if (product.condition) {
+      product.condition.split(",").map(t => t.trim()).filter(Boolean).forEach(t => parts.push(t));
+    }
+    const msg = `Hola, me interesa: ${parts.join(" · ")}, ¿sigue disponible?`;
     return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
   }
 
@@ -187,7 +192,7 @@ export default function CatalogoV2() {
   const price   = settings.prices_note;
 
   return (
-    <div className="container-page pb-8" style={themeVars}>
+    <div className="container-page pb-8 overflow-x-hidden" style={themeVars}>
 
       {/* Cabecera */}
       <div className="mb-4">
@@ -245,7 +250,7 @@ export default function CatalogoV2() {
       {/* ── Filtros ── */}
       <div className="mb-4 space-y-2.5">
         {/* Chips de categoría */}
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-1 min-w-0 w-full">
           {CATEGORIES.map((cat) => {
             const b = BRAND[cat];
             const active = category === cat;

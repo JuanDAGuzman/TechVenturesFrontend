@@ -40,7 +40,7 @@ export default function NavbarV2() {
                                 TechVenturesCO
                             </span>
                             <span className="text-xs text-slate-500 font-bold tracking-wide uppercase">
-                                {isCatalogo ? "Hardware usado · GPUs y más" : "Agenda tu cita"}
+                                {isCatalogo ? "GPUs · Hardware usado" : "Agenda tu cita"}
                             </span>
                         </div>
                     </Link>
