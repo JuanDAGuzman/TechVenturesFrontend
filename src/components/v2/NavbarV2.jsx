@@ -8,6 +8,7 @@ export default function NavbarV2() {
     const isCatalogo = location.pathname === "/catalogo";
     const isAdmin    = location.pathname.startsWith("/admin");
     const isContact  = location.pathname === "/contact";
+    const hideNav    = isContact || isCatalogo;
 
     return (
         <motion.header
@@ -20,7 +21,7 @@ export default function NavbarV2() {
                     {/* Logo Section */}
                     <Link
                         to="/"
-                        className={`flex items-center gap-3 transition-all ${isContact ? 'cursor-default pointer-events-none' : 'hover:scale-105'}`}
+                        className={`flex items-center gap-3 transition-all ${hideNav ? 'cursor-default pointer-events-none' : 'hover:scale-105'}`}
                     >
                         <motion.div
                             className="relative"
@@ -45,7 +46,7 @@ export default function NavbarV2() {
                     </Link>
 
                     {/* Navigation */}
-                    {!isContact && (
+                    {!hideNav && (
                         <nav className="flex gap-3">
                             <Link
                                 to="/"
