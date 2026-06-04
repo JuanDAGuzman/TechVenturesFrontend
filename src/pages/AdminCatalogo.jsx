@@ -112,11 +112,12 @@ export default function AdminCatalogo() {
   const [formError, setFormError] = useState("");
 
   // Imagen pendiente de subir (archivo local)
-  const [pendingImage, setPendingImage] = useState(null);      // { base64, ext, preview }
+  const [pendingImage, setPendingImage] = useState(null);
   // Imagen pendiente de URL externa (búsqueda Google)
   const [pendingImageUrl, setPendingImageUrl] = useState(null);
   const [imageSearchResults, setImageSearchResults] = useState([]);
   const [imageSearchLoading, setImageSearchLoading] = useState(false);
+  const [removeImage, setRemoveImage] = useState(false);
   const fileInputRef = useRef(null);
 
   // Confirmar eliminación
@@ -157,6 +158,9 @@ export default function AdminCatalogo() {
   function openAdd() {
     setForm(EMPTY_FORM);
     setPendingImage(null);
+    setPendingImageUrl(null);
+    setImageSearchResults([]);
+    setRemoveImage(false);
     setFormError("");
     setModal({ open: true, product: null });
   }
@@ -174,6 +178,7 @@ export default function AdminCatalogo() {
     setPendingImage(null);
     setPendingImageUrl(null);
     setImageSearchResults([]);
+    setRemoveImage(false);
     setFormError("");
     setModal({ open: true, product });
   }
@@ -183,6 +188,7 @@ export default function AdminCatalogo() {
     setPendingImage(null);
     setPendingImageUrl(null);
     setImageSearchResults([]);
+    setRemoveImage(false);
     setFormError("");
   }
 
@@ -237,9 +243,12 @@ export default function AdminCatalogo() {
 
     setSaving(true);
     try {
-      // Imagen incluida directamente: base64 data URL (archivo local)
-      // o URL del thumbnail de búsqueda. Se guarda en la DB, sin filesystem.
-      const imageValue = pendingImage?.preview ?? pendingImageUrl ?? undefined;
+      // removeImage=true → image_url:null (borrar)
+      // pendingImage/pendingImageUrl → nueva imagen
+      // ninguno → no tocar image_url existente
+      const imageValue = removeImage
+        ? null
+        : (pendingImage?.preview ?? pendingImageUrl ?? undefined);
 
       const payload = {
         name:            form.name.trim(),
@@ -335,9 +344,9 @@ export default function AdminCatalogo() {
 
   // ── Imagen del modal (preview actual) ─────────────────────────────────────
 
-  const currentImageSrc = pendingImage?.preview
-    ?? pendingImageUrl
-    ?? (modal.product?.image_url || null);
+  const currentImageSrc = removeImage
+    ? null
+    : (pendingImage?.preview ?? pendingImageUrl ?? (modal.product?.image_url || null));
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -524,7 +533,19 @@ export default function AdminCatalogo() {
 
                   {/* Imagen */}
                   <div>
-                    <label className="lbl text-sm">Foto del producto</label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="lbl text-sm mb-0">Foto del producto</label>
+                      {currentImageSrc && (
+                        <button
+                          type="button"
+                          onClick={() => { setRemoveImage(true); setPendingImage(null); setPendingImageUrl(null); }}
+                          className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium transition-colors"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                          Eliminar imagen
+                        </button>
+                      )}
+                    </div>
                     <div
                       className="relative w-full h-40 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 overflow-hidden cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-colors group"
                       onClick={() => fileInputRef.current?.click()}
@@ -580,7 +601,7 @@ export default function AdminCatalogo() {
 
                     {/* Grid de resultados */}
                     {imageSearchResults.length > 0 && (
-                      <div className="mt-2 grid grid-cols-4 gap-1.5">
+                      <div className="mt-2 grid grid-cols-4 sm:grid-cols-5 gap-1.5">
                         {imageSearchResults.map((img, i) => (
                           <button
                             key={i}
