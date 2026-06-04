@@ -164,6 +164,8 @@ export default function AdminCatalogo() {
       available:       product.available,
     });
     setPendingImage(null);
+    setPendingImageUrl(null);
+    setImageSearchResults([]);
     setFormError("");
     setModal({ open: true, product });
   }
@@ -210,9 +212,10 @@ export default function AdminCatalogo() {
     setImageSearchLoading(false);
   }
 
-  function selectSearchImage(imgUrl) {
-    setPendingImageUrl(imgUrl);
-    setPendingImage(null);       // descarta subida manual si había
+  function selectSearchImage(img) {
+    // Usamos el thumbnail (más fiable) en lugar del original
+    setPendingImageUrl(img.thumb || img.url);
+    setPendingImage(null);
     setImageSearchResults([]);
   }
 
@@ -226,6 +229,10 @@ export default function AdminCatalogo() {
 
     setSaving(true);
     try {
+      // Imagen incluida directamente: base64 data URL (archivo local)
+      // o URL del thumbnail de búsqueda. Se guarda en la DB, sin filesystem.
+      const imageValue = pendingImage?.preview ?? pendingImageUrl ?? undefined;
+
       const payload = {
         name:            form.name.trim(),
         category:        form.category,
@@ -234,42 +241,21 @@ export default function AdminCatalogo() {
         condition:       form.condition.trim(),
         description:     form.description.trim() || null,
         available:       form.available,
+        ...(imageValue !== undefined && { image_url: imageValue }),
       };
 
-      let savedProduct;
       if (modal.product) {
         const r = await fetch(`${API}/admin/products/${modal.product.id}`, {
           method: "PATCH", headers, body: JSON.stringify(payload),
         });
         const d = await r.json();
         if (!d.ok) throw new Error(d.error || "ERROR");
-        savedProduct = d.product;
       } else {
         const r = await fetch(`${API}/admin/products`, {
           method: "POST", headers, body: JSON.stringify(payload),
         });
         const d = await r.json();
         if (!d.ok) throw new Error(d.error || "ERROR");
-        savedProduct = d.product;
-      }
-
-      // Subir imagen: base64 (archivo local) tiene prioridad sobre URL de búsqueda
-      if (pendingImage) {
-        const r = await fetch(`${API}/admin/products/${savedProduct.id}/image`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ image: pendingImage.base64, ext: pendingImage.ext }),
-        });
-        const d = await r.json();
-        if (d.ok) savedProduct = { ...savedProduct, image_url: d.image_url };
-      } else if (pendingImageUrl) {
-        const r = await fetch(`${API}/admin/products/${savedProduct.id}/image-url`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify({ url: pendingImageUrl }),
-        });
-        const d = await r.json();
-        if (d.ok) savedProduct = { ...savedProduct, image_url: d.image_url };
       }
 
       await loadAll();
@@ -591,7 +577,7 @@ export default function AdminCatalogo() {
                           <button
                             key={i}
                             type="button"
-                            onClick={() => selectSearchImage(img.url)}
+                            onClick={() => selectSearchImage(img)}
                             className="aspect-square rounded-xl overflow-hidden border-2 border-slate-200 hover:border-brand-indigo transition-all"
                             title={img.title}
                           >
