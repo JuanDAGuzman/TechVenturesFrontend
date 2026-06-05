@@ -351,31 +351,37 @@ export default function AdminCatalogo() {
     if (!available.length) return;
 
     const EMOJI = {
-      NVIDIA: "⬛", AMD: "⬜", Intel: "🟦", Componentes: "⚪", Celulares: "📱",
+      NVIDIA: "⬛", AMD: "⬜", Intel: "🟦", Componentes: "⚙️", Celulares: "📱",
     };
 
-    const lines = ["🛒 CATÁLOGO TECHVENTURESCO\n"];
+    const SEP = "──────────────────────────";
+    const lines = ["🛒 CATÁLOGO TECHVENTURESCO", ""];
 
-    CATEGORIES.forEach((cat) => {
-      const items = available.filter((p) => p.category === cat);
-      if (!items.length) return;
+    const activeCats = CATEGORIES.filter((c) => available.some((p) => p.category === c));
+
+    activeCats.forEach((cat, idx) => {
+      const items = available.filter((p) => p.category === cat).sort((a, b) => a.price - b.price);
       const emoji = EMOJI[cat] ?? "▪️";
-      lines.push(`${emoji} ${cat}`);
-      items
-        .sort((a, b) => a.price - b.price)
-        .forEach((p) => {
-          const parts = [p.name];
-          if (p.memory_capacity) parts.push(p.memory_capacity);
-          if (p.condition) parts.push(p.condition);
-          const price = new Intl.NumberFormat("es-CO", {
-            style: "currency", currency: "COP", maximumFractionDigits: 0,
-          }).format(p.price);
-          lines.push(`• ${parts.join(" | ")}: ${price}`);
-        });
+      if (idx > 0) lines.push("");
+      lines.push(SEP);
+      lines.push(`${emoji}  ${cat.toUpperCase()}`);
+      lines.push(SEP);
       lines.push("");
+      items.forEach((p) => {
+        const price = new Intl.NumberFormat("es-CO", {
+          style: "currency", currency: "COP", maximumFractionDigits: 0,
+        }).format(p.price);
+        const parts = [p.name];
+        if (p.memory_capacity) parts.push(p.memory_capacity);
+        if (p.condition) parts.push(p.condition);
+        parts.push(price);
+        lines.push(`• ${parts.join("  ·  ")}`);
+        lines.push("");
+      });
     });
 
-    lines.push("📩 Escríbenos por WhatsApp para consultar disponibilidad.");
+    lines.push(SEP);
+    lines.push("📩 Consultar disponibilidad por WhatsApp");
 
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       setCopied(true);

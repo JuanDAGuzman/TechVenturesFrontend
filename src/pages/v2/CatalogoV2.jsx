@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { Search, MessageCircle, Cpu, Smartphone, Package, CreditCard, Tag, Repeat2 } from "lucide-react";
+import { Search, MessageCircle, Cpu, Smartphone, Package, CreditCard, Tag, Repeat2, Plus, Check, X } from "lucide-react";
 
 const API = (
   import.meta.env.VITE_API_BASE ??
@@ -48,11 +48,20 @@ function ProductThumb({ imageUrl, category, name }) {
 }
 
 // Única tarjeta — se usa tanto en vista agrupada como en vista filtrada
-function ProductCard({ product, waLink }) {
+function ProductCard({ product, isSelected, onToggle }) {
+  const b = BRAND[product.category] ?? BRAND.Componentes;
+
   return (
-    <div className={`bg-white border rounded-2xl overflow-hidden shadow-sm flex flex-col min-w-0 w-full ${
-      product.available ? "border-slate-200" : "border-slate-100 opacity-60"
-    }`}>
+    <div
+      className={`bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col min-w-0 w-full transition-all border-2 ${
+        !product.available
+          ? "border-slate-100 opacity-60"
+          : isSelected
+          ? "shadow-md"
+          : "border-slate-200"
+      }`}
+      style={product.available && isSelected ? { borderColor: b.dot } : {}}
+    >
       {/* Parte superior: fondo blanco + ícono centrado */}
       <div className="h-28 relative border-b border-slate-100">
         <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
@@ -63,13 +72,21 @@ function ProductCard({ product, waLink }) {
             </span>
           </div>
         )}
+        {isSelected && (
+          <div
+            className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
+            style={{ background: b.dot }}
+          >
+            <Check className="w-3 h-3 text-white" />
+          </div>
+        )}
       </div>
 
       {/* Parte inferior: información */}
       <div className="p-2.5 flex flex-col flex-1">
         <p className="font-bold text-slate-900 text-xs leading-snug line-clamp-2 uppercase">{product.name}</p>
 
-        {/* Badges: memoria + condición (separada por comas = múltiples tags) */}
+        {/* Badges: memoria + condición */}
         <div className="flex flex-wrap gap-1 mt-1.5">
           {product.memory_capacity && (
             <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full uppercase">
@@ -95,15 +112,19 @@ function ProductCard({ product, waLink }) {
         <div className="mt-auto pt-2">
           <p className="text-sm font-extrabold brand-text">{formatPrice(product.price)}</p>
           {product.available ? (
-            <a
-              href={waLink(product)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1.5 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl btn-primary text-xs"
+            <button
+              onClick={() => onToggle(product)}
+              className={`mt-1.5 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl text-xs font-semibold transition-all ${
+                isSelected ? "text-white" : "btn-primary"
+              }`}
+              style={isSelected ? { background: b.dot } : {}}
             >
-              <MessageCircle className="w-3 h-3" />
-              Consultar
-            </a>
+              {isSelected ? (
+                <><Check className="w-3 h-3" /> Agregado</>
+              ) : (
+                <><Plus className="w-3 h-3" /> Agregar</>
+              )}
+            </button>
           ) : (
             <div className="mt-1.5 py-1.5 rounded-xl bg-slate-100 text-center text-xs text-slate-400 font-medium">
               No disponible
@@ -123,6 +144,7 @@ export default function CatalogoV2() {
   const [search, setSearch]     = useState("");
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
+  const [selectedIds, setSelectedIds] = useState(new Set());
 
   useEffect(() => {
     Promise.all([
@@ -160,6 +182,20 @@ export default function CatalogoV2() {
 
   const availableCount = filtered.filter((p) => p.available).length;
 
+  const selectedProducts = useMemo(
+    () => products.filter((p) => selectedIds.has(p.id)),
+    [products, selectedIds]
+  );
+
+  function toggleSelect(product) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(product.id)) next.delete(product.id);
+      else next.add(product.id);
+      return next;
+    });
+  }
+
   function waLink(product) {
     const num = (settings.whatsapp_number || "573108216274").replace(/\D/g, "");
     const parts = [product.name];
@@ -168,6 +204,17 @@ export default function CatalogoV2() {
       product.condition.split(",").map(t => t.trim()).filter(Boolean).forEach(t => parts.push(t));
     }
     const msg = `Hola, me interesa: ${parts.join(" · ")}, ¿sigue disponible?`;
+    return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+  }
+
+  function waLinkMulti(items) {
+    const num = (settings.whatsapp_number || "573108216274").replace(/\D/g, "");
+    if (items.length === 1) return waLink(items[0]);
+    const list = items.map((p) => {
+      const detail = [p.memory_capacity, p.condition].filter(Boolean).join(", ");
+      return `• ${p.name}${detail ? ` (${detail})` : ""}`;
+    }).join("\n");
+    const msg = `Hola, me interesan los siguientes artículos, ¿siguen disponibles?\n\n${list}\n\n¡Gracias!`;
     return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
   }
 
@@ -192,7 +239,7 @@ export default function CatalogoV2() {
   const price   = settings.prices_note;
 
   return (
-    <div className="container-page pb-8 w-full min-w-0" style={themeVars}>
+    <div className={`container-page w-full min-w-0 ${selectedIds.size > 0 ? "pb-28" : "pb-8"}`} style={themeVars}>
 
       {/* Cabecera */}
       <div className="mb-4">
@@ -350,7 +397,7 @@ export default function CatalogoV2() {
                 {/* Cuadrícula — igual para todas las categorías */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 w-full min-w-0">
                   {items.map((p) => (
-                    <ProductCard key={p.id} product={p} waLink={waLink} />
+                    <ProductCard key={p.id} product={p} isSelected={selectedIds.has(p.id)} onToggle={toggleSelect} />
                   ))}
                 </div>
               </section>
@@ -361,8 +408,40 @@ export default function CatalogoV2() {
         /* Vista filtrada — siempre cuadrícula, nunca lista de 1 columna */
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
           {filtered.map((p) => (
-            <ProductCard key={p.id} product={p} waLink={waLink} />
+            <ProductCard key={p.id} product={p} isSelected={selectedIds.has(p.id)} onToggle={toggleSelect} />
           ))}
+        </div>
+      )}
+
+      {/* ── Barra flotante de consulta múltiple ── */}
+      {selectedIds.size > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pt-3 pb-5 bg-white border-t border-slate-200 shadow-2xl">
+          <div className="max-w-lg mx-auto flex items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-slate-800">
+                {selectedIds.size} artículo{selectedIds.size !== 1 ? "s" : ""} seleccionado{selectedIds.size !== 1 ? "s" : ""}
+              </p>
+              <p className="text-xs text-slate-400 truncate mt-0.5">
+                {selectedProducts.map((p) => p.name).join(", ")}
+              </p>
+            </div>
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+              title="Limpiar selección"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <a
+              href={waLinkMulti(selectedProducts)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-xl btn-primary text-sm font-semibold whitespace-nowrap"
+            >
+              <MessageCircle className="w-4 h-4" />
+              Consultar
+            </a>
+          </div>
         </div>
       )}
     </div>
