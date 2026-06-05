@@ -60,7 +60,7 @@ function ProductCard({ product, isSelected, onToggle }) {
           ? "shadow-md"
           : "border-slate-200"
       }`}
-      style={product.available && isSelected ? { borderColor: b.dot } : {}}
+      style={product.available && isSelected ? { borderColor: "var(--brand)" } : {}}
     >
       {/* Parte superior: fondo blanco + ícono centrado */}
       <div className="h-28 relative border-b border-slate-100">
@@ -75,7 +75,7 @@ function ProductCard({ product, isSelected, onToggle }) {
         {isSelected && (
           <div
             className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
-            style={{ background: b.dot }}
+            style={{ background: "var(--brand)" }}
           >
             <Check className="w-3 h-3 text-white" />
           </div>
@@ -114,10 +114,8 @@ function ProductCard({ product, isSelected, onToggle }) {
           {product.available ? (
             <button
               onClick={() => onToggle(product)}
-              className={`mt-1.5 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl text-xs font-semibold transition-all ${
-                isSelected ? "text-white" : "btn-primary"
-              }`}
-              style={isSelected ? { background: b.dot } : {}}
+              className={`mt-1.5 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl text-xs font-semibold transition-all btn-primary`}
+              style={isSelected ? { filter: "brightness(0.78)" } : {}}
             >
               {isSelected ? (
                 <><X className="w-3 h-3" /> Quitar</>
