@@ -120,7 +120,7 @@ function ProductCard({ product, isSelected, onToggle }) {
               style={isSelected ? { background: b.dot } : {}}
             >
               {isSelected ? (
-                <><Check className="w-3 h-3" /> Agregado</>
+                <><X className="w-3 h-3" /> Quitar</>
               ) : (
                 <><Plus className="w-3 h-3" /> Agregar</>
               )}
