@@ -10,7 +10,6 @@ import AdminGate from "./pages/AdminGate.jsx";
 import AdminCatalogoGate from "./pages/AdminCatalogoGate.jsx";
 import Contact from "./pages/Contact.jsx";
 import LayoutV2 from "./components/v2/LayoutV2.jsx";
-
 export default function App() {
   return (
     <BrowserRouter>
