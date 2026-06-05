@@ -411,9 +411,6 @@ export default function CatalogoV2() {
         </div>
       )}
 
-      {/* Espacio para que la barra flotante no tape los últimos ítems */}
-      {selectedIds.size > 0 && <div className="h-40" aria-hidden="true" />}
-
       {/* ── Panel flotante de consulta múltiple ── */}
       {selectedIds.size > 0 && (
         <div className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-slate-200 shadow-[0_-4px_24px_rgba(0,0,0,0.10)]">
