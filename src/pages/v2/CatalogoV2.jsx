@@ -237,7 +237,7 @@ export default function CatalogoV2() {
   const price   = settings.prices_note;
 
   return (
-    <div className={`container-page w-full min-w-0 ${selectedIds.size > 0 ? "pb-44" : "pb-8"}`} style={themeVars}>
+    <div className="container-page pb-8 w-full min-w-0" style={themeVars}>
 
       {/* Cabecera */}
       <div className="mb-4">
@@ -410,6 +410,9 @@ export default function CatalogoV2() {
           ))}
         </div>
       )}
+
+      {/* Espacio para que la barra flotante no tape los últimos ítems */}
+      {selectedIds.size > 0 && <div className="h-40" aria-hidden="true" />}
 
       {/* ── Panel flotante de consulta múltiple ── */}
       {selectedIds.size > 0 && (
