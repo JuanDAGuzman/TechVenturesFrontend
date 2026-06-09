@@ -354,34 +354,52 @@ export default function AdminCatalogo() {
       NVIDIA: "⬛", AMD: "⬜", Intel: "🟦", Componentes: "⚙️", Celulares: "📱",
     };
 
-    const SEP = "──────────────────────────";
-    const lines = ["🛒 CATÁLOGO TECHVENTURESCO", ""];
+    const fmt = (price) =>
+      new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 }).format(price) + ".";
 
-    const activeCats = CATEGORIES.filter((c) => available.some((p) => p.category === c));
+    const lines = [
+      "⬇️ LEER ATENTAMENTE ⬇️",
+      "",
+      "🎉 ¡BIENVENIDO/A TechVenturesCO! 🎉",
+      "",
+      "🖥️ GRÁFICAS DISPONIBLES:",
+      "",
+    ];
 
-    activeCats.forEach((cat, idx) => {
-      const items = available.filter((p) => p.category === cat).sort((a, b) => a.price - b.price);
+    CATEGORIES.forEach((cat) => {
+      const items = available
+        .filter((p) => p.category === cat)
+        .sort((a, b) => a.price - b.price);
+      if (!items.length) return;
       const emoji = EMOJI[cat] ?? "▪️";
-      if (idx > 0) lines.push("");
-      lines.push(SEP);
-      lines.push(`${emoji}  ${cat.toUpperCase()}`);
-      lines.push(SEP);
-      lines.push("");
       items.forEach((p) => {
-        const price = new Intl.NumberFormat("es-CO", {
-          style: "currency", currency: "COP", maximumFractionDigits: 0,
-        }).format(p.price);
-        const parts = [p.name];
-        if (p.memory_capacity) parts.push(p.memory_capacity);
-        if (p.condition) parts.push(p.condition);
-        parts.push(price);
-        lines.push(`• ${parts.join("  ·  ")}`);
+        let display = p.name;
+        if (p.memory_capacity) display += ` ${p.memory_capacity}`;
+        if (p.condition) display += ` (${p.condition})`;
+        lines.push(`${emoji} ${display}: ${fmt(p.price)}`);
         lines.push("");
       });
     });
 
-    lines.push(SEP);
-    lines.push("📩 Consultar disponibilidad por WhatsApp");
+    lines.push(
+      "💡 ¿TIENES UNA GRÁFICA USADA?",
+      "¡Aceptamos gráficas como parte de pago! 🤑",
+      "",
+      "💎 PRECIOS FIJOS:",
+      "Precios claros y sin negociación. 😊",
+      "¿Compras varias unidades? Escríbenos, podemos revisar opciones. 📩",
+      "",
+      "💳 NUEVA OPCIÓN DE PAGO DISPONIBLE",
+      "ahora también puedes pagar con tarjetas crédito y débito.",
+      "📌 pagos con datáfono tienen un recargo del 6 %.",
+      "💵 pagos en efectivo o transferencia → sin recargo.",
+      "",
+      "⚠️ ¿NO VES LA GRÁFICA QUE BUSCAS?",
+      "Lamentablemente, ya se ha vendido. ¡No te quedes sin la tuya! 🚀",
+      "",
+      "📲 ¿DESEAS CONTACTARNOS? Escríbenos aquí:",
+      "👉 https://techventuresco.vercel.app/contact",
+    );
 
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       setCopied(true);

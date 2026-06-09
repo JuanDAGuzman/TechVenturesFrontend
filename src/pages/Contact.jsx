@@ -90,7 +90,7 @@ export default function Contact() {
                         delay={0.1}
                     />
                     <SocialCard
-                        href="https://www.facebook.com/marketplace/profile/100084833282957/"
+                        href="https://www.facebook.com/marketplace/profile/100014648558150/?ref=permalink&mibextid=6ojiHh"
                         icon={<FacebookIcon />}
                         label="Marketplace"
                         description="Perfil y calificaciones"
