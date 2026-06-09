@@ -374,7 +374,8 @@ export default function AdminCatalogo() {
       const emoji = EMOJI[cat] ?? "▪️";
       items.forEach((p) => {
         let display = p.name;
-        if (p.memory_capacity) display += ` ${p.memory_capacity}`;
+        if (p.memory_capacity && !p.name.toUpperCase().includes(p.memory_capacity.toUpperCase()))
+          display += ` ${p.memory_capacity}`;
         if (p.condition) display += ` (${p.condition})`;
         lines.push(`${emoji} ${display}: ${fmt(p.price)}`);
         lines.push("");
