@@ -23,6 +23,18 @@ const BRAND = {
   Celulares:   { bg: "rgba(139,92,246,0.12)",   text: "#6d28d9", dot: "#8B5CF6"  },
 };
 
+const CATEGORY_EMOJI = {
+  NVIDIA: "⬛", AMD: "⬜", Intel: "🟦", Componentes: "⚙️", Celulares: "📱",
+};
+
+function productDisplayName(p) {
+  let display = p.name;
+  if (p.memory_capacity && !p.name.toUpperCase().includes(p.memory_capacity.toUpperCase()))
+    display += ` ${p.memory_capacity}`;
+  if (p.condition) display += ` (${p.condition})`;
+  return display;
+}
+
 const EMPTY_FORM = {
   name: "",
   category: "NVIDIA",
@@ -42,7 +54,7 @@ function formatPrice(p) {
   }).format(p);
 }
 
-function AdminProductCard({ p, onToggle, onEdit, onDelete }) {
+function AdminProductCard({ p, onToggle, onEdit, onDelete, onCopy, copied }) {
   const dot = BRAND[p.category]?.dot ?? "#94a3b8";
   return (
     <div className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col ${!p.available ? "opacity-60" : ""}`}>
@@ -82,6 +94,13 @@ function AdminProductCard({ p, onToggle, onEdit, onDelete }) {
           {p.available ? "Disp." : "Agot."}
         </button>
         <div className="flex gap-1 shrink-0">
+          <button
+            onClick={() => onCopy(p)}
+            title="Copiar mensaje del artículo"
+            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+          </button>
           <button onClick={() => onEdit(p)} className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors">
             <Pencil className="w-3.5 h-3.5" />
           </button>
@@ -350,10 +369,6 @@ export default function AdminCatalogo() {
     const available = products.filter((p) => p.available);
     if (!available.length) return;
 
-    const EMOJI = {
-      NVIDIA: "⬛", AMD: "⬜", Intel: "🟦", Componentes: "⚙️", Celulares: "📱",
-    };
-
     const fmt = (price) =>
       new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 }).format(price) + ".";
 
@@ -371,13 +386,9 @@ export default function AdminCatalogo() {
         .filter((p) => p.category === cat)
         .sort((a, b) => a.price - b.price);
       if (!items.length) return;
-      const emoji = EMOJI[cat] ?? "▪️";
+      const emoji = CATEGORY_EMOJI[cat] ?? "▪️";
       items.forEach((p) => {
-        let display = p.name;
-        if (p.memory_capacity && !p.name.toUpperCase().includes(p.memory_capacity.toUpperCase()))
-          display += ` ${p.memory_capacity}`;
-        if (p.condition) display += ` (${p.condition})`;
-        lines.push(`${emoji} ${display}: ${fmt(p.price)}`);
+        lines.push(`${emoji} ${productDisplayName(p)}: ${fmt(p.price)}`);
         lines.push("");
       });
     });
@@ -399,12 +410,39 @@ export default function AdminCatalogo() {
       "Lamentablemente, ya se ha vendido. ¡No te quedes sin la tuya! 🚀",
       "",
       "📲 ¿DESEAS CONTACTARNOS? Escríbenos aquí:",
-      "👉 https://techventuresco.vercel.app/contact",
+      "👉 https://techventuresco.com/contact",
     );
 
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
+    });
+  }
+
+  // ── Copiar mensaje individual de un artículo ───────────────────────────────
+
+  const [copiedProductId, setCopiedProductId] = useState(null);
+
+  function copyProductMessage(p) {
+    const emoji = CATEGORY_EMOJI[p.category] ?? "▪️";
+    const price = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 }).format(p.price);
+    const tradeIn = settingsForm.trade_in_note?.trim();
+
+    const lines = [
+      `${emoji} ${productDisplayName(p)}`,
+      "",
+      `💵 ${price} COP`,
+      "",
+      "🇨🇴 Envíos a nivel nacional",
+    ];
+
+    if (tradeIn) lines.push("", `🔁 ${tradeIn}`);
+
+    lines.push("", "💬 Tenemos más artículos disponibles, pregúntanos sin compromiso");
+
+    navigator.clipboard.writeText(lines.join("\n")).then(() => {
+      setCopiedProductId(p.id);
+      setTimeout(() => setCopiedProductId(null), 2500);
     });
   }
 
@@ -502,7 +540,7 @@ export default function AdminCatalogo() {
                     <span className="text-xs text-slate-400">{avail} disponible{avail !== 1 ? "s" : ""} · {items.length} total</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-                    {items.map((p) => <AdminProductCard key={p.id} p={p} onToggle={toggleAvailable} onEdit={openEdit} onDelete={setDeleteTarget} />)}
+                    {items.map((p) => <AdminProductCard key={p.id} p={p} onToggle={toggleAvailable} onEdit={openEdit} onDelete={setDeleteTarget} onCopy={copyProductMessage} copied={copiedProductId === p.id} />)}
                   </div>
                 </section>
               );
@@ -512,7 +550,7 @@ export default function AdminCatalogo() {
         /* Vista filtrada por categoría */
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 mb-6">
           {visibleProducts.map((p) => (
-            <AdminProductCard key={p.id} p={p} onToggle={toggleAvailable} onEdit={openEdit} onDelete={setDeleteTarget} />
+            <AdminProductCard key={p.id} p={p} onToggle={toggleAvailable} onEdit={openEdit} onDelete={setDeleteTarget} onCopy={copyProductMessage} copied={copiedProductId === p.id} />
           ))}
         </div>
       )}

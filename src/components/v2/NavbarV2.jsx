@@ -1,12 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, Settings, ShoppingBag } from "lucide-react";
+import { Calendar, ShoppingBag, MessageCircle } from "lucide-react";
 
 export default function NavbarV2() {
     const location = useLocation();
     const isBooking  = location.pathname === "/";
     const isCatalogo = location.pathname === "/catalogo";
-    const isAdmin    = location.pathname.startsWith("/admin");
     const isContact  = location.pathname === "/contact";
     const hideNav    = isContact || isCatalogo;
 
@@ -35,7 +34,7 @@ export default function NavbarV2() {
                             />
                         </motion.div>
 
-                        <div className="flex flex-col">
+                        <div className="hidden sm:flex flex-col">
                             <span className="font-extrabold text-xl text-brand-indigo tracking-tight leading-tight drop-shadow-sm">
                                 TechVenturesCO
                             </span>
@@ -46,42 +45,47 @@ export default function NavbarV2() {
                     </Link>
 
                     {/* Navigation */}
-                    {!hideNav && (
-                        <nav className="flex gap-3">
-                            <Link
-                                to="/"
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm ${isBooking
-                                    ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
-                                    : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
-                                    }`}
-                            >
-                                <Calendar className="w-4 h-4" />
-                                <span>Agendar</span>
-                            </Link>
+                    <div className="flex items-center gap-3">
+                        {!hideNav && (
+                            <nav className="flex gap-2 sm:gap-3">
+                                <Link
+                                    to="/"
+                                    className={`flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm ${isBooking
+                                        ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
+                                        : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
+                                        }`}
+                                >
+                                    <Calendar className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Agendar</span>
+                                </Link>
 
-                            <Link
-                                to="/catalogo"
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm ${isCatalogo
-                                    ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
-                                    : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
-                                    }`}
-                            >
-                                <ShoppingBag className="w-4 h-4" />
-                                <span>Catálogo</span>
-                            </Link>
+                                <Link
+                                    to="/catalogo"
+                                    className={`flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm ${isCatalogo
+                                        ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
+                                        : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
+                                        }`}
+                                >
+                                    <ShoppingBag className="w-4 h-4" />
+                                    <span className="hidden sm:inline">Catálogo</span>
+                                </Link>
+                            </nav>
+                        )}
 
-                            <Link
-                                to="/admin"
-                                className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm ${isAdmin
-                                    ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
-                                    : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
-                                    }`}
-                            >
-                                <Settings className="w-4 h-4" />
-                                <span>Admin</span>
-                            </Link>
-                        </nav>
-                    )}
+                        {/* Contacto — siempre visible, incluso cuando el resto del nav está oculto */}
+                        <Link
+                            to="/contact"
+                            title="Contáctanos"
+                            aria-label="Contáctanos"
+                            className={`flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm shrink-0 ${isContact
+                                ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
+                                : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
+                                }`}
+                        >
+                            <MessageCircle className="w-4 h-4" />
+                            <span className="hidden sm:inline">Contacto</span>
+                        </Link>
+                    </div>
                 </div>
             </div>
         </motion.header>
