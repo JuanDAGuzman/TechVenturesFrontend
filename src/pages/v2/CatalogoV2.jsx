@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from "react";
-import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X } from "lucide-react";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
 
 const API = (
@@ -193,6 +193,8 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, index 
 function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLink }) {
   const b = BRAND[product.category] ?? BRAND.Componentes;
   const form = CATEGORY_FORM[product.category] ?? "component";
+  const scrollRef = useRef(null);
+  const [showScrollHint, setShowScrollHint] = useState(false);
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -203,6 +205,28 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
       document.body.style.overflow = "";
     };
   }, [onClose]);
+
+  // Muestra un indicador de "más contenido abajo" mientras el modal tenga
+  // scroll pendiente (útil en mobile, donde los botones quedan fuera de vista)
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const check = () => {
+      const hasOverflow = el.scrollHeight - el.clientHeight > 8;
+      const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 24;
+      setShowScrollHint(hasOverflow && !nearBottom);
+    };
+    check();
+    el.addEventListener("scroll", check);
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    window.addEventListener("resize", check);
+    return () => {
+      el.removeEventListener("scroll", check);
+      ro.disconnect();
+      window.removeEventListener("resize", check);
+    };
+  }, [product]);
 
   const specs = [
     ["Categoría", product.category],
@@ -219,16 +243,18 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
       onClick={onClose}
     >
       <div
-        className="modal-pop bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2 relative"
+        className="modal-pop bg-white rounded-3xl shadow-2xl w-full max-w-3xl relative overflow-hidden"
         style={{ "--ca": b.dot }}
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/90 border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-all"
+          className="absolute top-3 right-3 z-20 w-9 h-9 rounded-full bg-white/90 border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-all"
         >
           <X className="w-4 h-4" />
         </button>
+
+        <div ref={scrollRef} className="max-h-[90vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2">
 
         {/* Visual */}
         <div
@@ -303,6 +329,14 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
             </a>
           </div>
         </div>
+        </div>
+
+        {/* Indicador de scroll: avisa que hay más contenido debajo (mobile) */}
+        {showScrollHint && (
+          <div className="md:hidden pointer-events-none absolute bottom-0 inset-x-0 h-14 rounded-b-3xl bg-gradient-to-t from-white via-white/90 to-transparent flex items-end justify-center pb-1.5">
+            <ChevronDown className="w-5 h-5 text-slate-400 animate-bounce" />
+          </div>
+        )}
       </div>
     </div>
   );
