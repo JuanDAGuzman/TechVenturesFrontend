@@ -16,7 +16,7 @@ export default function FooterV2() {
 
     const links = {
         company: [
-            { label: "Agendar cita", href: "/" },
+            { label: "Catálogo", href: "/" },
             { label: "Contacto", href: "/contact" },
         ],
         social: [

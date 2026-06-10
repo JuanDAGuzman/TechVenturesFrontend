@@ -2,7 +2,7 @@ import { createPortal } from "react-dom";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { getAdminToken } from "../lib/adminSession.js";
 import {
-  Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X, Copy, Check,
+  Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X, Copy, Check, Star,
 } from "lucide-react";
 
 const API = (
@@ -43,7 +43,11 @@ const EMPTY_FORM = {
   condition: "",
   description: "",
   available: true,
+  tier: "",
+  is_flagship: false,
 };
+
+const TIER_OPTIONS = ["Baja", "Media", "Alta"];
 
 
 function formatPrice(p) {
@@ -70,6 +74,21 @@ function AdminProductCard({ p, onToggle, onEdit, onDelete, onCopy, copied }) {
       {/* Info */}
       <div className="p-2 flex-1 flex flex-col">
         <p className="font-bold text-slate-800 text-xs leading-snug line-clamp-2">{p.name}</p>
+        {(p.tier || p.is_flagship) && (
+          <div className="flex flex-wrap gap-1 mt-0.5">
+            {p.tier && (
+              <span className="inline-block w-fit text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
+                {p.tier}
+              </span>
+            )}
+            {p.is_flagship && (
+              <span className="inline-flex items-center gap-0.5 w-fit text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">
+                <Star className="w-2.5 h-2.5 fill-current" />
+                Insignia
+              </span>
+            )}
+          </div>
+        )}
         {p.condition && (
           <div className="flex flex-wrap gap-1 mt-0.5">
             {p.condition.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag, i) => (
@@ -193,6 +212,8 @@ export default function AdminCatalogo() {
       condition:       product.condition || "",
       description:     product.description || "",
       available:       product.available,
+      tier:            product.tier || "",
+      is_flagship:     product.is_flagship || false,
     });
     setPendingImage(null);
     setPendingImageUrl(null);
@@ -277,6 +298,8 @@ export default function AdminCatalogo() {
         condition:       form.condition.trim(),
         description:     form.description.trim() || null,
         available:       form.available,
+        tier:            form.tier || null,
+        is_flagship:     !!form.is_flagship,
         ...(imageValue !== undefined && { image_url: imageValue }),
       };
 
@@ -321,6 +344,8 @@ export default function AdminCatalogo() {
           condition:       product.condition,
           description:     product.description,
           available:       !product.available,
+          tier:            product.tier || null,
+          is_flagship:     !!product.is_flagship,
         }),
       });
     } catch {
@@ -804,6 +829,38 @@ export default function AdminCatalogo() {
                       />
                     </div>
                   </div>
+
+                  {/* Gama */}
+                  <div>
+                    <label className="lbl text-sm">
+                      Gama{" "}
+                      <span className="text-slate-400 text-xs font-normal">(opcional, manual)</span>
+                    </label>
+                    <select
+                      value={form.tier}
+                      onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none bg-white transition text-sm"
+                    >
+                      <option value="">Sin definir (automático)</option>
+                      {TIER_OPTIONS.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Insignia (tope de línea/marca) */}
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={form.is_flagship}
+                      onChange={(e) => setForm((f) => ({ ...f, is_flagship: e.target.checked }))}
+                      className="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                    />
+                    <span className="text-sm text-slate-700 font-medium">
+                      ¿Es la línea insignia de su marca?{" "}
+                      <span className="text-slate-400 text-xs font-normal">(ej. Nitro+, ROG Strix, Red Devil)</span>
+                    </span>
+                  </label>
 
                   {/* Descripción */}
                   <div>

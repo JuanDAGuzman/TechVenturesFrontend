@@ -1,13 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, ShoppingBag, MessageCircle } from "lucide-react";
+import { ShoppingBag, MessageCircle } from "lucide-react";
 
 export default function NavbarV2() {
     const location = useLocation();
-    const isBooking  = location.pathname === "/";
-    const isCatalogo = location.pathname === "/catalogo";
+    const isHome     = location.pathname === "/";
+    const isCatalogo = isHome || location.pathname === "/catalogo";
     const isContact  = location.pathname === "/contact";
-    const hideNav    = isContact || isCatalogo;
+    const hideNav    = isContact;
 
     return (
         <motion.header
@@ -20,7 +20,7 @@ export default function NavbarV2() {
                     {/* Logo Section */}
                     <Link
                         to="/"
-                        className={`flex items-center gap-3 transition-all ${hideNav ? 'cursor-default pointer-events-none' : 'hover:scale-105'}`}
+                        className={`flex items-center gap-3 transition-all ${isHome ? 'cursor-default pointer-events-none' : 'hover:scale-105'}`}
                     >
                         <motion.div
                             className="relative"
@@ -50,17 +50,6 @@ export default function NavbarV2() {
                             <nav className="flex gap-2 sm:gap-3">
                                 <Link
                                     to="/"
-                                    className={`flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm ${isBooking
-                                        ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
-                                        : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
-                                        }`}
-                                >
-                                    <Calendar className="w-4 h-4" />
-                                    <span className="hidden sm:inline">Agendar</span>
-                                </Link>
-
-                                <Link
-                                    to="/catalogo"
                                     className={`flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm ${isCatalogo
                                         ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
                                         : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"

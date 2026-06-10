@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
-import { Search, MessageCircle, Cpu, Smartphone, Package, CreditCard, Tag, Repeat2, Plus, Check, X } from "lucide-react";
+import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X } from "lucide-react";
+import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
 
 const API = (
   import.meta.env.VITE_API_BASE ??
@@ -25,11 +26,16 @@ function formatPrice(p) {
   }).format(p);
 }
 
-// Placeholder blanco con ícono pequeño de color de marca — sin ningún recuadro de color
+const copFmt = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 });
+function formatCop(p) {
+  return `$ ${copFmt.format(p)}`;
+}
+
+// Placeholder con ilustración técnica "blueprint" en el color de marca de la categoría
 function ProductThumb({ imageUrl, category, name }) {
   const [imgErr, setImgErr] = useState(false);
   const dot = BRAND[category]?.dot ?? "#64748b";
-  const isPhone = category === "Celulares";
+  const form = CATEGORY_FORM[category] ?? "component";
 
   if (imageUrl && !imgErr) {
     return (
@@ -39,32 +45,75 @@ function ProductThumb({ imageUrl, category, name }) {
     );
   }
   return (
-    <div className="w-full h-full bg-white flex items-center justify-center">
-      {isPhone
-        ? <Smartphone className="w-7 h-7" style={{ color: dot }} />
-        : <Cpu        className="w-7 h-7" style={{ color: dot }} />}
+    <div
+      className="w-full h-full flex items-center justify-center overflow-hidden"
+      style={{
+        background: `
+          radial-gradient(90% 80% at 50% 28%, color-mix(in srgb, ${dot} 16%, transparent), transparent 70%),
+          repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(15,23,42,0.045) 15px, rgba(15,23,42,0.045) 16px),
+          repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(15,23,42,0.045) 15px, rgba(15,23,42,0.045) 16px),
+          #ffffff
+        `,
+      }}
+    >
+      <Silhouette
+        form={form}
+        className="w-[68%] sm:w-[62%] max-h-full transition-all duration-500 ease-out opacity-[var(--sil-op)] group-hover:scale-105 group-hover:opacity-100"
+        style={{ color: dot, "--sil-op": 0.55 }}
+      />
     </div>
   );
 }
 
 // Única tarjeta — se usa tanto en vista agrupada como en vista filtrada
-function ProductCard({ product, isSelected, onToggle }) {
+function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, index = 0 }) {
   const b = BRAND[product.category] ?? BRAND.Componentes;
 
   return (
     <div
-      className={`bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col min-w-0 w-full transition-all border-2 ${
+      onClick={() => onOpenDetail(product)}
+      className={`catalog-card-in group bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col min-w-0 w-full transition-all duration-300 ease-out border-2 cursor-pointer ${
         !product.available
           ? "border-slate-100 opacity-60"
           : isSelected
           ? "shadow-md"
-          : "border-slate-200"
+          : "border-slate-200 hover:-translate-y-1.5 hover:border-[var(--brand)] hover:shadow-[0_12px_32px_-12px_var(--brand-ring)]"
       }`}
-      style={product.available && isSelected ? { borderColor: "var(--brand)" } : {}}
+      style={{
+        "--ca": b.dot,
+        animationDelay: `${Math.min(index, 11) * 35}ms`,
+        ...(product.available && isSelected ? { borderColor: "var(--brand)" } : {}),
+      }}
     >
       {/* Parte superior: fondo blanco + ícono centrado */}
-      <div className="h-28 relative border-b border-slate-100">
+      <div className="h-36 sm:h-44 relative border-b border-slate-100">
         <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
+
+        {/* Marco técnico tipo "viewfinder" — aparece al hover */}
+        <div className="pointer-events-none absolute inset-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <span className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 rounded-tl" style={{ borderColor: "var(--brand)" }} />
+          <span className="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 rounded-tr" style={{ borderColor: "var(--brand)" }} />
+          <span className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 rounded-bl" style={{ borderColor: "var(--brand)" }} />
+          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2 rounded-br" style={{ borderColor: "var(--brand)" }} />
+        </div>
+
+        {(tier || product.is_flagship) && (
+          <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
+            {tier && (
+              <span className="text-[9px] font-mono font-bold uppercase tracking-widest px-2 py-1 rounded-full border shadow-sm text-slate-800 bg-white border-slate-400">
+                {tier}
+              </span>
+            )}
+            {product.is_flagship && (
+              <span
+                className="text-[9px] font-mono font-bold uppercase tracking-widest px-2 py-1 rounded-full border border-transparent text-white shadow-sm"
+                style={{ background: "var(--brand)" }}
+              >
+                Insignia
+              </span>
+            )}
+          </div>
+        )}
         {!product.available && (
           <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
             <span className="text-xs font-bold text-slate-500 bg-white px-2 py-0.5 rounded-full shadow-sm border border-slate-200">
@@ -74,17 +123,23 @@ function ProductCard({ product, isSelected, onToggle }) {
         )}
         {isSelected && (
           <div
-            className="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center shadow-sm"
+            className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center shadow-sm"
             style={{ background: "var(--brand)" }}
           >
-            <Check className="w-3 h-3 text-white" />
+            <Check className="w-3.5 h-3.5 text-white" />
           </div>
         )}
       </div>
 
       {/* Parte inferior: información */}
-      <div className="p-2.5 flex flex-col flex-1">
-        <p className="font-bold text-slate-900 text-xs leading-snug line-clamp-2 uppercase">{product.name}</p>
+      <div className="p-3 sm:p-4 flex flex-col flex-1">
+        {/* Marca/categoría + punto de color */}
+        <div className="flex items-center gap-1.5 mb-1">
+          <span className="text-[10px] font-mono font-medium uppercase tracking-[0.2em] text-slate-400">{product.category}</span>
+          <span className="w-1.5 h-1.5 rounded-full ml-auto" style={{ background: b.dot }} />
+        </div>
+
+        <p className="font-display font-semibold text-slate-900 text-sm sm:text-base leading-snug line-clamp-2 uppercase tracking-tight">{product.name}</p>
 
         {/* Badges: memoria + condición */}
         <div className="flex flex-wrap gap-1 mt-1.5">
@@ -101,33 +156,152 @@ function ProductCard({ product, isSelected, onToggle }) {
             ))}
         </div>
 
-        {/* Descripción (si existe) */}
+        {/* Descripción (si existe) — se expande por completo al hacer hover */}
         {product.description && (
-          <p className="text-xs text-slate-400 mt-1.5 leading-relaxed line-clamp-2 uppercase">
+          <p className="text-xs sm:text-sm text-slate-400 mt-1.5 leading-relaxed uppercase line-clamp-2 sm:group-hover:line-clamp-none transition-all">
             {product.description}
           </p>
         )}
 
         {/* Precio + botón siempre pegados al fondo del card */}
-        <div className="mt-auto pt-2">
-          <p className="text-sm font-extrabold brand-text">{formatPrice(product.price)}</p>
+        <div className="mt-auto pt-3">
+          <p className="text-xl sm:text-2xl font-mono font-semibold brand-text tracking-tight">{formatPrice(product.price)}</p>
           {product.available ? (
             <button
-              onClick={() => onToggle(product)}
-              className={`mt-1.5 flex items-center justify-center gap-1 w-full py-1.5 rounded-xl text-xs font-semibold transition-all btn-primary`}
+              onClick={(e) => { e.stopPropagation(); onToggle(product); }}
+              className={`mt-2 flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-sm font-semibold transition-all btn-primary`}
               style={isSelected ? { filter: "brightness(0.78)" } : {}}
             >
               {isSelected ? (
-                <><X className="w-3 h-3" /> Quitar</>
+                <><X className="w-4 h-4" /> Quitar</>
               ) : (
-                <><Plus className="w-3 h-3" /> Agregar</>
+                <><Plus className="w-4 h-4" /> Agregar</>
               )}
             </button>
           ) : (
-            <div className="mt-1.5 py-1.5 rounded-xl bg-slate-100 text-center text-xs text-slate-400 font-medium">
+            <div className="mt-2 py-2.5 rounded-xl bg-slate-100 text-center text-sm text-slate-400 font-medium">
               No disponible
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Modal de detalle — se abre al hacer clic en una tarjeta
+function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLink }) {
+  const b = BRAND[product.category] ?? BRAND.Componentes;
+  const form = CATEGORY_FORM[product.category] ?? "component";
+
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose]);
+
+  const specs = [
+    ["Categoría", product.category],
+    product.memory_capacity && ["Memoria / Capacidad", product.memory_capacity],
+    product.condition && ["Estado", product.condition],
+    tier && ["Gama", tier],
+    product.is_flagship && ["Insignia", "Sí, tope de línea de su marca"],
+    ["Disponibilidad", product.available ? "Disponible" : "Agotado"],
+  ].filter(Boolean);
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        className="modal-pop bg-white rounded-3xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2 relative"
+        style={{ "--ca": b.dot }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/90 border border-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-800 hover:border-slate-300 transition-all"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Visual */}
+        <div
+          className="relative min-h-[240px] md:min-h-[360px] border-b md:border-b-0 md:border-r border-slate-100 flex items-center justify-center p-8"
+          style={{
+            background: `
+              radial-gradient(80% 70% at 50% 35%, color-mix(in srgb, ${b.dot} 14%, transparent), transparent 70%),
+              repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(15,23,42,0.04) 27px, rgba(15,23,42,0.04) 28px),
+              repeating-linear-gradient(90deg, transparent, transparent 27px, rgba(15,23,42,0.04) 27px, rgba(15,23,42,0.04) 28px),
+              #ffffff
+            `,
+          }}
+        >
+          {product.image_url ? (
+            <img src={product.image_url} alt={product.name} className="max-w-full max-h-full object-contain" />
+          ) : (
+            <Silhouette form={form} className="w-[70%] max-h-full" style={{ color: b.dot }} />
+          )}
+          {!product.available && (
+            <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
+              <span className="text-sm font-bold text-slate-500 bg-white px-3 py-1 rounded-full shadow-sm border border-slate-200">
+                Agotado
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="p-6 sm:p-8 flex flex-col">
+          <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-2">
+            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: b.dot }} />
+            {product.category}{tier ? ` · ${tier}` : ""}{product.is_flagship ? " · Insignia" : ""}
+          </div>
+          <h2 className="font-display font-bold text-2xl sm:text-3xl uppercase tracking-tight text-slate-900 leading-tight">
+            {product.name}
+          </h2>
+          {product.description && (
+            <p className="text-sm text-slate-500 mt-3 leading-relaxed uppercase">{product.description}</p>
+          )}
+          <p className="font-mono text-2xl sm:text-3xl font-semibold brand-text mt-4">{formatPrice(product.price)}</p>
+
+          <div className="mt-5 border-t border-slate-100">
+            {specs.map(([k, v]) => (
+              <div key={k} className="flex justify-between gap-4 py-2.5 border-b border-slate-100">
+                <span className="font-mono text-[11px] uppercase tracking-wide text-slate-400 shrink-0">{k}</span>
+                <span className="font-mono text-xs text-slate-700 text-right uppercase">{v}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-auto pt-5 flex flex-col gap-2.5">
+            {product.available && (
+              <button
+                onClick={() => onToggle(product)}
+                className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap btn-primary"
+                style={isSelected ? { filter: "brightness(0.78)" } : {}}
+              >
+                {isSelected ? (
+                  <><X className="w-4 h-4 shrink-0" /> Quitar de la consulta</>
+                ) : (
+                  <><Plus className="w-4 h-4 shrink-0" /> Agregar a la consulta</>
+                )}
+              </button>
+            )}
+            <a
+              href={waLink(product)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl text-sm font-semibold border-2 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all whitespace-nowrap"
+            >
+              <MessageCircle className="w-4 h-4 shrink-0" /> Preguntar por WhatsApp
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -143,6 +317,7 @@ export default function CatalogoV2() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set());
+  const [detailProduct, setDetailProduct] = useState(null);
 
   useEffect(() => {
     Promise.all([
@@ -157,6 +332,46 @@ export default function CatalogoV2() {
       .finally(() => setLoading(false));
   }, []);
 
+  // Asigna una "gama" (Alta / Media / Baja) a cada producto que no tenga una
+  // gama definida manualmente, según su posición de precio dentro de su
+  // propia categoría
+  const tierByProductId = useMemo(() => {
+    const map = new Map();
+    CATEGORY_ORDER.forEach((cat) => {
+      const items = products.filter((p) => p.category === cat);
+      if (!items.length) return;
+      const sorted = [...items].sort((a, b) => b.price - a.price);
+      const n = sorted.length;
+      sorted.forEach((p, i) => {
+        const pct = i / n;
+        let tier;
+        if (n === 1 || pct < 0.333) tier = "Alta";
+        else if (pct < 0.667) tier = "Media";
+        else tier = "Baja";
+        map.set(p.id, p.tier || tier);
+      });
+    });
+    return map;
+  }, [products]);
+
+  const priceBounds = useMemo(() => {
+    if (!products.length) return { min: 0, max: 0 };
+    const prices = products.map((p) => p.price);
+    return {
+      min: Math.floor(Math.min(...prices) / 50000) * 50000,
+      max: Math.ceil(Math.max(...prices) / 50000) * 50000,
+    };
+  }, [products]);
+
+  // Cantidad de productos disponibles por categoría — se muestra en los chips de filtro
+  const categoryCounts = useMemo(() => {
+    const counts = { Todos: products.filter((p) => p.available).length };
+    CATEGORY_ORDER.forEach((cat) => {
+      counts[cat] = products.filter((p) => p.category === cat && p.available).length;
+    });
+    return counts;
+  }, [products]);
+
   const filtered = useMemo(() => {
     return products.filter((p) => {
       if (!p.available) return false;                                                    // ocultar agotados
@@ -168,8 +383,9 @@ export default function CatalogoV2() {
     });
   }, [products, category, search, minPrice, maxPrice]);
 
-  // Vista agrupada SOLO cuando se muestra "Todos" sin filtros de texto/precio
-  const showGrouped = category === "Todos" && !search.trim() && minPrice === "" && maxPrice === "";
+  // Vista agrupada por categoría siempre que se muestre "Todos" sin búsqueda de texto
+  // (los filtros de precio se aplican dentro de cada grupo, no rompen el agrupamiento)
+  const showGrouped = category === "Todos" && !search.trim();
 
   const groups = useMemo(() => {
     if (!showGrouped) return [];
@@ -237,12 +453,35 @@ export default function CatalogoV2() {
   const price   = settings.prices_note;
 
   return (
-    <div className="container-page pb-8 w-full min-w-0" style={themeVars}>
+    <div className="relative w-full min-w-0" style={themeVars}>
+      {/* Fondo técnico: cuadrícula sutil + resplandor de marca */}
+      <div
+        className="absolute inset-0 -z-10 pointer-events-none"
+        style={{
+          background: `
+            radial-gradient(60% 32rem at 50% 0%, var(--brand-ring), transparent 70%),
+            repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(15,23,42,0.035) 39px, rgba(15,23,42,0.035) 40px),
+            repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(15,23,42,0.035) 39px, rgba(15,23,42,0.035) 40px)
+          `,
+        }}
+      />
+
+      <div className="container-page pb-8 w-full min-w-0">
 
       {/* Cabecera */}
-      <div className="mb-4">
-        <h1 className="text-2xl font-extrabold brand-text">Catálogo</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Hardware usado · GPUs y más</p>
+      <div className="mb-4 flex items-end justify-between gap-3 flex-wrap">
+        <div>
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.35em] text-slate-400 mb-1">
+            TechVenturesCO
+          </p>
+          <h1 className="font-display text-3xl sm:text-4xl font-bold brand-text tracking-tight">Catálogo</h1>
+          <p className="text-sm text-slate-500 mt-1">Hardware usado · GPUs y más</p>
+        </div>
+        {!loading && (
+          <div className="font-mono text-xs text-slate-400 border border-slate-200 rounded-full px-3 py-1.5 bg-white shrink-0">
+            <span className="font-semibold brand-text">{categoryCounts.Todos}</span> productos disponibles
+          </div>
+        )}
       </div>
 
       {/* ── Banner de información ── */}
@@ -299,16 +538,26 @@ export default function CatalogoV2() {
           {CATEGORIES.map((cat) => {
             const b = BRAND[cat];
             const active = category === cat;
+            const count = categoryCounts[cat] ?? 0;
             return (
               <button
                 key={cat}
                 onClick={() => setCategory(cat)}
                 style={active ? { background: "var(--brand)", color: "#fff", borderColor: "transparent" } : {}}
-                className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide border transition-all ${
+                className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide border transition-all ${
                   active ? "shadow-sm" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
                 }`}
               >
+                {b && (
+                  <span
+                    className="w-1.5 h-1.5 rounded-full shrink-0"
+                    style={{ background: active ? "#fff" : b.dot }}
+                  />
+                )}
                 {cat}
+                <span className={`font-mono font-medium normal-case ${active ? "text-white/70" : "text-slate-400"}`}>
+                  {count}
+                </span>
               </button>
             );
           })}
@@ -337,11 +586,42 @@ export default function CatalogoV2() {
             className="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-200 input-themed outline-none text-sm bg-white"
           />
         </div>
+
+        {/* Slider de precio máximo */}
+        {priceBounds.max > 0 && (
+          <div className="bg-white rounded-xl border-2 border-slate-200 px-3.5 py-3">
+            <div className="flex justify-between items-baseline mb-2">
+              <span className="text-[11px] font-mono text-slate-400">{formatCop(priceBounds.min)}</span>
+              <span className="text-xs font-mono font-semibold brand-text">
+                {formatCop(maxPrice === "" ? priceBounds.max : Number(maxPrice))}
+              </span>
+            </div>
+            <div className="relative h-4 flex items-center">
+              <div className="absolute inset-x-0 h-[3px] bg-slate-200 rounded-full" />
+              <div
+                className="absolute h-[3px] rounded-full"
+                style={{
+                  background: "var(--brand)",
+                  width: `${(((maxPrice === "" ? priceBounds.max : Number(maxPrice)) - priceBounds.min) / (priceBounds.max - priceBounds.min || 1)) * 100}%`,
+                }}
+              />
+              <input
+                type="range"
+                min={priceBounds.min}
+                max={priceBounds.max}
+                step="50000"
+                value={maxPrice === "" ? priceBounds.max : Number(maxPrice)}
+                onChange={(e) => setMaxPrice(e.target.value)}
+                className="range-themed absolute inset-x-0 w-full"
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Contador */}
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm text-slate-500">
+        <p className="font-mono text-xs uppercase tracking-wider text-slate-400">
           {loading ? "Cargando..." : `${availableCount} disponible${availableCount !== 1 ? "s" : ""} · ${filtered.length} en total`}
         </p>
         {hasActiveFilters && (
@@ -353,9 +633,9 @@ export default function CatalogoV2() {
 
       {/* ── Productos ── */}
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-48 bg-slate-100 rounded-2xl animate-pulse" />
+            <div key={i} className="h-64 bg-slate-100 rounded-2xl animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -381,21 +661,22 @@ export default function CatalogoV2() {
               <section key={cat}>
                 {/* Encabezado de categoría — estilo uniforme para todas */}
                 <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-1 h-5 rounded-full shrink-0" style={{ background: b.dot }} />
+                  <div className="w-1.5 h-6 rounded-full shrink-0" style={{ background: b.dot }} />
                   <h2
-                    className="font-bold text-sm uppercase tracking-widest"
+                    className="font-display font-bold text-base sm:text-lg uppercase tracking-[0.2em]"
                     style={{ color: b.dot }}
                   >
                     {cat}
                   </h2>
-                  <span className="text-xs text-slate-400">
+                  <span className="font-mono text-[11px] text-slate-400 ml-auto sm:ml-0">
                     {avail} disponible{avail !== 1 ? "s" : ""} · {items.length} total
                   </span>
+                  <div className="hidden sm:block flex-1 h-px ml-2" style={{ background: `${b.dot}22` }} />
                 </div>
                 {/* Cuadrícula — igual para todas las categorías */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 w-full min-w-0">
-                  {items.map((p) => (
-                    <ProductCard key={p.id} product={p} isSelected={selectedIds.has(p.id)} onToggle={toggleSelect} />
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 w-full min-w-0">
+                  {items.map((p, i) => (
+                    <ProductCard key={p.id} product={p} tier={tierByProductId.get(p.id)} isSelected={selectedIds.has(p.id)} onToggle={toggleSelect} onOpenDetail={setDetailProduct} index={i} />
                   ))}
                 </div>
               </section>
@@ -404,12 +685,14 @@ export default function CatalogoV2() {
         </div>
       ) : (
         /* Vista filtrada — siempre cuadrícula, nunca lista de 1 columna */
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-          {filtered.map((p) => (
-            <ProductCard key={p.id} product={p} isSelected={selectedIds.has(p.id)} onToggle={toggleSelect} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          {filtered.map((p, i) => (
+            <ProductCard key={p.id} product={p} tier={tierByProductId.get(p.id)} isSelected={selectedIds.has(p.id)} onToggle={toggleSelect} onOpenDetail={setDetailProduct} index={i} />
           ))}
         </div>
       )}
+
+      </div>
 
       {/* ── Panel flotante de consulta múltiple ── */}
       {selectedIds.size > 0 && (
@@ -465,6 +748,18 @@ export default function CatalogoV2() {
 
           </div>
         </div>
+      )}
+
+      {/* ── Modal de detalle de producto ── */}
+      {detailProduct && (
+        <ProductDetailModal
+          product={detailProduct}
+          tier={tierByProductId.get(detailProduct.id)}
+          isSelected={selectedIds.has(detailProduct.id)}
+          onToggle={toggleSelect}
+          onClose={() => setDetailProduct(null)}
+          waLink={waLink}
+        />
       )}
     </div>
   );
