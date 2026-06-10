@@ -434,8 +434,8 @@ export default function AdminCatalogo() {
       "⚠️ ¿NO VES LA GRÁFICA QUE BUSCAS?",
       "Lamentablemente, ya se ha vendido. ¡No te quedes sin la tuya! 🚀",
       "",
-      "📲 ¿DESEAS CONTACTARNOS?",
-      "Escríbenos por este medio o busca el link de nuestra web en nuestro perfil. 😊",
+      "💬 ¿Dudas o quieres más fotos/info?",
+      "Escríbenos por este chat — también puedes ver más en nuestro perfil. 😊",
     );
 
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
@@ -466,7 +466,7 @@ export default function AdminCatalogo() {
     lines.push(
       "",
       "💬 Tenemos más artículos disponibles, pregúntanos sin compromiso",
-      "📲 ¿Deseas contactarnos? Escríbenos por este medio o busca el link de nuestra web en nuestro perfil. 😊"
+      "¿Dudas o quieres más fotos/info? Escríbenos por este chat — también puedes ver más en nuestro perfil. 😊"
     );
 
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
