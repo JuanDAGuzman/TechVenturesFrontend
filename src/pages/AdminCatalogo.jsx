@@ -434,8 +434,8 @@ export default function AdminCatalogo() {
       "⚠️ ¿NO VES LA GRÁFICA QUE BUSCAS?",
       "Lamentablemente, ya se ha vendido. ¡No te quedes sin la tuya! 🚀",
       "",
-      "📲 ¿DESEAS CONTACTARNOS? Escríbenos aquí:",
-      "👉 https://techventuresco.com/contact",
+      "📲 ¿DESEAS CONTACTARNOS?",
+      "Escríbenos por este medio o busca el link de nuestra web en nuestro perfil. 😊",
     );
 
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
@@ -463,7 +463,11 @@ export default function AdminCatalogo() {
 
     if (tradeIn) lines.push("", `🔁 ${tradeIn}`);
 
-    lines.push("", "💬 Tenemos más artículos disponibles, pregúntanos sin compromiso");
+    lines.push(
+      "",
+      "💬 Tenemos más artículos disponibles, pregúntanos sin compromiso",
+      "📲 ¿Deseas contactarnos? Escríbenos por este medio o busca el link de nuestra web en nuestro perfil. 😊"
+    );
 
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       setCopiedProductId(p.id);

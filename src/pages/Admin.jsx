@@ -493,7 +493,7 @@ export default function AdminPage() {
       const j = await adminCreateWindow(payload, token);
       if (j?.ok === false) throw new Error(j?.error || "CREATE_ERROR");
 
-      const link = `${window.location.origin}/?type=${wType}&date=${wDate}&start=${wStart}&end=${wEnd}`;
+      const link = `${window.location.origin}/agendar?type=${wType}&date=${wDate}&start=${wStart}&end=${wEnd}`;
       setLastCreatedLink(link);
       setToast("Horario abierto.");
       await fetchWeekdayWindows();
@@ -1190,7 +1190,7 @@ export default function AdminPage() {
           </div>
           <button
             onClick={() => {
-              const link = `${window.location.origin}/?type=SHIPPING&date=${shippingLinkDate}`;
+              const link = `${window.location.origin}/agendar?type=SHIPPING&date=${shippingLinkDate}`;
               const msg = `¡Hola! 😊 Para gestionar tu envío solo entra al link, llena tus datos y la dirección de entrega — nosotros nos encargamos del resto:\n\n👉 ${link}\n\nCualquier duda, me avisas. 🚀`;
               navigator.clipboard.writeText(msg);
               setToast("Mensaje de envío copiado al portapapeles.");
@@ -1436,7 +1436,7 @@ export default function AdminPage() {
                           <button
                             className="flex-1 px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-medium hover:bg-indigo-100 transition-colors"
                             onClick={() => {
-                              const link = `${window.location.origin}/?type=${wType}&date=${wDate}&start=${r.start}&end=${r.end}`;
+                              const link = `${window.location.origin}/agendar?type=${wType}&date=${wDate}&start=${r.start}&end=${r.end}`;
                               const msg = buildBookingMessage(wType, wDate, r.start, r.end, link);
                               navigator.clipboard.writeText(msg);
                               setToast("Mensaje copiado al portapapeles.");
