@@ -1,6 +1,7 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, createContext, useContext } from "react";
 import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
+import { brandFromColor, DEFAULT_BRAND } from "../../lib/categoryBrand.js";
 
 const API = (
   import.meta.env.VITE_API_BASE ??
@@ -9,16 +10,9 @@ const API = (
   "http://localhost:4000/api"
 ).replace(/\/+$/, "");
 
-const CATEGORIES     = ["Todos", "NVIDIA", "AMD", "Intel", "Componentes", "Celulares"];
-const CATEGORY_ORDER = ["NVIDIA", "AMD", "Intel", "Componentes", "Celulares"];
-
-const BRAND = {
-  NVIDIA:      { dot: "#76B900", hover: "#5d9000", ring: "rgba(118,185,0,0.22)",   badge: { background: "rgba(118,185,0,0.15)",   color: "#4a7a00" } },
-  AMD:         { dot: "#ED1C24", hover: "#c0111a", ring: "rgba(237,28,36,0.2)",    badge: { background: "rgba(237,28,36,0.12)",   color: "#c0111a" } },
-  Intel:       { dot: "#0068B5", hover: "#004d87", ring: "rgba(0,104,181,0.2)",    badge: { background: "rgba(0,104,181,0.12)",   color: "#005da0" } },
-  Componentes: { dot: "#64748b", hover: "#475569", ring: "rgba(100,116,139,0.2)",  badge: { background: "rgba(100,116,139,0.12)", color: "#475569" } },
-  Celulares:   { dot: "#8B5CF6", hover: "#6d28d9", ring: "rgba(139,92,246,0.22)",  badge: { background: "rgba(139,92,246,0.12)",  color: "#6d28d9" } },
-};
+// Provee el mapa de colores de marca por categoría a las tarjetas/modales,
+// que se construye dinámicamente a partir de las secciones del catálogo
+const BrandContext = createContext({ brandMap: {} });
 
 function formatPrice(p) {
   return new Intl.NumberFormat("es-CO", {
@@ -34,7 +28,8 @@ function formatCop(p) {
 // Placeholder con ilustración técnica "blueprint" en el color de marca de la categoría
 function ProductThumb({ imageUrl, category, name }) {
   const [imgErr, setImgErr] = useState(false);
-  const dot = BRAND[category]?.dot ?? "#64748b";
+  const { brandMap } = useContext(BrandContext);
+  const dot = brandMap[category]?.dot ?? DEFAULT_BRAND.dot;
   const form = CATEGORY_FORM[category] ?? "component";
 
   if (imageUrl && !imgErr) {
@@ -67,7 +62,8 @@ function ProductThumb({ imageUrl, category, name }) {
 
 // Única tarjeta — se usa tanto en vista agrupada como en vista filtrada
 function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, index = 0 }) {
-  const b = BRAND[product.category] ?? BRAND.Componentes;
+  const { brandMap } = useContext(BrandContext);
+  const b = brandMap[product.category] ?? DEFAULT_BRAND;
 
   return (
     <div
@@ -191,7 +187,8 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, index 
 
 // Modal de detalle — se abre al hacer clic en una tarjeta
 function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLink }) {
-  const b = BRAND[product.category] ?? BRAND.Componentes;
+  const { brandMap } = useContext(BrandContext);
+  const b = brandMap[product.category] ?? DEFAULT_BRAND;
   const form = CATEGORY_FORM[product.category] ?? "component";
   const scrollRef = useRef(null);
   const [showScrollHint, setShowScrollHint] = useState(false);
@@ -344,6 +341,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
 
 export default function CatalogoV2() {
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [settings, setSettings] = useState({});
   const [loading, setLoading]   = useState(true);
   const [category, setCategory] = useState("Todos");
@@ -357,14 +355,25 @@ export default function CatalogoV2() {
     Promise.all([
       fetch(`${API}/catalog/products`).then((r) => r.json()),
       fetch(`${API}/catalog/settings`).then((r) => r.json()),
+      fetch(`${API}/catalog/categories`).then((r) => r.json()),
     ])
-      .then(([pData, sData]) => {
+      .then(([pData, sData, cData]) => {
         if (pData.ok) setProducts(pData.products);
         if (sData.ok) setSettings(sData.settings);
+        if (cData.ok) setCategories(cData.categories);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
+
+  // Orden de secciones del catálogo + paleta de colores derivada por categoría
+  const CATEGORY_ORDER = useMemo(() => categories.map((c) => c.name), [categories]);
+  const CATEGORIES = useMemo(() => ["Todos", ...CATEGORY_ORDER], [CATEGORY_ORDER]);
+  const brandMap = useMemo(() => {
+    const map = {};
+    categories.forEach((c) => { map[c.name] = brandFromColor(c.color); });
+    return map;
+  }, [categories]);
 
   // Asigna una "gama" (Alta / Media / Baja) a cada producto que no tenga una
   // gama definida manualmente, según su posición de precio dentro de su
@@ -477,16 +486,17 @@ export default function CatalogoV2() {
 
   // CSS variables que se aplican dinámicamente según la categoría activa
   const themeVars = useMemo(() => {
-    const b = BRAND[category];
+    const b = brandMap[category];
     if (!b) return {};                      // "Todos" → usa el indigo del root
     return { "--brand": b.dot, "--brand-hover": b.hover, "--brand-ring": b.ring };
-  }, [category]);
+  }, [category, brandMap]);
 
   const trade   = settings.trade_in_note;
   const payment = settings.payment_methods;
   const price   = settings.prices_note;
 
   return (
+    <BrandContext.Provider value={{ brandMap }}>
     <div className="relative w-full min-w-0" style={themeVars}>
       {/* Fondo técnico: cuadrícula sutil + resplandor de marca */}
       <div
@@ -570,7 +580,7 @@ export default function CatalogoV2() {
         {/* Chips de categoría */}
         <div className="flex gap-2 overflow-x-auto pb-1 min-w-0 w-full">
           {CATEGORIES.map((cat) => {
-            const b = BRAND[cat];
+            const b = brandMap[cat];
             const active = category === cat;
             const count = categoryCounts[cat] ?? 0;
             return (
@@ -689,7 +699,7 @@ export default function CatalogoV2() {
         /* Vista agrupada por categoría con encabezados */
         <div className="space-y-7">
           {groups.map(({ cat, items }) => {
-            const b = BRAND[cat] ?? BRAND.Componentes;
+            const b = brandMap[cat] ?? DEFAULT_BRAND;
             const avail = items.filter((p) => p.available).length;
             return (
               <section key={cat}>
@@ -749,7 +759,7 @@ export default function CatalogoV2() {
             {/* Chips removibles por artículo */}
             <div className="flex gap-1.5 overflow-x-auto pb-0.5">
               {selectedProducts.map((p) => {
-                const b = BRAND[p.category] ?? BRAND.Componentes;
+                const b = brandMap[p.category] ?? DEFAULT_BRAND;
                 return (
                   <div
                     key={p.id}
@@ -796,5 +806,6 @@ export default function CatalogoV2() {
         />
       )}
     </div>
+    </BrandContext.Provider>
   );
 }

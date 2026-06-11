@@ -4,6 +4,7 @@ import { getAdminToken } from "../lib/adminSession.js";
 import {
   Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X, Copy, Check, Star,
 } from "lucide-react";
+import { brandFromColor, DEFAULT_BRAND } from "../lib/categoryBrand.js";
 
 const API = (
   import.meta.env.VITE_API_BASE ??
@@ -11,17 +12,6 @@ const API = (
   window.__API_BASE__ ??
   "http://localhost:4000/api"
 ).replace(/\/+$/, "");
-
-const CATEGORIES      = ["NVIDIA", "AMD", "Intel", "Componentes", "Celulares"];
-const FILTER_CATS     = ["Todos", ...CATEGORIES];
-
-const BRAND = {
-  NVIDIA:      { bg: "rgba(118,185,0,0.15)",    text: "#4a7a00", dot: "#76B900"  },
-  AMD:         { bg: "rgba(237,28,36,0.12)",    text: "#c0111a", dot: "#ED1C24"  },
-  Intel:       { bg: "rgba(0,104,181,0.12)",    text: "#005da0", dot: "#0068B5"  },
-  Componentes: { bg: "rgba(100,116,139,0.12)",  text: "#475569", dot: "#64748b"  },
-  Celulares:   { bg: "rgba(139,92,246,0.12)",   text: "#6d28d9", dot: "#8B5CF6"  },
-};
 
 const CATEGORY_EMOJI = {
   NVIDIA: "⬛", AMD: "⬜", Intel: "🟦", Componentes: "⚙️", Celulares: "📱",
@@ -58,8 +48,7 @@ function formatPrice(p) {
   }).format(p);
 }
 
-function AdminProductCard({ p, onToggle, onEdit, onDelete, onCopy, copied }) {
-  const dot = BRAND[p.category]?.dot ?? "#94a3b8";
+function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }) {
   return (
     <div className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col ${!p.available ? "opacity-60" : ""}`}>
       {/* Imagen */}
@@ -140,8 +129,23 @@ export default function AdminCatalogo() {
   );
 
   const [products, setProducts]     = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading]       = useState(true);
   const [categoryFilter, setCategoryFilter] = useState("Todos");
+
+  // Categorías/secciones del catálogo
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: "", color: "#64748b" });
+  const [categoryError, setCategoryError] = useState("");
+  const [savingCategory, setSavingCategory] = useState(false);
+
+  const CATEGORIES  = useMemo(() => categories.map((c) => c.name), [categories]);
+  const FILTER_CATS = useMemo(() => ["Todos", ...CATEGORIES], [CATEGORIES]);
+  const BRAND = useMemo(() => {
+    const map = {};
+    categories.forEach((c) => { map[c.name] = brandFromColor(c.color); });
+    return map;
+  }, [categories]);
 
   // Modal agregar / editar
   const [modal, setModal] = useState({ open: false, product: null });
@@ -179,22 +183,75 @@ export default function AdminCatalogo() {
   async function loadAll() {
     setLoading(true);
     try {
-      const [pRes, sRes] = await Promise.all([
+      const [pRes, sRes, cRes] = await Promise.all([
         fetch(`${API}/admin/products`, { headers }),
         fetch(`${API}/admin/store-settings`, { headers }),
+        fetch(`${API}/admin/categories`, { headers }),
       ]);
       const pData = await pRes.json();
       const sData = await sRes.json();
+      const cData = await cRes.json();
       if (pData.ok) setProducts(pData.products);
       if (sData.ok) setSettingsForm(sData.settings);
+      if (cData.ok) setCategories(cData.categories);
     } catch {}
     setLoading(false);
+  }
+
+  // ── Categorías / secciones ─────────────────────────────────────────────────
+
+  async function addCategory() {
+    setCategoryError("");
+    if (!newCategory.name.trim()) return setCategoryError("Ingresa un nombre.");
+    setSavingCategory(true);
+    try {
+      const r = await fetch(`${API}/admin/categories`, {
+        method: "POST", headers,
+        body: JSON.stringify({ name: newCategory.name.trim(), color: newCategory.color }),
+      });
+      const d = await r.json();
+      if (!d.ok) {
+        if (d.error === "DUPLICATE_NAME") throw new Error("Ya existe una sección con ese nombre.");
+        throw new Error("No se pudo crear la sección.");
+      }
+      setCategories((prev) => [...prev, d.category]);
+      setNewCategory({ name: "", color: "#64748b" });
+    } catch (err) {
+      setCategoryError(err.message);
+    }
+    setSavingCategory(false);
+  }
+
+  async function updateCategoryColor(cat, color) {
+    setCategories((prev) => prev.map((c) => c.id === cat.id ? { ...c, color } : c));
+    try {
+      await fetch(`${API}/admin/categories/${cat.id}`, {
+        method: "PATCH", headers, body: JSON.stringify({ color }),
+      });
+    } catch {}
+  }
+
+  async function deleteCategory(cat) {
+    setCategoryError("");
+    try {
+      const r = await fetch(`${API}/admin/categories/${cat.id}`, { method: "DELETE", headers });
+      const d = await r.json();
+      if (!d.ok) {
+        if (d.error === "CATEGORY_IN_USE") {
+          throw new Error(`No se puede eliminar: hay ${d.count} producto${d.count === 1 ? "" : "s"} en "${cat.name}".`);
+        }
+        throw new Error("No se pudo eliminar la sección.");
+      }
+      setCategories((prev) => prev.filter((c) => c.id !== cat.id));
+    } catch (err) {
+      setCategoryError(err.message);
+    }
   }
 
   // ── Modal helpers ──────────────────────────────────────────────────────────
 
   function openAdd() {
-    setForm(EMPTY_FORM);
+    setForm({ ...EMPTY_FORM, category: CATEGORIES[0] || "" });
     setPendingImage(null);
     setPendingImageUrl(null);
     setImageSearchResults([]);
@@ -559,7 +616,7 @@ export default function AdminCatalogo() {
             .map((cat) => ({ cat, items: products.filter((p) => p.category === cat) }))
             .filter((g) => g.items.length > 0)
             .map(({ cat, items }) => {
-              const b = BRAND[cat] ?? BRAND.Componentes;
+              const b = BRAND[cat] ?? DEFAULT_BRAND;
               const avail = items.filter((p) => p.available).length;
               return (
                 <section key={cat}>
@@ -569,7 +626,7 @@ export default function AdminCatalogo() {
                     <span className="text-xs text-slate-400">{avail} disponible{avail !== 1 ? "s" : ""} · {items.length} total</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
-                    {items.map((p) => <AdminProductCard key={p.id} p={p} onToggle={toggleAvailable} onEdit={openEdit} onDelete={setDeleteTarget} onCopy={copyProductMessage} copied={copiedProductId === p.id} />)}
+                    {items.map((p) => <AdminProductCard key={p.id} p={p} dot={b.dot} onToggle={toggleAvailable} onEdit={openEdit} onDelete={setDeleteTarget} onCopy={copyProductMessage} copied={copiedProductId === p.id} />)}
                   </div>
                 </section>
               );
@@ -579,10 +636,81 @@ export default function AdminCatalogo() {
         /* Vista filtrada por categoría */
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 mb-6">
           {visibleProducts.map((p) => (
-            <AdminProductCard key={p.id} p={p} onToggle={toggleAvailable} onEdit={openEdit} onDelete={setDeleteTarget} onCopy={copyProductMessage} copied={copiedProductId === p.id} />
+            <AdminProductCard key={p.id} p={p} dot={(BRAND[p.category] ?? DEFAULT_BRAND).dot} onToggle={toggleAvailable} onEdit={openEdit} onDelete={setDeleteTarget} onCopy={copyProductMessage} copied={copiedProductId === p.id} />
           ))}
         </div>
       )}
+
+      {/* ── Secciones del catálogo ──────────────────────────────────────────── */}
+
+      <div className="card mb-4">
+        <button
+          onClick={() => setCategoriesOpen((o) => !o)}
+          className="w-full flex items-center justify-between text-left"
+        >
+          <h2 className="font-bold text-slate-800">Secciones del catálogo</h2>
+          <ChevronDown
+            className={`w-5 h-5 text-slate-400 transition-transform duration-200 ${categoriesOpen ? "rotate-180" : ""}`}
+          />
+        </button>
+
+        {categoriesOpen && (
+          <div className="mt-5 space-y-4">
+            <div className="space-y-2">
+              {categories.map((cat) => {
+                const count = products.filter((p) => p.category === cat.name).length;
+                return (
+                  <div key={cat.id} className="flex items-center gap-3 px-3 py-2 rounded-xl border border-slate-200">
+                    <input
+                      type="color"
+                      value={cat.color}
+                      onChange={(e) => updateCategoryColor(cat, e.target.value)}
+                      className="w-8 h-8 rounded-lg border border-slate-200 cursor-pointer shrink-0"
+                      title="Color de la sección"
+                    />
+                    <span className="font-semibold text-slate-700 text-sm flex-1">{cat.name}</span>
+                    <span className="text-xs text-slate-400">{count} producto{count !== 1 ? "s" : ""}</span>
+                    <button
+                      onClick={() => deleteCategory(cat)}
+                      disabled={count > 0}
+                      title={count > 0 ? "No se puede eliminar: tiene productos" : "Eliminar sección"}
+                      className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="color"
+                value={newCategory.color}
+                onChange={(e) => setNewCategory((c) => ({ ...c, color: e.target.value }))}
+                className="w-10 h-10 rounded-xl border border-slate-200 cursor-pointer shrink-0"
+                title="Color de la nueva sección"
+              />
+              <input
+                type="text"
+                value={newCategory.name}
+                onChange={(e) => setNewCategory((c) => ({ ...c, name: e.target.value }))}
+                placeholder="Ej. Periféricos, Monitores..."
+                className="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm"
+              />
+              <button
+                onClick={addCategory}
+                disabled={savingCategory}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-indigo text-white font-semibold hover:bg-brand-hover disabled:opacity-60 transition-colors text-sm shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                Agregar
+              </button>
+            </div>
+            {categoryError && <p className="err">{categoryError}</p>}
+          </div>
+        )}
+      </div>
 
       {/* ── Configuración de la tienda ─────────────────────────────────────── */}
 
