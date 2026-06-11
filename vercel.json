@@ -1,4 +1,17 @@
 {
+  "redirects": [
+    {
+      "source": "/(.*)",
+      "has": [
+        {
+          "type": "host",
+          "value": "techventuresco.vercel.app"
+        }
+      ],
+      "destination": "https://techventuresco.com/$1",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/catalogo",
