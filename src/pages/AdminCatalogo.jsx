@@ -48,6 +48,24 @@ function formatPrice(p) {
   }).format(p);
 }
 
+// Convierte "573108216274" en "310 821 6274" (sin el código de país, en grupos de 3-3-4)
+function formatWhatsappDisplay(raw) {
+  const digits = (raw || "").replace(/\D/g, "");
+  const local = digits.length === 12 && digits.startsWith("57") ? digits.slice(2) : digits;
+  if (local.length !== 10) return local;
+  return `${local.slice(0, 3)} ${local.slice(3, 6)} ${local.slice(6)}`;
+}
+
+// Líneas de contacto (WhatsApp/IG) para el pie de los mensajes copiados
+function contactFooterLines(settings) {
+  const wa = formatWhatsappDisplay(settings.whatsapp_number);
+  const ig = settings.instagram_handle?.trim();
+  const lines = [];
+  if (wa) lines.push(`📲 WhatsApp: ${wa}`);
+  if (ig) lines.push(`📸 IG: ${ig.startsWith("@") ? ig : `@${ig}`}`);
+  return lines;
+}
+
 function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }) {
   return (
     <div className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm flex flex-col ${!p.available ? "opacity-60" : ""}`}>
@@ -495,6 +513,9 @@ export default function AdminCatalogo() {
       "Escríbenos por este chat — también puedes ver más en nuestro perfil. 😊",
     );
 
+    const contact = contactFooterLines(settingsForm);
+    if (contact.length) lines.push("", ...contact);
+
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
@@ -525,6 +546,9 @@ export default function AdminCatalogo() {
       "💬 Tenemos más artículos disponibles, pregúntanos sin compromiso",
       "¿Dudas o quieres más fotos/info? Escríbenos por este chat — también puedes ver más en nuestro perfil. 😊"
     );
+
+    const contact = contactFooterLines(settingsForm);
+    if (contact.length) lines.push("", ...contact);
 
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       setCopiedProductId(p.id);
@@ -733,6 +757,12 @@ export default function AdminCatalogo() {
                 label: "Número de WhatsApp",
                 hint: "Sin + ni espacios, con código de país (ej: 573108216274)",
                 placeholder: "573108216274",
+              },
+              {
+                key: "instagram_handle",
+                label: "Usuario de Instagram",
+                hint: "Se agrega al final de los mensajes copiados (ej: @techventuresco)",
+                placeholder: "@techventuresco",
               },
               {
                 key: "trade_in_note",
