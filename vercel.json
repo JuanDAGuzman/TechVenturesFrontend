@@ -10,13 +10,14 @@
       ],
       "destination": "https://techventuresco.com/$1",
       "permanent": true
+    },
+    {
+      "source": "/catalogo",
+      "destination": "/",
+      "permanent": true
     }
   ],
   "rewrites": [
-    {
-      "source": "/catalogo",
-      "destination": "/catalogo.html"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"

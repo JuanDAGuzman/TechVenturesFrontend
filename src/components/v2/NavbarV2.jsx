@@ -5,7 +5,7 @@ import { ShoppingBag, MessageCircle } from "lucide-react";
 export default function NavbarV2() {
     const location = useLocation();
     const isHome     = location.pathname === "/";
-    const isCatalogo = isHome || location.pathname === "/catalogo";
+    const isCatalogo = isHome;
     const isContact  = location.pathname === "/contact";
     const hideNav    = isContact;
 

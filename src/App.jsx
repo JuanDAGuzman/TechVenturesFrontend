@@ -16,7 +16,6 @@ export default function App() {
       <Routes>
         <Route element={<LayoutV2 />}>
           <Route path="/" element={<CatalogoV2 />} />
-          <Route path="/catalogo" element={<CatalogoV2 />} />
           <Route path="/agendar" element={<BookingV2 />} />
           <Route path="/admin" element={<AdminGate />} />
           <Route path="/admin/catalogo" element={<AdminCatalogoGate />} />
