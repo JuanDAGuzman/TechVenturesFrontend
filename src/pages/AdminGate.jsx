@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import dayjs from "dayjs";
+import { startAuthentication, startRegistration } from "@simplewebauthn/browser";
 import Admin from "./Admin.jsx";
 import {
   getAdminToken,
@@ -11,10 +12,18 @@ import {
 const API = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 const HOURS = Number(import.meta.env.VITE_ADMIN_SESSION_HOURS || 8);
 
+const PASSKEY_SUPPORTED =
+  typeof window !== "undefined" && !!window.PublicKeyCredential;
+
 export default function AdminGate() {
   const [status, setStatus] = useState("checking"); // checking | need_login | ready
   const [error, setError] = useState("");
   const [remaining, setRemaining] = useState(getAdminRemaining());
+
+  // Passkeys (Windows Hello / huella / Face ID)
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
+  const [passkeyError, setPasskeyError] = useState("");
+  const [passkeys, setPasskeys] = useState([]);
 
   // Al montar: si hay token válido y no vencido, valida contra API (sin renovar sesión)
   useEffect(() => {
@@ -36,6 +45,24 @@ export default function AdminGate() {
     }, 1000);
     return () => clearInterval(id);
   }, [status]);
+
+  // Carga la lista de dispositivos (passkeys) registrados
+  useEffect(() => {
+    if (status !== "ready") return;
+    loadPasskeys();
+  }, [status]);
+
+  async function loadPasskeys() {
+    try {
+      const r = await fetch(`${API}/admin/webauthn/credentials`, {
+        headers: { "x-admin-token": getAdminToken() },
+      });
+      const j = await r.json();
+      if (j?.ok) setPasskeys(j.credentials || []);
+    } catch {
+      // silencioso: la gestión de passkeys es opcional
+    }
+  }
 
   // validateToken: si renew=true (login real) crea/renueva sesión; si no, conserva expiración
   async function validateToken(t, renew = false) {
@@ -68,6 +95,91 @@ export default function AdminGate() {
     } catch {
       setError("Clave incorrecta.");
       setStatus("need_login");
+    }
+  }
+
+  // Login con Windows Hello / huella / Face ID
+  async function loginWithPasskey() {
+    setPasskeyError("");
+    setPasskeyBusy(true);
+    try {
+      const optsRes = await fetch(`${API}/webauthn/options`, { method: "POST" });
+      const optsJson = await optsRes.json();
+      if (!optsJson?.ok) throw new Error(optsJson?.error || "OPTIONS_FAILED");
+
+      const authResponse = await startAuthentication({ optionsJSON: optsJson.options });
+
+      const verifyRes = await fetch(`${API}/webauthn/verify`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ response: authResponse }),
+      });
+      const verifyJson = await verifyRes.json();
+      if (!verifyJson?.ok || !verifyJson.token) {
+        throw new Error(verifyJson?.error || "VERIFICATION_FAILED");
+      }
+
+      await validateToken(verifyJson.token, true);
+    } catch (e) {
+      if (e?.name !== "NotAllowedError") {
+        setPasskeyError("No se pudo iniciar sesión con biometría. Usa tu clave.");
+      }
+    } finally {
+      setPasskeyBusy(false);
+    }
+  }
+
+  // Registra este dispositivo como passkey del admin
+  async function registerPasskey() {
+    setPasskeyError("");
+    setPasskeyBusy(true);
+    try {
+      const optsRes = await fetch(`${API}/admin/webauthn/register-options`, {
+        method: "POST",
+        headers: { "x-admin-token": getAdminToken() },
+      });
+      const optsJson = await optsRes.json();
+      if (!optsJson?.ok) throw new Error(optsJson?.error || "OPTIONS_FAILED");
+
+      const regResponse = await startRegistration({ optionsJSON: optsJson.options });
+
+      const deviceName = window.prompt(
+        "Nombre para este dispositivo (ej. Windows Hello — escritorio):",
+        "Este dispositivo"
+      );
+      if (deviceName === null) return; // cancelado
+
+      const verifyRes = await fetch(`${API}/admin/webauthn/register-verify`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-token": getAdminToken(),
+        },
+        body: JSON.stringify({ response: regResponse, deviceName }),
+      });
+      const verifyJson = await verifyRes.json();
+      if (!verifyJson?.ok) throw new Error(verifyJson?.error || "VERIFICATION_FAILED");
+
+      await loadPasskeys();
+    } catch (e) {
+      if (e?.name !== "NotAllowedError") {
+        setPasskeyError("No se pudo registrar el dispositivo.");
+      }
+    } finally {
+      setPasskeyBusy(false);
+    }
+  }
+
+  async function deletePasskey(id) {
+    if (!window.confirm("¿Eliminar este dispositivo?")) return;
+    try {
+      await fetch(`${API}/admin/webauthn/credentials/${id}`, {
+        method: "DELETE",
+        headers: { "x-admin-token": getAdminToken() },
+      });
+      await loadPasskeys();
+    } catch {
+      setPasskeyError("No se pudo eliminar el dispositivo.");
     }
   }
 
@@ -122,6 +234,58 @@ export default function AdminGate() {
           </div>
         </div>
 
+        {/* Seguridad: passkeys (Windows Hello / huella / Face ID) */}
+        {PASSKEY_SUPPORTED && (
+          <div className="border-b border-slate-200 bg-slate-50">
+            <div className="container-page py-3">
+              <details>
+                <summary className="cursor-pointer text-sm font-semibold text-slate-600">
+                  Seguridad — Windows Hello / huella / Face ID
+                </summary>
+                <div className="mt-3 space-y-2">
+                  {passkeyError && <p className="err text-sm">{passkeyError}</p>}
+                  {passkeys.length > 0 ? (
+                    <ul className="space-y-1">
+                      {passkeys.map((p) => (
+                        <li
+                          key={p.id}
+                          className="flex items-center justify-between text-sm bg-white border border-slate-200 rounded-lg px-3 py-2"
+                        >
+                          <span>
+                            {p.device_name || "Dispositivo"}
+                            {p.last_used_at && (
+                              <span className="text-slate-400">
+                                {" "}— último uso {dayjs(p.last_used_at).format("DD/MM/YYYY HH:mm")}
+                              </span>
+                            )}
+                          </span>
+                          <button
+                            onClick={() => deletePasskey(p.id)}
+                            className="text-red-600 hover:underline"
+                          >
+                            Eliminar
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-slate-500">
+                      No hay dispositivos registrados todavía.
+                    </p>
+                  )}
+                  <button
+                    onClick={registerPasskey}
+                    disabled={passkeyBusy}
+                    className="px-3 py-2 rounded-lg bg-brand-indigo text-white text-sm font-semibold disabled:opacity-50"
+                  >
+                    Registrar este dispositivo
+                  </button>
+                </div>
+              </details>
+            </div>
+          </div>
+        )}
+
         <Admin />
       </div>
     );
@@ -161,6 +325,26 @@ export default function AdminGate() {
         >
           Entrar
         </button>
+
+        {PASSKEY_SUPPORTED && (
+          <>
+            <div className="flex items-center gap-3 my-4">
+              <div className="h-px bg-slate-200 flex-1" />
+              <span className="text-xs text-slate-400 font-semibold uppercase">o</span>
+              <div className="h-px bg-slate-200 flex-1" />
+            </div>
+
+            <button
+              onClick={loginWithPasskey}
+              disabled={passkeyBusy}
+              className="w-full py-3 rounded-xl border-2 border-brand-indigo text-brand-indigo font-bold hover:bg-indigo-50 transition-all disabled:opacity-50"
+            >
+              Iniciar sesión con Windows Hello / huella
+            </button>
+
+            {passkeyError && <p className="err mt-2">{passkeyError}</p>}
+          </>
+        )}
       </div>
     </div>
   );
