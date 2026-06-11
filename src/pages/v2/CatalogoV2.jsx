@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef, createContext, useContext } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
 import { brandFromColor, DEFAULT_BRAND } from "../../lib/categoryBrand.js";
@@ -13,6 +14,16 @@ const API = (
 // Provee el mapa de colores de marca por categoría a las tarjetas/modales,
 // que se construye dinámicamente a partir de las secciones del catálogo
 const BrandContext = createContext({ brandMap: {} });
+
+// Convierte el nombre de una categoría en un slug apto para la URL (ej. "Componentes" → "componentes")
+function slugify(name) {
+  return name
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-");
+}
 
 function formatPrice(p) {
   return new Intl.NumberFormat("es-CO", {
@@ -340,6 +351,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
 }
 
 export default function CatalogoV2() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [settings, setSettings] = useState({});
@@ -374,6 +386,21 @@ export default function CatalogoV2() {
     categories.forEach((c) => { map[c.name] = brandFromColor(c.color); });
     return map;
   }, [categories]);
+
+  // Al cargar las categorías, selecciona la indicada en la URL (?categoria=celulares)
+  useEffect(() => {
+    if (!CATEGORY_ORDER.length) return;
+    const slug = searchParams.get("categoria");
+    if (!slug) return;
+    const match = CATEGORY_ORDER.find((name) => slugify(name) === slug);
+    if (match) setCategory(match);
+  }, [CATEGORY_ORDER]);
+
+  // Cambia la categoría activa y refleja la selección en la URL para poder compartirla
+  function selectCategory(cat) {
+    setCategory(cat);
+    setSearchParams(cat === "Todos" ? {} : { categoria: slugify(cat) }, { replace: true });
+  }
 
   // Asigna una "gama" (Alta / Media / Baja) a cada producto que no tenga una
   // gama definida manualmente, según su posición de precio dentro de su
@@ -478,7 +505,7 @@ export default function CatalogoV2() {
   const hasActiveFilters = category !== "Todos" || search.trim() || minPrice || maxPrice;
 
   function clearFilters() {
-    setCategory("Todos");
+    selectCategory("Todos");
     setSearch("");
     setMinPrice("");
     setMaxPrice("");
@@ -586,7 +613,7 @@ export default function CatalogoV2() {
             return (
               <button
                 key={cat}
-                onClick={() => setCategory(cat)}
+                onClick={() => selectCategory(cat)}
                 style={active ? { background: "var(--brand)", color: "#fff", borderColor: "transparent" } : {}}
                 className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide border transition-all ${
                   active ? "shadow-sm" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
