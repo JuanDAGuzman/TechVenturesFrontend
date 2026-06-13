@@ -72,7 +72,7 @@ function ProductThumb({ imageUrl, category, name }) {
 }
 
 // Única tarjeta — se usa tanto en vista agrupada como en vista filtrada
-function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, index = 0 }) {
+function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink, index = 0 }) {
   const { brandMap } = useContext(BrandContext);
   const b = brandMap[product.category] ?? DEFAULT_BRAND;
 
@@ -174,17 +174,29 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, index 
         <div className="mt-auto pt-3">
           <p className="text-xl sm:text-2xl font-mono font-semibold brand-text tracking-tight">{formatPrice(product.price)}</p>
           {product.available ? (
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggle(product); }}
-              className={`mt-2 flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-sm font-semibold transition-all btn-primary`}
-              style={isSelected ? { filter: "brightness(0.78)" } : {}}
-            >
-              {isSelected ? (
-                <><X className="w-4 h-4" /> Quitar</>
-              ) : (
-                <><Plus className="w-4 h-4" /> Agregar</>
-              )}
-            </button>
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggle(product); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all btn-primary`}
+                style={isSelected ? { filter: "brightness(0.78)" } : {}}
+              >
+                {isSelected ? (
+                  <><X className="w-4 h-4" /> Quitar</>
+                ) : (
+                  <><Plus className="w-4 h-4" /> Agregar</>
+                )}
+              </button>
+              <a
+                href={waLink(product)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                title="Contactar por WhatsApp"
+                className="shrink-0 w-11 flex items-center justify-center rounded-xl border-2 border-slate-200 text-slate-500 hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </a>
+            </div>
           ) : (
             <div className="mt-2 py-2.5 rounded-xl bg-slate-100 text-center text-sm text-slate-400 font-medium">
               No disponible
@@ -480,27 +492,43 @@ export default function CatalogoV2() {
     });
   }
 
+  function productWaNumber(product) {
+    return (product.whatsapp_number || settings.whatsapp_number || "573108216274").replace(/\D/g, "");
+  }
+
   function waLink(product) {
-    const num = (settings.whatsapp_number || "573108216274").replace(/\D/g, "");
+    const num = productWaNumber(product);
     const parts = [product.name];
     if (product.memory_capacity) parts.push(product.memory_capacity);
     if (product.condition) {
       product.condition.split(",").map(t => t.trim()).filter(Boolean).forEach(t => parts.push(t));
     }
-    const msg = `Hola, me interesa: ${parts.join(" · ")}, ¿sigue disponible?`;
+    const msg = `Hola, me interesa: ${parts.join(" · ")} (${formatCop(product.price)}), ¿sigue disponible?`;
     return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
   }
 
   function waLinkMulti(items) {
-    const num = (settings.whatsapp_number || "573108216274").replace(/\D/g, "");
     if (items.length === 1) return waLink(items[0]);
+    const num = productWaNumber(items[0]);
     const list = items.map((p) => {
       const detail = [p.memory_capacity, p.condition].filter(Boolean).join(", ");
-      return `• ${p.name}${detail ? ` (${detail})` : ""}`;
+      return `• ${p.name}${detail ? ` (${detail})` : ""} — ${formatCop(p.price)}`;
     }).join("\n");
     const msg = `Hola, me interesan los siguientes artículos, ¿siguen disponibles?\n\n${list}\n\n¡Gracias!`;
     return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
   }
+
+  // Agrupa los productos seleccionados por su número de contacto (algunos
+  // artículos pueden tener un WhatsApp distinto al general de la tienda)
+  const selectedGroups = useMemo(() => {
+    const groups = new Map();
+    selectedProducts.forEach((p) => {
+      const num = productWaNumber(p);
+      if (!groups.has(num)) groups.set(num, []);
+      groups.get(num).push(p);
+    });
+    return [...groups.values()];
+  }, [selectedProducts, settings]);
 
   const hasActiveFilters = category !== "Todos" || search.trim() || minPrice || maxPrice;
 
@@ -747,7 +775,7 @@ export default function CatalogoV2() {
                 {/* Cuadrícula — igual para todas las categorías */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 w-full min-w-0">
                   {items.map((p, i) => (
-                    <ProductCard key={p.id} product={p} tier={tierByProductId.get(p.id)} isSelected={selectedIds.has(p.id)} onToggle={toggleSelect} onOpenDetail={setDetailProduct} index={i} />
+                    <ProductCard key={p.id} product={p} tier={tierByProductId.get(p.id)} isSelected={selectedIds.has(p.id)} onToggle={toggleSelect} onOpenDetail={setDetailProduct} waLink={waLink} index={i} />
                   ))}
                 </div>
               </section>
@@ -758,7 +786,7 @@ export default function CatalogoV2() {
         /* Vista filtrada — siempre cuadrícula, nunca lista de 1 columna */
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {filtered.map((p, i) => (
-            <ProductCard key={p.id} product={p} tier={tierByProductId.get(p.id)} isSelected={selectedIds.has(p.id)} onToggle={toggleSelect} onOpenDetail={setDetailProduct} index={i} />
+            <ProductCard key={p.id} product={p} tier={tierByProductId.get(p.id)} isSelected={selectedIds.has(p.id)} onToggle={toggleSelect} onOpenDetail={setDetailProduct} waLink={waLink} index={i} />
           ))}
         </div>
       )}
@@ -806,16 +834,38 @@ export default function CatalogoV2() {
               })}
             </div>
 
-            {/* Botón de acción principal */}
-            <a
-              href={waLinkMulti(selectedProducts)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl btn-primary text-sm font-bold"
-            >
-              <MessageCircle className="w-4 h-4" />
-              Consultar {selectedIds.size > 1 ? `los ${selectedIds.size} artículos` : "artículo"} por WhatsApp
-            </a>
+            {/* Botón(es) de acción — uno por cada número de contacto involucrado */}
+            {selectedGroups.length === 1 ? (
+              <a
+                href={waLinkMulti(selectedProducts)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl btn-primary text-sm font-bold"
+              >
+                <MessageCircle className="w-4 h-4" />
+                Consultar {selectedIds.size > 1 ? `los ${selectedIds.size} artículos` : "artículo"} por WhatsApp
+              </a>
+            ) : (
+              <div className="space-y-1.5">
+                <p className="text-xs text-slate-400 text-center">
+                  Estos artículos los maneja más de una persona — se abrirá un chat por cada uno:
+                </p>
+                {selectedGroups.map((group, gi) => (
+                  <a
+                    key={gi}
+                    href={waLinkMulti(group)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl btn-primary text-sm font-bold"
+                  >
+                    <MessageCircle className="w-4 h-4 shrink-0" />
+                    <span className="truncate">
+                      Consultar {group.length > 1 ? `${group.length} artículos` : group[0].name}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            )}
 
           </div>
         </div>

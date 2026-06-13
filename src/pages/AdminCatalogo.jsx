@@ -2,7 +2,7 @@ import { createPortal } from "react-dom";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { getAdminToken } from "../lib/adminSession.js";
 import {
-  Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X, Copy, Check, Star,
+  Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X, Copy, Check, Star, FileText, Loader2,
 } from "lucide-react";
 import { brandFromColor, DEFAULT_BRAND } from "../lib/categoryBrand.js";
 
@@ -35,6 +35,7 @@ const EMPTY_FORM = {
   available: true,
   tier: "",
   is_flagship: false,
+  whatsapp_number: "",
 };
 
 const TIER_OPTIONS = ["Baja", "Media", "Alta"];
@@ -289,6 +290,7 @@ export default function AdminCatalogo() {
       available:       product.available,
       tier:            product.tier || "",
       is_flagship:     product.is_flagship || false,
+      whatsapp_number: formatWhatsappDisplay(product.whatsapp_number || ""),
     });
     setPendingImage(null);
     setPendingImageUrl(null);
@@ -375,6 +377,7 @@ export default function AdminCatalogo() {
         available:       form.available,
         tier:            form.tier || null,
         is_flagship:     !!form.is_flagship,
+        whatsapp_number: form.whatsapp_number.trim() || null,
         ...(imageValue !== undefined && { image_url: imageValue }),
       };
 
@@ -522,6 +525,34 @@ export default function AdminCatalogo() {
     });
   }
 
+  // ── Generar catálogo en PDF ──────────────────────────────────────────────
+
+  const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  async function downloadCatalogPdf() {
+    setGeneratingPdf(true);
+    try {
+      const res = await fetch(`${API}/admin/catalog-pdf`, {
+        headers: { "x-admin-token": getAdminToken() },
+      });
+      if (!res.ok) throw new Error("No se pudo generar el PDF");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `catalogo-techventuresco-${new Date().toISOString().slice(0, 10)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      alert("No se pudo generar el catálogo en PDF. Intenta de nuevo.");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  }
+
   // ── Copiar mensaje individual de un artículo ───────────────────────────────
 
   const [copiedProductId, setCopiedProductId] = useState(null);
@@ -584,6 +615,15 @@ export default function AdminCatalogo() {
           >
             {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
             <span className="hidden sm:inline">{copied ? "¡Copiado!" : "Copiar lista"}</span>
+          </button>
+          <button
+            onClick={downloadCatalogPdf}
+            disabled={generatingPdf || !products.filter((p) => p.available).length}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 transition-colors disabled:opacity-40"
+            title="Generar catálogo en PDF con los productos disponibles"
+          >
+            {generatingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
+            <span className="hidden sm:inline">{generatingPdf ? "Generando…" : "Generar PDF"}</span>
           </button>
           <button
             onClick={openAdd}
@@ -1023,6 +1063,24 @@ export default function AdminCatalogo() {
                       <span className="text-slate-400 text-xs font-normal">(ej. Nitro+, ROG Strix, Red Devil)</span>
                     </span>
                   </label>
+
+                  {/* WhatsApp alternativo */}
+                  <div>
+                    <label className="lbl text-sm">
+                      Número de WhatsApp para este producto{" "}
+                      <span className="text-slate-400 text-xs font-normal">(opcional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={form.whatsapp_number}
+                      onChange={(e) => setForm((f) => ({ ...f, whatsapp_number: e.target.value }))}
+                      placeholder="Ej: 313 329 3644 — déjalo vacío para usar el WhatsApp general"
+                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm"
+                    />
+                    <p className="text-xs text-slate-400 mt-1">
+                      Útil si este producto lo maneja otra persona. El botón "Contactar por WhatsApp" del catálogo apuntará a este número.
+                    </p>
+                  </div>
 
                   {/* Descripción */}
                   <div>
