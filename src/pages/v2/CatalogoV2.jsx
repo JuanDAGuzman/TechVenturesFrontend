@@ -108,7 +108,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
           <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
             {tier && (
               <span className="text-[9px] font-mono font-bold uppercase tracking-widest px-2 py-1 rounded-full border shadow-sm text-slate-800 bg-white border-slate-400">
-                {tier}
+                Gama {tier}
               </span>
             )}
             {product.is_flagship && (
@@ -116,7 +116,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
                 className="text-[9px] font-mono font-bold uppercase tracking-widest px-2 py-1 rounded-full border border-transparent text-white shadow-sm"
                 style={{ background: "var(--brand)" }}
               >
-                Insignia
+                Marca Insignia
               </span>
             )}
           </div>
@@ -156,11 +156,15 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
             </span>
           )}
           {product.condition &&
-            product.condition.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag, i) => (
-              <span key={i} className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full uppercase">
-                {tag}
-              </span>
-            ))}
+            product.condition.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag, i) => {
+              const t = tag.toUpperCase();
+              const highlighted = t === "NUEVO" || t === "CON CAJA" || t === "SELLADO";
+              return (
+                <span key={i} className={`text-xs px-1.5 py-0.5 rounded-full uppercase font-medium ${highlighted ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300" : "text-slate-500 bg-slate-100"}`}>
+                  {tag}
+                </span>
+              );
+            })}
         </div>
 
         {/* Descripción (si existe) — se expande por completo al hacer hover */}
@@ -306,7 +310,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
         <div className="p-6 sm:p-8 flex flex-col">
           <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-2">
             <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: b.dot }} />
-            {product.category}{tier ? ` · ${tier}` : ""}{product.is_flagship ? " · Insignia" : ""}
+            {product.category}{tier ? ` · Gama ${tier}` : ""}{product.is_flagship ? " · Marca Insignia" : ""}
           </div>
           <h2 className="font-display font-bold text-2xl sm:text-3xl uppercase tracking-tight text-slate-900 leading-tight">
             {product.name}

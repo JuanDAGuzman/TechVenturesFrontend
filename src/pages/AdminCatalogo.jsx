@@ -86,24 +86,28 @@ function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }
           <div className="flex flex-wrap gap-1 mt-0.5">
             {p.tier && (
               <span className="inline-block w-fit text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
-                {p.tier}
+                Gama {p.tier}
               </span>
             )}
             {p.is_flagship && (
               <span className="inline-flex items-center gap-0.5 w-fit text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">
                 <Star className="w-2.5 h-2.5 fill-current" />
-                Insignia
+                Marca Insignia
               </span>
             )}
           </div>
         )}
         {p.condition && (
           <div className="flex flex-wrap gap-1 mt-0.5">
-            {p.condition.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag, i) => (
-              <span key={i} className="text-xs text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
-                {tag}
-              </span>
-            ))}
+            {p.condition.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag, i) => {
+              const t = tag.toUpperCase();
+              const highlighted = t === "NUEVO" || t === "CON CAJA" || t === "SELLADO";
+              return (
+                <span key={i} className={`text-xs px-1.5 py-0.5 rounded-full ${highlighted ? "bg-emerald-100 text-emerald-700 font-medium" : "text-slate-400 bg-slate-100"}`}>
+                  {tag}
+                </span>
+              );
+            })}
           </div>
         )}
         <p className="text-xs font-extrabold text-brand-indigo mt-auto pt-1.5">{formatPrice(p.price)}</p>
