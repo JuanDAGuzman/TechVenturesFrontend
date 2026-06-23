@@ -160,7 +160,11 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
               const t = tag.toUpperCase();
               const highlighted = t === "NUEVO" || t === "CON CAJA" || t === "SELLADO";
               return (
-                <span key={i} className={`text-xs px-1.5 py-0.5 rounded-full uppercase font-medium ${highlighted ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-300" : "text-slate-500 bg-slate-100"}`}>
+                <span
+                  key={i}
+                  className={`text-xs px-1.5 py-0.5 rounded-full uppercase font-medium ${highlighted ? "ring-1" : "text-slate-500 bg-slate-100"}`}
+                  style={highlighted ? { background: b.badge.background, color: b.badge.color, "--tw-ring-color": b.ring } : undefined}
+                >
                   {tag}
                 </span>
               );
