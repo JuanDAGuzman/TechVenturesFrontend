@@ -13,7 +13,8 @@ const API = (
 
 // Provee el mapa de colores de marca por categoría a las tarjetas/modales,
 // que se construye dinámicamente a partir de las secciones del catálogo
-const BrandContext = createContext({ brandMap: {} });
+const TODOS_BRAND = brandFromColor("#6d28d9");
+const BrandContext = createContext({ brandMap: {}, activeBrand: TODOS_BRAND });
 
 // Convierte el nombre de una categoría en un slug apto para la URL (ej. "Componentes" → "componentes")
 function slugify(name) {
@@ -73,8 +74,9 @@ function ProductThumb({ imageUrl, category, name }) {
 
 // Única tarjeta — se usa tanto en vista agrupada como en vista filtrada
 function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink, index = 0 }) {
-  const { brandMap } = useContext(BrandContext);
+  const { brandMap, activeBrand } = useContext(BrandContext);
   const b = brandMap[product.category] ?? DEFAULT_BRAND;
+  const ab = activeBrand ?? b;
 
   return (
     <div
@@ -163,7 +165,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
                 <span
                   key={i}
                   className={`text-xs px-1.5 py-0.5 rounded-full uppercase font-medium ${highlighted ? "ring-1" : "text-slate-500 bg-slate-100"}`}
-                  style={highlighted ? { background: b.badge.background, color: b.badge.color, "--tw-ring-color": b.ring } : undefined}
+                  style={highlighted ? { background: ab.badge.background, color: ab.badge.color, "--tw-ring-color": ab.ring } : undefined}
                 >
                   {tag}
                 </span>
@@ -548,9 +550,10 @@ export default function CatalogoV2() {
   }
 
   // CSS variables que se aplican dinámicamente según la categoría activa
+  const activeBrand = useMemo(() => brandMap[category] ?? TODOS_BRAND, [category, brandMap]);
   const themeVars = useMemo(() => {
+    if (!brandMap[category]) return {};     // "Todos" → usa el indigo del root
     const b = brandMap[category];
-    if (!b) return {};                      // "Todos" → usa el indigo del root
     return { "--brand": b.dot, "--brand-hover": b.hover, "--brand-ring": b.ring };
   }, [category, brandMap]);
 
@@ -559,7 +562,7 @@ export default function CatalogoV2() {
   const price   = settings.prices_note;
 
   return (
-    <BrandContext.Provider value={{ brandMap }}>
+    <BrandContext.Provider value={{ brandMap, activeBrand }}>
     <div className="relative w-full min-w-0" style={themeVars}>
       {/* Fondo técnico: cuadrícula sutil + resplandor de marca */}
       <div
