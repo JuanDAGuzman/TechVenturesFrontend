@@ -385,6 +385,7 @@ export default function AdminCatalogo() {
         ...(imageValue !== undefined && { image_url: imageValue }),
       };
 
+      let savedId = modal.product?.id;
       if (modal.product) {
         const r = await fetch(`${API}/admin/products/${modal.product.id}`, {
           method: "PATCH", headers, body: JSON.stringify(payload),
@@ -397,6 +398,17 @@ export default function AdminCatalogo() {
         });
         const d = await r.json();
         if (!d.ok) throw new Error(d.error || "ERROR");
+        savedId = d.product?.id ?? d.id;
+      }
+
+      // Si la imagen viene de una URL externa (buscador Google), descargarla y guardarla
+      // en el servidor para que no expire cuando el CDN externo la borre.
+      if (savedId && pendingImageUrl && !pendingImageUrl.startsWith("/uploads/")) {
+        try {
+          await fetch(`${API}/admin/products/${savedId}/image-url`, {
+            method: "POST", headers, body: JSON.stringify({ url: pendingImageUrl }),
+          });
+        } catch {}
       }
 
       await loadAll();
