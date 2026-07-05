@@ -154,7 +154,8 @@ export default function AdminCatalogo() {
   const [products, setProducts]     = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading]       = useState(true);
-  const [categoryFilter, setCategoryFilter] = useState("Todos");
+  const [categoryFilter, setCategoryFilter]       = useState("Todos");
+  const [availabilityFilter, setAvailabilityFilter] = useState("Todos");
 
   // Categorías/secciones del catálogo
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -194,12 +195,14 @@ export default function AdminCatalogo() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
 
-  const visibleProducts = useMemo(() =>
-    categoryFilter === "Todos"
+  const visibleProducts = useMemo(() => {
+    let list = categoryFilter === "Todos"
       ? products
-      : products.filter((p) => p.category === categoryFilter),
-    [products, categoryFilter]
-  );
+      : products.filter((p) => p.category === categoryFilter);
+    if (availabilityFilter === "Disponible")    list = list.filter((p) => p.available);
+    if (availabilityFilter === "No disponible") list = list.filter((p) => !p.available);
+    return list;
+  }, [products, categoryFilter, availabilityFilter]);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -640,7 +643,7 @@ export default function AdminCatalogo() {
       </div>
 
       {/* Filtro por categoría */}
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-5">
+      <div className="flex gap-2 overflow-x-auto pb-1 mb-2">
         {FILTER_CATS.map((cat) => {
           const b = BRAND[cat];
           const active = categoryFilter === cat;
@@ -659,6 +662,23 @@ export default function AdminCatalogo() {
         })}
       </div>
 
+      {/* Filtro por disponibilidad */}
+      <div className="flex gap-2 mb-5">
+        {[
+          { label: "Todos",          value: "Todos",          cls: "bg-white text-slate-600 border-slate-200 hover:border-slate-300", activeCls: "bg-slate-700 text-white border-transparent" },
+          { label: "Disponible",     value: "Disponible",     cls: "bg-white text-emerald-600 border-emerald-200 hover:border-emerald-300", activeCls: "bg-emerald-500 text-white border-transparent" },
+          { label: "No disponible",  value: "No disponible",  cls: "bg-white text-slate-400 border-slate-200 hover:border-slate-300", activeCls: "bg-slate-400 text-white border-transparent" },
+        ].map(({ label, value, cls, activeCls }) => (
+          <button
+            key={value}
+            onClick={() => setAvailabilityFilter(value)}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide border transition-all shadow-sm ${availabilityFilter === value ? activeCls : cls}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       {/* ── Productos: cuadrícula agrupada (igual que la vista pública) ─────── */}
 
       {loading ? (
@@ -671,17 +691,17 @@ export default function AdminCatalogo() {
         <div className="card text-center py-12 mb-6">
           <Package className="w-10 h-10 text-slate-300 mx-auto mb-2" />
           <p className="text-slate-500 font-medium">
-            {products.length === 0 ? "Sin productos" : `Sin productos en ${categoryFilter}`}
+            {products.length === 0 ? "Sin productos" : "Sin resultados para este filtro"}
           </p>
           <p className="text-slate-400 text-sm mt-1">
-            {products.length === 0 ? "Agrega tu primer producto" : "Prueba con otra categoría"}
+            {products.length === 0 ? "Agrega tu primer producto" : "Prueba cambiando categoría o disponibilidad"}
           </p>
         </div>
       ) : categoryFilter === "Todos" ? (
         /* Vista agrupada por sección */
         <div className="space-y-6 mb-6">
           {CATEGORIES
-            .map((cat) => ({ cat, items: products.filter((p) => p.category === cat) }))
+            .map((cat) => ({ cat, items: visibleProducts.filter((p) => p.category === cat) }))
             .filter((g) => g.items.length > 0)
             .map(({ cat, items }) => {
               const b = BRAND[cat] ?? DEFAULT_BRAND;
