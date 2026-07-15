@@ -8,6 +8,7 @@ import BookingV2 from "./pages/v2/BookingV2.jsx";
 import CatalogoV2 from "./pages/v2/CatalogoV2.jsx";
 import AdminGate from "./pages/AdminGate.jsx";
 import AdminCatalogoGate from "./pages/AdminCatalogoGate.jsx";
+import AdminMetricsGate from "./pages/AdminMetricsGate.jsx";
 import Contact from "./pages/Contact.jsx";
 import LayoutV2 from "./components/v2/LayoutV2.jsx";
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/agendar" element={<BookingV2 />} />
           <Route path="/admin" element={<AdminGate />} />
           <Route path="/admin/catalogo" element={<AdminCatalogoGate />} />
+          <Route path="/admin/metricas" element={<AdminMetricsGate />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
