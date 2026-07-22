@@ -1643,7 +1643,7 @@ export default function AdminPage() {
                             <span className="font-medium text-red-700">Bloqueado el:</span>{" "}
                             <span className="text-red-600">
                               {dayjs(searchResult.blacklist_info.blocked_at).format(
-                                "DD/MM/YYYY HH:mm"
+                                "DD/MM/YYYY h:mm A"
                               )}
                             </span>
                           </div>
@@ -1762,7 +1762,7 @@ export default function AdminPage() {
                         <div>
                           <span className="font-medium text-slate-700">Bloqueado el:</span>{" "}
                           <span className="text-slate-600">
-                            {dayjs(item.blocked_at).format("DD/MM/YYYY HH:mm")}
+                            {dayjs(item.blocked_at).format("DD/MM/YYYY h:mm A")}
                           </span>
                         </div>
                       </div>

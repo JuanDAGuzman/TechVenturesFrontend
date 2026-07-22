@@ -262,7 +262,7 @@ export default function AdminGate() {
                             {p.device_name || "Dispositivo"}
                             {p.last_used_at && (
                               <span className="text-slate-400">
-                                {" "}— último uso {dayjs(p.last_used_at).format("DD/MM/YYYY HH:mm")}
+                                {" "}— último uso {dayjs(p.last_used_at).format("DD/MM/YYYY h:mm A")}
                               </span>
                             )}
                           </span>
