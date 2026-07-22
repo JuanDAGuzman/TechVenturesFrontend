@@ -25,6 +25,15 @@ import HeroV2 from "../../components/v2/HeroV2";
 
 const API_BASE = "https://techventuresbackend-production.up.railway.app";
 
+function to12h(hhmm) {
+    if (!hhmm) return "";
+    const [h, m] = (hhmm || "").slice(0, 5).split(":");
+    const hour = parseInt(h, 10);
+    const suffix = hour >= 12 ? "PM" : "AM";
+    const h12 = hour % 12 || 12;
+    return `${h12}:${m} ${suffix}`;
+}
+
 const METHODS = [
     {
         key: "TRYOUT",
@@ -961,7 +970,7 @@ export default function BookingV2() {
                                                                 selectedSlot &&
                                                                 selectedSlot.start === s.start &&
                                                                 selectedSlot.end === s.end;
-                                                            const label = `${s.start} – ${s.end}`;
+                                                            const label = `${to12h(s.start)} – ${to12h(s.end)}`;
 
                                                             return (
                                                                 <motion.button

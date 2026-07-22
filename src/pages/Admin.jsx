@@ -73,7 +73,14 @@ function statusBadgeClass(code) {
       return "bg-slate-100 text-slate-700";
   }
 }
-const fmt = (hhmm) => (hhmm || "").slice(0, 5);
+function fmt(hhmm) {
+  if (!hhmm) return "";
+  const [h, m] = (hhmm || "").slice(0, 5).split(":");
+  const hour = parseInt(h, 10);
+  const suffix = hour >= 12 ? "PM" : "AM";
+  const h12 = hour % 12 || 12;
+  return `${h12}:${m} ${suffix}`;
+}
 
 async function safeJson(res) {
   const text = await res.text();
@@ -396,7 +403,7 @@ export default function AdminPage() {
 
   function buildBookingMessage(type, date, start, end, link) {
     const fechaFmt = dayjs(date).locale("es").format("dddd D [de] MMMM");
-    const horaFmt  = `${start} – ${end}`;
+    const horaFmt  = `${fmt(start)} – ${fmt(end)}`;
     if (type === "TRYOUT") {
       return `¡Hola! 😊 Te tenemos listo un horario para tu ensayo el ${fechaFmt} de ${horaFmt}. Entra al link, llena tus datos y confirma tu cita — la fecha y la hora ya están seleccionadas para ti:\n\n👉 ${link}\n\nCualquier duda, me avisas. 🚀`;
     }
@@ -478,7 +485,7 @@ export default function AdminPage() {
 
       const windowDuration = toMin(wEnd) - toMin(wStart);
       if (Number(slotSizeW) > windowDuration) {
-        setToast(`El bloque de ${slotSizeW} min no cabe en el rango ${wStart}–${wEnd} (${windowDuration} min disponibles).`);
+        setToast(`El bloque de ${slotSizeW} min no cabe en el rango ${fmt(wStart)}–${fmt(wEnd)} (${windowDuration} min disponibles).`);
         return;
       }
 
@@ -1412,7 +1419,7 @@ export default function AdminPage() {
                           <div className="flex items-center gap-2">
                             <div>
                               <div className="font-bold text-lg text-slate-800">
-                                {r.start} — {r.end}
+                                {fmt(r.start)} — {fmt(r.end)}
                               </div>
                               {typeof r.slot === "number" && (
                                 <div className="text-xs text-slate-500 font-medium">
@@ -2320,7 +2327,7 @@ export default function AdminPage() {
                                   onClick={() => { setQbForm((f) => ({ ...f, start_time: s.start, end_time: s.end })); setQbErrors((er) => ({ ...er, slot: undefined })); }}
                                   className={`py-1.5 px-2 rounded-lg text-xs font-medium border-2 transition-all ${active ? "bg-indigo-600 text-white border-indigo-600" : "border-slate-200 hover:border-indigo-300"}`}
                                 >
-                                  {s.start} – {s.end}
+                                  {fmt(s.start)} – {fmt(s.end)}
                                 </button>
                               );
                             })}
