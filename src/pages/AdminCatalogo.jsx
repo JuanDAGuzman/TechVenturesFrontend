@@ -119,7 +119,7 @@ function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }
                 style={{ background: dot }}
               >
                 <Tag className="w-2.5 h-2.5 shrink-0" />
-                -{Math.round((1 - p.price / p.original_price) * 100)}% oferta
+                -{Math.round((1 - p.price / p.original_price) * 100)}% descuento
               </span>
               <span className="text-xs text-slate-400 line-through">{formatPrice(p.original_price)}</span>
             </div>

@@ -137,7 +137,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
               style={{ background: b.dot }}
             >
               <Tag className="w-2.5 h-2.5 shrink-0" />
-              -{Math.round((1 - product.price / product.original_price) * 100)}% oferta
+              -{Math.round((1 - product.price / product.original_price) * 100)}% descuento
             </span>
           </div>
         )}
@@ -345,7 +345,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
                 style={{ background: b.dot }}
               >
                 <Tag className="w-3.5 h-3.5 shrink-0" />
-                -{Math.round((1 - product.price / product.original_price) * 100)}% oferta
+                -{Math.round((1 - product.price / product.original_price) * 100)}% descuento
               </span>
               <span className="text-base text-slate-400 line-through font-mono">{formatPrice(product.original_price)}</span>
             </div>
