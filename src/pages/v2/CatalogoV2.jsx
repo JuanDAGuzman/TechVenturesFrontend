@@ -130,6 +130,13 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
             </span>
           </div>
         )}
+        {product.available && product.original_price && Number(product.original_price) > Number(product.price) && !isSelected && (
+          <div className="absolute top-2 right-2">
+            <span className="text-[10px] font-black bg-red-500 text-white px-2 py-1 rounded-full shadow-md tracking-wide">
+              -{Math.round((1 - product.price / product.original_price) * 100)}% OFF
+            </span>
+          </div>
+        )}
         {isSelected && (
           <div
             className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center shadow-sm"
@@ -182,6 +189,9 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
 
         {/* Precio + botón siempre pegados al fondo del card */}
         <div className="mt-auto pt-3">
+          {product.original_price && Number(product.original_price) > Number(product.price) && (
+            <p className="text-xs text-slate-400 line-through font-mono">{formatPrice(product.original_price)}</p>
+          )}
           <p className="text-xl sm:text-2xl font-mono font-semibold brand-text tracking-tight">{formatPrice(product.price)}</p>
           {product.available ? (
             <div className="mt-2 flex gap-2">
@@ -324,7 +334,15 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
           {product.description && (
             <p className="text-sm text-slate-500 mt-3 leading-relaxed uppercase">{product.description}</p>
           )}
-          <p className="font-mono text-2xl sm:text-3xl font-semibold brand-text mt-4">{formatPrice(product.price)}</p>
+          {product.original_price && Number(product.original_price) > Number(product.price) && (
+            <div className="flex items-center gap-2 mt-4">
+              <span className="text-sm font-black bg-red-500 text-white px-2.5 py-1 rounded-full">
+                -{Math.round((1 - product.price / product.original_price) * 100)}% OFF
+              </span>
+              <span className="text-base text-slate-400 line-through font-mono">{formatPrice(product.original_price)}</span>
+            </div>
+          )}
+          <p className={`font-mono text-2xl sm:text-3xl font-semibold brand-text ${product.original_price && Number(product.original_price) > Number(product.price) ? "mt-1" : "mt-4"}`}>{formatPrice(product.price)}</p>
 
           <div className="mt-5 border-t border-slate-100">
             {specs.map(([k, v]) => (

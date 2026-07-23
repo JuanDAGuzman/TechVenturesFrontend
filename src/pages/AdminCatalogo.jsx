@@ -30,6 +30,7 @@ const EMPTY_FORM = {
   category: "NVIDIA",
   memory_capacity: "",
   price: "",
+  original_price: "",
   condition: "",
   description: "",
   available: true,
@@ -110,7 +111,17 @@ function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }
             })}
           </div>
         )}
-        <p className="text-xs font-extrabold text-brand-indigo mt-auto pt-1.5">{formatPrice(p.price)}</p>
+        <div className="mt-auto pt-1.5">
+          {p.original_price && Number(p.original_price) > Number(p.price) && (
+            <div className="flex items-center gap-1 mb-0.5">
+              <span className="text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full">
+                -{Math.round((1 - p.price / p.original_price) * 100)}%
+              </span>
+              <span className="text-xs text-slate-400 line-through">{formatPrice(p.original_price)}</span>
+            </div>
+          )}
+          <p className="text-xs font-extrabold text-brand-indigo">{formatPrice(p.price)}</p>
+        </div>
       </div>
 
       {/* Acciones */}
@@ -292,6 +303,7 @@ export default function AdminCatalogo() {
       category:        product.category,
       memory_capacity: product.memory_capacity || "",
       price:           String(product.price),
+      original_price:  product.original_price ? String(product.original_price) : "",
       condition:       product.condition || "",
       description:     product.description || "",
       available:       product.available,
@@ -379,6 +391,8 @@ export default function AdminCatalogo() {
         category:        form.category,
         memory_capacity: form.memory_capacity.trim() || null,
         price:           Number(form.price),
+        original_price:  form.original_price !== "" && !isNaN(Number(form.original_price))
+                           ? Number(form.original_price) : null,
         condition:       form.condition.trim(),
         description:     form.description.trim() || null,
         available:       form.available,
@@ -1029,11 +1043,11 @@ export default function AdminCatalogo() {
                     </div>
                   </div>
 
-                  {/* Precio + Estado */}
+                  {/* Precio + Precio original + Estado */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="lbl text-sm">
-                        Precio (COP) <span className="text-red-500">*</span>
+                        Precio actual (COP) <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -1044,6 +1058,29 @@ export default function AdminCatalogo() {
                         className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm"
                       />
                     </div>
+                    <div>
+                      <label className="lbl text-sm">
+                        Precio antes de oferta
+                        <span className="text-slate-400 text-xs font-normal ml-1">(opcional)</span>
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={form.original_price}
+                        onChange={(e) => setForm((f) => ({ ...f, original_price: e.target.value }))}
+                        placeholder="1500000"
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-amber-200 focus:border-amber-400 outline-none transition text-sm"
+                      />
+                      {form.original_price && form.price &&
+                       Number(form.original_price) > Number(form.price) && (
+                        <p className="text-xs text-amber-600 font-semibold mt-0.5">
+                          Descuento: {Math.round((1 - Number(form.price) / Number(form.original_price)) * 100)}% OFF
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
                     <div>
                       <label className="lbl text-sm">Estado / Condición</label>
                       <input
