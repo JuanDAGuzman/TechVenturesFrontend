@@ -133,8 +133,8 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
         {product.available && product.original_price && Number(product.original_price) > Number(product.price) && !isSelected && (
           <div className="absolute top-2 right-2">
             <span
-              className="flex items-center gap-1 text-[10px] font-black text-white px-2 py-1 rounded-full shadow-md tracking-wide"
-              style={{ background: b.dot }}
+              className="flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-full shadow-lg tracking-wide border-2 bg-white"
+              style={{ color: b.dot, borderColor: b.dot }}
             >
               <Tag className="w-2.5 h-2.5 shrink-0" />
               -{Math.round((1 - product.price / product.original_price) * 100)}% descuento
@@ -341,8 +341,8 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
           {product.original_price && Number(product.original_price) > Number(product.price) && (
             <div className="flex items-center gap-2 mt-4">
               <span
-                className="flex items-center gap-1 text-sm font-black text-white px-2.5 py-1 rounded-full"
-                style={{ background: b.dot }}
+                className="flex items-center gap-1 text-sm font-black px-2.5 py-1 rounded-full border-2 bg-white"
+                style={{ color: b.dot, borderColor: b.dot }}
               >
                 <Tag className="w-3.5 h-3.5 shrink-0" />
                 -{Math.round((1 - product.price / product.original_price) * 100)}% descuento

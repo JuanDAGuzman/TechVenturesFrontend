@@ -115,8 +115,8 @@ function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }
           {p.original_price && Number(p.original_price) > Number(p.price) && (
             <div className="flex items-center gap-1 mb-0.5">
               <span
-                className="flex items-center gap-0.5 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-full"
-                style={{ background: dot }}
+                className="flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 bg-white"
+                style={{ color: dot, borderColor: dot }}
               >
                 <Tag className="w-2.5 h-2.5 shrink-0" />
                 -{Math.round((1 - p.price / p.original_price) * 100)}% descuento
