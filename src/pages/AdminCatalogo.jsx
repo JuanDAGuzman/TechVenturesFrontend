@@ -505,18 +505,18 @@ export default function AdminCatalogo() {
       "",
       "🎉 ¡BIENVENIDO/A TechVenturesCO! 🎉",
       "",
-      "🖥️ GRÁFICAS DISPONIBLES:",
+      "🖥️ COMPONENTES DISPONIBLES:",
       "",
     ];
 
     CATEGORIES.forEach((cat) => {
       const items = available
         .filter((p) => p.category === cat)
-        .sort((a, b) => a.price - b.price);
+        .sort((a, b) => Number(a.price) - Number(b.price));
       if (!items.length) return;
       const emoji = CATEGORY_EMOJI[cat] ?? "▪️";
       items.forEach((p) => {
-        lines.push(`${emoji} ${productDisplayName(p)}: ${fmt(p.price)}`);
+        lines.push(`${emoji} ${productDisplayName(p)}: ${fmt(Number(p.price))}`);
         lines.push("");
       });
     });
