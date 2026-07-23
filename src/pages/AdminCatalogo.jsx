@@ -2,7 +2,7 @@ import { createPortal } from "react-dom";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { getAdminToken } from "../lib/adminSession.js";
 import {
-  Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X, Copy, Check, Star, FileText, Loader2,
+  Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X, Copy, Check, Star, FileText, Loader2, Tag,
 } from "lucide-react";
 import { brandFromColor, DEFAULT_BRAND } from "../lib/categoryBrand.js";
 
@@ -114,8 +114,12 @@ function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }
         <div className="mt-auto pt-1.5">
           {p.original_price && Number(p.original_price) > Number(p.price) && (
             <div className="flex items-center gap-1 mb-0.5">
-              <span className="text-[10px] font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full">
-                -{Math.round((1 - p.price / p.original_price) * 100)}%
+              <span
+                className="flex items-center gap-0.5 text-[10px] font-bold text-white px-1.5 py-0.5 rounded-full"
+                style={{ background: dot }}
+              >
+                <Tag className="w-2.5 h-2.5 shrink-0" />
+                -{Math.round((1 - p.price / p.original_price) * 100)}% oferta
               </span>
               <span className="text-xs text-slate-400 line-through">{formatPrice(p.original_price)}</span>
             </div>
