@@ -131,7 +131,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
           </div>
         )}
         {product.available && product.original_price && Number(product.original_price) > Number(product.price) && !isSelected && (
-          <div className="absolute top-2 right-2">
+          <div className="absolute bottom-2 right-2">
             <span
               className="flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-full shadow-lg tracking-wide border-2 bg-white"
               style={{ color: b.dot, borderColor: b.dot }}
