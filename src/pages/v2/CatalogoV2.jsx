@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, createContext, useContext } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown } from "lucide-react";
+import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronRight } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
 import { brandFromColor, DEFAULT_BRAND } from "../../lib/categoryBrand.js";
 
@@ -410,6 +410,8 @@ export default function CatalogoV2() {
   const [maxPrice, setMaxPrice] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [detailProduct, setDetailProduct] = useState(null);
+  const catScrollRef = useRef(null);
+  const [showCatHint, setShowCatHint] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -489,6 +491,17 @@ export default function CatalogoV2() {
     });
     return counts;
   }, [products]);
+
+  // Detecta si el scroll de categorías tiene overflow → muestra hint visual
+  useEffect(() => {
+    const el = catScrollRef.current;
+    if (!el) return;
+    const check = () => setShowCatHint(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    return () => { el.removeEventListener("scroll", check); window.removeEventListener("resize", check); };
+  }, [categories]);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -670,7 +683,8 @@ export default function CatalogoV2() {
       {/* ── Filtros ── */}
       <div className="mb-4 space-y-2.5">
         {/* Chips de categoría */}
-        <div className="flex gap-2 overflow-x-auto pb-1 min-w-0 w-full">
+        <div className="relative min-w-0 w-full">
+        <div ref={catScrollRef} className="flex gap-2 overflow-x-auto pb-1 min-w-0 w-full scrollbar-hide">
           {CATEGORIES.map((cat) => {
             const b = brandMap[cat];
             const active = category === cat;
@@ -697,6 +711,13 @@ export default function CatalogoV2() {
               </button>
             );
           })}
+        </div>
+        {showCatHint && (
+          <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-16 flex items-center justify-end pr-1"
+               style={{ background: "linear-gradient(to left, white 40%, transparent)" }}>
+            <ChevronRight className="w-4 h-4 text-slate-400 opacity-70" />
+          </div>
+        )}
         </div>
 
         {/* Búsqueda */}
