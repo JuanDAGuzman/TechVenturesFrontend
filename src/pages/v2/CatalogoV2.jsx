@@ -79,6 +79,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
   const ab = activeBrand ?? b;
   const condTags = product.condition ? product.condition.split(",").map(t => t.trim().toUpperCase()).filter(Boolean) : [];
   const isNew = condTags.some(t => t === "NUEVO" || t === "SELLADO" || t === "OPEN BOX");
+  const hasBox = condTags.includes("CON CAJA");
 
   return (
     <div
@@ -189,6 +190,11 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
               Usado
             </span>
           )}
+          {!hasBox && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full uppercase font-medium text-slate-500 bg-slate-100">
+              Sin caja
+            </span>
+          )}
         </div>
 
         {/* Descripción (si existe) — se expande por completo al hacer hover */}
@@ -281,9 +287,12 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
 
   const condTagsModal = product.condition ? product.condition.split(",").map(t => t.trim().toUpperCase()).filter(Boolean) : [];
   const isNewModal = condTagsModal.some(t => t === "NUEVO" || t === "SELLADO" || t === "OPEN BOX");
-  const conditionDisplay = product.condition
-    ? (isNewModal ? product.condition : [product.condition, "Usado"].filter(Boolean).join(", "))
-    : "Usado";
+  const hasBoxModal = condTagsModal.includes("CON CAJA");
+  const conditionDisplay = [
+    product.condition || null,
+    !isNewModal ? "Usado" : null,
+    !hasBoxModal ? "Sin caja" : null,
+  ].filter(Boolean).join(", ") || "Usado, Sin caja";
 
   const specs = [
     ["Categoría", product.category],
