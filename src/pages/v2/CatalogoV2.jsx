@@ -77,6 +77,8 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
   const { brandMap, activeBrand } = useContext(BrandContext);
   const b = brandMap[product.category] ?? DEFAULT_BRAND;
   const ab = activeBrand ?? b;
+  const condTags = product.condition ? product.condition.split(",").map(t => t.trim().toUpperCase()).filter(Boolean) : [];
+  const isNew = condTags.some(t => t === "NUEVO" || t === "SELLADO");
 
   return (
     <div
@@ -182,6 +184,11 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
                 </span>
               );
             })}
+          {!isNew && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full uppercase font-medium text-slate-500 bg-slate-100">
+              Usado
+            </span>
+          )}
         </div>
 
         {/* Descripción (si existe) — se expande por completo al hacer hover */}
@@ -272,10 +279,16 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
     };
   }, [product]);
 
+  const condTagsModal = product.condition ? product.condition.split(",").map(t => t.trim().toUpperCase()).filter(Boolean) : [];
+  const isNewModal = condTagsModal.some(t => t === "NUEVO" || t === "SELLADO");
+  const conditionDisplay = product.condition
+    ? (isNewModal ? product.condition : [product.condition, "Usado"].filter(Boolean).join(", "))
+    : "Usado";
+
   const specs = [
     ["Categoría", product.category],
     product.memory_capacity && ["Memoria / Capacidad", product.memory_capacity],
-    product.condition && ["Estado", product.condition],
+    ["Estado", conditionDisplay],
     tier && ["Gama", tier],
     product.is_flagship && ["Insignia", "Sí, tope de línea de su marca"],
     ["Disponibilidad", product.available ? "Disponible" : "Agotado"],
