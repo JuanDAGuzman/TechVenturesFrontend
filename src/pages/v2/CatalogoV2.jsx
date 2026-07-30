@@ -78,7 +78,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
   const b = brandMap[product.category] ?? DEFAULT_BRAND;
   const ab = activeBrand ?? b;
   const condTags = product.condition ? product.condition.split(",").map(t => t.trim().toUpperCase()).filter(Boolean) : [];
-  const isNew = condTags.some(t => t === "NUEVO" || t === "SELLADO");
+  const isNew = condTags.some(t => t === "NUEVO" || t === "SELLADO" || t === "OPEN BOX");
 
   return (
     <div
@@ -173,7 +173,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
           {product.condition &&
             product.condition.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag, i) => {
               const t = tag.toUpperCase();
-              const highlighted = t === "NUEVO" || t === "CON CAJA" || t === "SELLADO";
+              const highlighted = t === "NUEVO" || t === "CON CAJA" || t === "SELLADO" || t === "OPEN BOX";
               return (
                 <span
                   key={i}
@@ -280,7 +280,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
   }, [product]);
 
   const condTagsModal = product.condition ? product.condition.split(",").map(t => t.trim().toUpperCase()).filter(Boolean) : [];
-  const isNewModal = condTagsModal.some(t => t === "NUEVO" || t === "SELLADO");
+  const isNewModal = condTagsModal.some(t => t === "NUEVO" || t === "SELLADO" || t === "OPEN BOX");
   const conditionDisplay = product.condition
     ? (isNewModal ? product.condition : [product.condition, "Usado"].filter(Boolean).join(", "))
     : "Usado";
