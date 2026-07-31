@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, createContext, useContext } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronRight, ArrowRight, AlertTriangle, Percent, Layers } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
 import { brandFromColor, DEFAULT_BRAND } from "../../lib/categoryBrand.js";
 
@@ -710,73 +710,90 @@ export default function CatalogoV2() {
         const discounted = products.filter((p) => p.available && p.original_price && Number(p.original_price) > Number(p.price));
         const hasOffers = discounted.length > 0 || bundleDeals.length > 0;
         if (!hasOffers) return null;
+        const totalOffers = discounted.length + bundleDeals.length;
         return (
-          <div className="mb-6">
+          <div className="mb-8">
             {/* Header */}
-            <div className="flex items-center gap-2 mb-3">
-              <span className="text-lg">🏷️</span>
-              <h2 className="font-display text-xl font-bold brand-text tracking-tight">Ofertas</h2>
-              <span className="text-xs font-mono text-slate-400 border border-slate-200 rounded-full px-2 py-0.5 bg-white">
-                {discounted.length + bundleDeals.length} activa{(discounted.length + bundleDeals.length) !== 1 ? "s" : ""}
-              </span>
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center brand-bg shrink-0">
+                <Tag className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <h2 className="font-display text-xl font-bold brand-text tracking-tight leading-none">Ofertas</h2>
+                <p className="text-[11px] text-slate-400 font-mono mt-0.5">{totalOffers} oferta{totalOffers !== 1 ? "s" : ""} activa{totalOffers !== 1 ? "s" : ""}</p>
+              </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
 
-              {/* Bundle deals — precio por cantidad */}
+              {/* ── Bundle deals ── */}
               {bundleDeals.map((deal) => {
                 const b = brandMap[deal.category] ?? DEFAULT_BRAND;
-                const saving = (Number(deal.price) - Number(deal.bundle_price)) * Number(deal.min_quantity);
+                const savingUnit = Number(deal.price) - Number(deal.bundle_price);
+                const savingTotal = savingUnit * Number(deal.min_quantity);
                 return (
-                  <div key={deal.id}
-                    className="relative overflow-hidden rounded-2xl border-2 bg-white"
-                    style={{ borderColor: b.dot }}>
-                    {/* Franja de color a la izquierda */}
-                    <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl" style={{ background: b.dot }} />
+                  <div key={deal.id} className="relative overflow-hidden rounded-2xl bg-white shadow-sm" style={{ border: `2px solid ${b.dot}` }}>
 
-                    <div className="pl-5 pr-4 py-4 flex items-center gap-4">
-                      {/* Info principal */}
+                    {/* Cabecera coloreada */}
+                    <div className="flex items-center gap-2 px-4 py-2.5" style={{ background: b.dot }}>
+                      <Layers className="w-3.5 h-3.5 text-white shrink-0" />
+                      <span className="text-[11px] font-black text-white uppercase tracking-widest">Oferta por cantidad</span>
+                      {savingUnit > 0 && (
+                        <span className="ml-auto text-[11px] font-black text-white bg-white/20 rounded-full px-2 py-0.5">
+                          -{Math.round((savingUnit / Number(deal.price)) * 100)}% c/u
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="px-4 py-4 flex items-start gap-4">
+                      {/* Imagen del producto */}
+                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+                        {deal.image_url
+                          ? <img src={deal.image_url} alt={deal.name} className="w-full h-full object-contain" />
+                          : <Package className="w-6 h-6 text-slate-300" />}
+                      </div>
+
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded-full text-white" style={{ background: b.dot }}>
-                            Oferta por cantidad
-                          </span>
-                        </div>
-                        <p className="font-bold text-slate-800 text-sm leading-tight">
+                        <p className="font-bold text-slate-800 text-base leading-tight">
                           {deal.name}{deal.memory_capacity ? ` ${deal.memory_capacity}` : ""}
                         </p>
 
-                        {/* Precios */}
-                        <div className="flex items-baseline gap-3 mt-2 flex-wrap">
-                          <div>
-                            <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wide">Precio normal</p>
+                        {/* Bloque de precios */}
+                        <div className="flex items-center gap-2 mt-2 flex-wrap">
+                          <div className="text-center">
+                            <p className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Precio normal</p>
                             <p className="text-sm text-slate-400 line-through font-mono">{formatCop(deal.price)}</p>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <span className="text-slate-300 text-lg">→</span>
-                          </div>
-                          <div>
-                            <p className="text-[10px] uppercase font-semibold tracking-wide" style={{ color: b.dot }}>Llevando {deal.min_quantity}+ unidades</p>
-                            <p className="text-xl font-black font-mono" style={{ color: b.dot }}>{formatCop(deal.bundle_price)}<span className="text-xs font-semibold ml-1 text-slate-500">c/u</span></p>
+                          <ArrowRight className="w-4 h-4 text-slate-300 shrink-0" />
+                          <div className="text-center">
+                            <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: b.dot }}>
+                              Llevando {deal.min_quantity}+ unidades
+                            </p>
+                            <p className="text-xl font-black font-mono leading-none" style={{ color: b.dot }}>
+                              {formatCop(deal.bundle_price)}
+                              <span className="text-xs font-semibold text-slate-400 ml-1">c/u</span>
+                            </p>
                           </div>
                         </div>
 
-                        {/* Aviso */}
-                        <div className="mt-2 flex items-start gap-1.5">
-                          <span className="text-amber-500 text-xs mt-px shrink-0">⚠️</span>
-                          <p className="text-[11px] text-slate-500 leading-tight">
-                            Precio exclusivo al comprar <strong>mínimo {deal.min_quantity} unidades</strong>.
-                            {saving > 0 && <span className="text-emerald-600 font-semibold"> Ahorras hasta {formatCop(saving)} en total.</span>}
+                        {/* Aviso mínimo */}
+                        <div className="mt-3 flex items-start gap-1.5 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
+                          <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-px" />
+                          <p className="text-[11px] text-amber-800 leading-tight">
+                            Precio válido <strong>únicamente al comprar mínimo {deal.min_quantity} unidades</strong>.
+                            {savingTotal > 0 && (
+                              <span className="text-emerald-700 font-semibold"> Ahorro total: {formatCop(savingTotal)}.</span>
+                            )}
                           </p>
                         </div>
                       </div>
 
-                      {/* Ahorro badge */}
-                      {saving > 0 && (
-                        <div className="shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-2xl text-white text-center" style={{ background: b.dot }}>
-                          <p className="text-[10px] font-semibold leading-tight">Ahorras</p>
-                          <p className="text-xs font-black leading-tight">{formatCop(Number(deal.price) - Number(deal.bundle_price))}</p>
-                          <p className="text-[9px] leading-tight opacity-80">por unidad</p>
+                      {/* Badge ahorro por unidad */}
+                      {savingUnit > 0 && (
+                        <div className="shrink-0 flex flex-col items-center justify-center w-14 h-14 rounded-xl text-white text-center shadow-sm" style={{ background: b.dot }}>
+                          <p className="text-[9px] font-bold leading-tight uppercase">Ahorras</p>
+                          <p className="text-[11px] font-black leading-tight">{formatCop(savingUnit)}</p>
+                          <p className="text-[8px] opacity-80 leading-tight">por unidad</p>
                         </div>
                       )}
                     </div>
@@ -784,34 +801,48 @@ export default function CatalogoV2() {
                 );
               })}
 
-              {/* Descuentos simples (original_price > price) */}
+              {/* ── Artículos en descuento — scroll horizontal ── */}
               {discounted.length > 0 && (
-                <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-                  <div className="px-4 py-2.5 border-b border-slate-100 flex items-center gap-2">
-                    <Tag className="w-3.5 h-3.5 text-slate-500" />
-                    <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">Artículos en descuento</p>
+                <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+                  {/* Cabecera */}
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50">
+                    <Percent className="w-3.5 h-3.5 text-slate-500" />
+                    <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Artículos con descuento</p>
+                    <span className="ml-auto text-[10px] text-slate-400 font-mono">{discounted.length} artículo{discounted.length !== 1 ? "s" : ""}</span>
                   </div>
-                  <div className="divide-y divide-slate-100">
+
+                  {/* Scroll horizontal */}
+                  <div className="flex gap-3 overflow-x-auto px-4 py-4 scrollbar-hide">
                     {discounted.map((p) => {
                       const b = brandMap[p.category] ?? DEFAULT_BRAND;
                       const pct = Math.round((1 - Number(p.price) / Number(p.original_price)) * 100);
                       return (
-                        <div key={p.id} className="flex items-center gap-3 px-4 py-3">
-                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-50 shrink-0 border border-slate-100 flex items-center justify-center">
+                        <div key={p.id} className="shrink-0 w-40 flex flex-col rounded-xl border-2 overflow-hidden bg-white"
+                          style={{ borderColor: b.ring }}>
+                          {/* Imagen */}
+                          <div className="relative h-24 bg-slate-50 flex items-center justify-center">
                             {p.image_url
-                              ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain" />
-                              : <span className="text-slate-300 text-xl">📦</span>}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-slate-800 truncate">{p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-xs text-slate-400 line-through font-mono">{formatCop(p.original_price)}</span>
-                              <span className="text-xs font-black font-mono" style={{ color: b.dot }}>{formatCop(p.price)}</span>
+                              ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-1" />
+                              : <Package className="w-8 h-8 text-slate-200" />}
+                            {/* Badge descuento */}
+                            <div className="absolute top-1.5 right-1.5">
+                              <span className="flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full border-2 bg-white leading-none"
+                                style={{ color: b.dot, borderColor: b.dot }}>
+                                <Tag className="w-2 h-2 shrink-0" />
+                                -{pct}%
+                              </span>
                             </div>
                           </div>
-                          <span className="shrink-0 text-[11px] font-black px-2 py-1 rounded-full border-2 bg-white" style={{ color: b.dot, borderColor: b.dot }}>
-                            -{pct}%
-                          </span>
+                          {/* Info */}
+                          <div className="p-2 flex flex-col flex-1">
+                            <p className="text-[11px] font-bold text-slate-800 leading-tight line-clamp-2">
+                              {p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}
+                            </p>
+                            <div className="mt-auto pt-2">
+                              <p className="text-[10px] text-slate-400 line-through font-mono leading-none">{formatCop(p.original_price)}</p>
+                              <p className="text-sm font-black font-mono leading-tight" style={{ color: b.dot }}>{formatCop(p.price)}</p>
+                            </div>
+                          </div>
                         </div>
                       );
                     })}
