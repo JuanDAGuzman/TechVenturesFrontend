@@ -11,8 +11,10 @@ import AdminCatalogoGate from "./pages/AdminCatalogoGate.jsx";
 import AdminMetricsGate from "./pages/AdminMetricsGate.jsx";
 import Contact from "./pages/Contact.jsx";
 import LayoutV2 from "./components/v2/LayoutV2.jsx";
+import { SiteThemeProvider } from "./lib/SiteThemeContext.jsx";
 export default function App() {
   return (
+    <SiteThemeProvider>
     <BrowserRouter>
       <Routes>
         <Route element={<LayoutV2 />}>
@@ -26,5 +28,6 @@ export default function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </SiteThemeProvider>
   );
 }

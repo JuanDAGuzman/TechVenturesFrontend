@@ -1,9 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ShoppingBag, MessageCircle } from "lucide-react";
+import { useSiteTheme } from "../../lib/SiteThemeContext.jsx";
 
 export default function NavbarV2() {
     const location = useLocation();
+    const { brand } = useSiteTheme();
     const isHome     = location.pathname === "/";
     const isCatalogo = isHome;
     const isContact  = location.pathname === "/contact";
@@ -13,11 +15,12 @@ export default function NavbarV2() {
         <motion.header
             initial={{ y: -100 }}
             animate={{ y: 0 }}
-            className="sticky top-0 z-50 bg-white shadow-lg border-b-4 border-brand-indigo w-full"
+            className="sticky top-0 z-50 bg-white shadow-lg w-full border-b-4"
+            style={{ borderBottomColor: brand.dot }}
         >
             <div className="container-page">
                 <div className="flex items-center justify-between py-3">
-                    {/* Logo Section */}
+                    {/* Logo */}
                     <Link
                         to="/"
                         className={`flex items-center gap-3 transition-all ${isHome ? 'cursor-default pointer-events-none' : 'hover:scale-105'}`}
@@ -35,7 +38,8 @@ export default function NavbarV2() {
                         </motion.div>
 
                         <div className="hidden sm:flex flex-col">
-                            <span className="font-extrabold text-xl text-brand-indigo tracking-tight leading-tight drop-shadow-sm">
+                            <span className="font-extrabold text-xl tracking-tight leading-tight drop-shadow-sm"
+                                style={{ color: brand.dot }}>
                                 TechVenturesCO
                             </span>
                             <span className="text-xs text-slate-500 font-bold tracking-wide uppercase">
@@ -51,9 +55,16 @@ export default function NavbarV2() {
                                 <Link
                                     to="/"
                                     className={`flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm ${isCatalogo
-                                        ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
+                                        ? "text-white ring-2"
                                         : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
                                         }`}
+                                    style={isCatalogo ? {
+                                        background: brand.dot,
+                                        ringColor: brand.ring,
+                                        boxShadow: `0 2px 8px ${brand.ring}`,
+                                        outline: `2px solid ${brand.ring}`,
+                                        outlineOffset: "2px",
+                                    } : {}}
                                 >
                                     <ShoppingBag className="w-4 h-4" />
                                     <span className="hidden sm:inline">Catálogo</span>
@@ -61,15 +72,20 @@ export default function NavbarV2() {
                             </nav>
                         )}
 
-                        {/* Contacto — siempre visible, incluso cuando el resto del nav está oculto */}
                         <Link
                             to="/contact"
                             title="Contáctanos"
                             aria-label="Contáctanos"
                             className={`flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm shrink-0 ${isContact
-                                ? "bg-brand-indigo text-white shadow-indigo-200 ring-2 ring-indigo-100"
+                                ? "text-white ring-2"
                                 : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
                                 }`}
+                            style={isContact ? {
+                                background: brand.dot,
+                                boxShadow: `0 2px 8px ${brand.ring}`,
+                                outline: `2px solid ${brand.ring}`,
+                                outlineOffset: "2px",
+                            } : {}}
                         >
                             <MessageCircle className="w-4 h-4" />
                             <span className="hidden sm:inline">Contacto</span>

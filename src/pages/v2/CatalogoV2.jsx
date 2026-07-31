@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronRight, ArrowRight, AlertTriangle, Percent, Layers } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
 import { brandFromColor, DEFAULT_BRAND } from "../../lib/categoryBrand.js";
+import { useSiteTheme } from "../../lib/SiteThemeContext.jsx";
 
 const API = (
   import.meta.env.VITE_API_BASE ??
@@ -615,6 +616,8 @@ export default function CatalogoV2() {
 
   // CSS variables que se aplican dinámicamente según la categoría activa
   const activeBrand = useMemo(() => brandMap[category] ?? TODOS_BRAND, [category, brandMap]);
+  const { setBrand } = useSiteTheme();
+  useEffect(() => { setBrand(activeBrand); }, [activeBrand, setBrand]);
   const themeVars = useMemo(() => {
     if (!brandMap[category]) return {};     // "Todos" → usa el indigo del root
     const b = brandMap[category];
