@@ -159,6 +159,98 @@ function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }
   );
 }
 
+// Formulario reutilizable para crear/editar bundle deals con búsqueda en tiempo real
+function BundleFormFields({ form, setForm, products, error, onSave, onCancel, saving, mode }) {
+  const [query, setQuery] = useState(form.match_name || "");
+
+  useEffect(() => { setQuery(form.match_name || ""); }, [form.match_name]);
+
+  const matches = useMemo(() => {
+    if (!query.trim()) return [];
+    const q = query.trim().toLowerCase();
+    return products.filter(p => p.available && p.name.toLowerCase().includes(q)).slice(0, 12);
+  }, [query, products]);
+
+  function handleQueryChange(val) {
+    setQuery(val);
+    setForm(f => ({ ...f, match_name: val }));
+  }
+
+  const inputCls = "w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-amber-400 outline-none transition text-sm";
+  const editCls  = "w-full px-3 py-2 rounded-lg border-2 border-amber-300 focus:border-amber-500 outline-none text-sm";
+  const cls = mode === "edit" ? editCls : inputCls;
+
+  return (
+    <div className="space-y-3">
+      {/* Campo de búsqueda por nombre */}
+      <div>
+        <label className="text-xs text-slate-500 mb-1 block">Nombre o término de búsqueda</label>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => handleQueryChange(e.target.value)}
+          placeholder='Ej: "RX 580", "RTX 3060 Ti", "NVME 256"...'
+          className={cls}
+        />
+        <p className="text-[10px] text-slate-400 mt-1">La oferta aplica a todos los productos disponibles cuyo nombre contenga este texto.</p>
+      </div>
+
+      {/* Preview de coincidencias en tiempo real */}
+      {query.trim() && (
+        <div className={`rounded-xl border px-3 py-2.5 ${matches.length > 0 ? "border-emerald-200 bg-emerald-50" : "border-slate-200 bg-slate-50"}`}>
+          {matches.length > 0 ? (
+            <>
+              <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wide mb-1.5">
+                {matches.length} producto{matches.length !== 1 ? "s" : ""} coincide{matches.length !== 1 ? "n" : ""}
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {matches.map(p => (
+                  <span key={p.id} className="text-[10px] bg-white border border-emerald-200 text-slate-700 px-2 py-0.5 rounded-full font-medium">
+                    {p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}
+                  </span>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p className="text-[11px] text-slate-500">Ningún producto disponible coincide con "{query}".</p>
+          )}
+        </div>
+      )}
+
+      {/* Cantidad y precio */}
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <label className="text-xs text-slate-500 mb-1 block">Cantidad mínima</label>
+          <input type="number" min="2" placeholder="Ej: 6" value={form.min_quantity}
+            onChange={(e) => setForm(f => ({ ...f, min_quantity: e.target.value }))}
+            className={cls} />
+        </div>
+        <div className="flex-1">
+          <label className="text-xs text-slate-500 mb-1 block">Precio por unidad</label>
+          <input type="number" min="1" placeholder="Ej: 400000" value={form.bundle_price}
+            onChange={(e) => setForm(f => ({ ...f, bundle_price: e.target.value }))}
+            className={cls} />
+        </div>
+      </div>
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+
+      <div className="flex gap-2">
+        <button onClick={onSave} disabled={saving}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 disabled:opacity-60 transition-colors text-sm">
+          <Save className="w-4 h-4" />
+          {mode === "edit" ? "Guardar" : "Crear oferta"}
+        </button>
+        {onCancel && (
+          <button onClick={onCancel} className="px-4 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-semibold hover:bg-slate-200 transition-colors text-sm">
+            Cancelar
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminCatalogo() {
   const token = getAdminToken();
   const headers = useMemo(
@@ -207,7 +299,7 @@ export default function AdminCatalogo() {
   // Bundle deals
   const [bundleDeals, setBundleDeals] = useState([]);
   const [bundleDealsOpen, setBundleDealsOpen] = useState(false);
-  const [bundleForm, setBundleForm] = useState({ product_id: "", min_quantity: "", bundle_price: "" });
+  const [bundleForm, setBundleForm] = useState({ match_name: "", min_quantity: "", bundle_price: "" });
   const [bundleEditId, setBundleEditId] = useState(null);
   const [savingBundle, setSavingBundle] = useState(false);
   const [bundleError, setBundleError] = useState("");
@@ -628,7 +720,7 @@ export default function AdminCatalogo() {
   function openBundleEdit(deal) {
     setBundleEditId(deal.id);
     setBundleForm({
-      product_id: String(deal.product_id),
+      match_name: deal.match_name || "",
       min_quantity: String(deal.min_quantity),
       bundle_price: String(deal.bundle_price),
     });
@@ -637,14 +729,14 @@ export default function AdminCatalogo() {
 
   function cancelBundleEdit() {
     setBundleEditId(null);
-    setBundleForm({ product_id: "", min_quantity: "", bundle_price: "" });
+    setBundleForm({ match_name: "", min_quantity: "", bundle_price: "" });
     setBundleError("");
   }
 
   async function saveBundle() {
     setBundleError("");
-    const { product_id, min_quantity, bundle_price } = bundleForm;
-    if (!product_id || !min_quantity || !bundle_price) return setBundleError("Completa todos los campos.");
+    const { match_name, min_quantity, bundle_price } = bundleForm;
+    if (!match_name.trim() || !min_quantity || !bundle_price) return setBundleError("Completa todos los campos.");
     if (isNaN(Number(min_quantity)) || Number(min_quantity) < 2) return setBundleError("La cantidad mínima debe ser al menos 2.");
     if (isNaN(Number(bundle_price)) || Number(bundle_price) <= 0) return setBundleError("Precio inválido.");
     setSavingBundle(true);
@@ -653,7 +745,7 @@ export default function AdminCatalogo() {
       const method = bundleEditId ? "PATCH" : "POST";
       const r = await fetch(url, {
         method, headers,
-        body: JSON.stringify({ product_id: Number(product_id), min_quantity: Number(min_quantity), bundle_price: Number(bundle_price) }),
+        body: JSON.stringify({ match_name: match_name.trim(), min_quantity: Number(min_quantity), bundle_price: Number(bundle_price) }),
       });
       const d = await r.json();
       if (!d.ok) throw new Error("Error al guardar.");
@@ -918,64 +1010,43 @@ export default function AdminCatalogo() {
             {/* Lista de deals existentes */}
             {bundleDeals.length > 0 && (
               <div className="space-y-2">
-                {bundleDeals.map((deal) => (
-                  <div key={deal.id} className={`rounded-xl border p-3 ${deal.active ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50 opacity-60"}`}>
-                    {bundleEditId === deal.id ? (
-                      <div className="space-y-2">
-                        <select
-                          value={bundleForm.product_id}
-                          onChange={(e) => setBundleForm((f) => ({ ...f, product_id: e.target.value }))}
-                          className="w-full px-3 py-2 rounded-lg border-2 border-amber-300 focus:border-amber-500 outline-none text-sm"
-                        >
-                          <option value="">— Selecciona producto —</option>
-                          {products.filter(p => p.available).map((p) => (
-                            <option key={p.id} value={p.id}>{p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}</option>
-                          ))}
-                        </select>
-                        <div className="flex gap-2">
-                          <input type="number" min="2" placeholder="Cant. mín." value={bundleForm.min_quantity}
-                            onChange={(e) => setBundleForm((f) => ({ ...f, min_quantity: e.target.value }))}
-                            className="w-28 px-3 py-2 rounded-lg border-2 border-amber-300 focus:border-amber-500 outline-none text-sm" />
-                          <input type="number" min="1" placeholder="Precio bundle" value={bundleForm.bundle_price}
-                            onChange={(e) => setBundleForm((f) => ({ ...f, bundle_price: e.target.value }))}
-                            className="flex-1 px-3 py-2 rounded-lg border-2 border-amber-300 focus:border-amber-500 outline-none text-sm" />
+                {bundleDeals.map((deal) => {
+                  const matchCount = Number(deal.matching_count ?? 0);
+                  return (
+                    <div key={deal.id} className={`rounded-xl border p-3 ${deal.active ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50 opacity-60"}`}>
+                      {bundleEditId === deal.id ? (
+                        <BundleFormFields form={bundleForm} setForm={setBundleForm} products={products} error={bundleError}
+                          onSave={saveBundle} onCancel={cancelBundleEdit} saving={savingBundle} mode="edit" />
+                      ) : (
+                        <div className="flex items-center gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-bold text-slate-800">"{deal.match_name}"</p>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${matchCount > 0 ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                                {matchCount} producto{matchCount !== 1 ? "s" : ""} coincide{matchCount !== 1 ? "n" : ""}
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 mt-0.5">
+                              Lleva <span className="font-bold text-amber-600">{deal.min_quantity}+</span> unidades → <span className="font-bold text-amber-600">{formatPrice(deal.bundle_price)}</span> c/u
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button onClick={() => toggleBundleActive(deal)}
+                              className={`text-xs px-2 py-1 rounded-lg font-semibold transition-colors ${deal.active ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>
+                              {deal.active ? "Activa" : "Inactiva"}
+                            </button>
+                            <button onClick={() => openBundleEdit(deal)} className="p-1.5 rounded-lg hover:bg-amber-100 text-amber-600 transition-colors">
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => deleteBundle(deal.id)} className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </div>
-                        {bundleError && <p className="text-xs text-red-500">{bundleError}</p>}
-                        <div className="flex gap-2">
-                          <button onClick={saveBundle} disabled={savingBundle}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500 text-white text-xs font-semibold hover:bg-amber-600 disabled:opacity-60 transition-colors">
-                            <Save className="w-3.5 h-3.5" /> Guardar
-                          </button>
-                          <button onClick={cancelBundleEdit} className="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition-colors">
-                            Cancelar
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-3">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-slate-800 truncate">{deal.product_name}{deal.memory_capacity ? ` ${deal.memory_capacity}` : ""}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">
-                            Lleva <span className="font-bold text-amber-600">{deal.min_quantity}+</span> unidades → <span className="font-bold text-amber-600">{formatPrice(deal.bundle_price)}</span> c/u
-                            <span className="ml-2 text-slate-400">(precio normal: {formatPrice(deal.product_price)})</span>
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
-                          <button onClick={() => toggleBundleActive(deal)}
-                            className={`text-xs px-2 py-1 rounded-lg font-semibold transition-colors ${deal.active ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>
-                            {deal.active ? "Activa" : "Inactiva"}
-                          </button>
-                          <button onClick={() => openBundleEdit(deal)} className="p-1.5 rounded-lg hover:bg-amber-100 text-amber-600 transition-colors">
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => deleteBundle(deal.id)} className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
 
@@ -983,40 +1054,8 @@ export default function AdminCatalogo() {
             {bundleEditId === null && (
               <div className="border-2 border-dashed border-amber-200 rounded-xl p-4 space-y-3">
                 <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Nueva oferta por cantidad</p>
-                <select
-                  value={bundleForm.product_id}
-                  onChange={(e) => setBundleForm((f) => ({ ...f, product_id: e.target.value }))}
-                  className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-amber-400 outline-none transition text-sm"
-                >
-                  <option value="">— Selecciona producto —</option>
-                  {products.filter(p => p.available).map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}</option>
-                  ))}
-                </select>
-                <div className="flex gap-2">
-                  <div className="flex-1">
-                    <label className="text-xs text-slate-500 mb-1 block">Cantidad mínima</label>
-                    <input type="number" min="2" placeholder="Ej: 6" value={bundleForm.min_quantity}
-                      onChange={(e) => setBundleForm((f) => ({ ...f, min_quantity: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-amber-400 outline-none transition text-sm" />
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-xs text-slate-500 mb-1 block">Precio por unidad (bundle)</label>
-                    <input type="number" min="1" placeholder="Ej: 400000" value={bundleForm.bundle_price}
-                      onChange={(e) => setBundleForm((f) => ({ ...f, bundle_price: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-amber-400 outline-none transition text-sm" />
-                  </div>
-                </div>
-                {bundleForm.product_id && bundleForm.min_quantity && bundleForm.bundle_price && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800">
-                    Preview: "Lleva <strong>{bundleForm.min_quantity}+</strong> unidades de <strong>{products.find(p => p.id === Number(bundleForm.product_id))?.name}</strong> a <strong>{formatPrice(Number(bundleForm.bundle_price))}</strong> c/u"
-                  </div>
-                )}
-                {bundleError && <p className="text-xs text-red-500">{bundleError}</p>}
-                <button onClick={saveBundle} disabled={savingBundle}
-                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 disabled:opacity-60 transition-colors text-sm">
-                  <Plus className="w-4 h-4" /> Crear oferta
-                </button>
+                <BundleFormFields form={bundleForm} setForm={setBundleForm} products={products} error={bundleError}
+                  onSave={saveBundle} onCancel={null} saving={savingBundle} mode="create" />
               </div>
             )}
           </div>

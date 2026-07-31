@@ -728,8 +728,13 @@ export default function CatalogoV2() {
 
               {/* ── Bundle deals ── */}
               {bundleDeals.map((deal) => {
-                const b = brandMap[deal.category] ?? DEFAULT_BRAND;
-                const savingUnit = Number(deal.price) - Number(deal.bundle_price);
+                const dealProducts = deal.products ?? [];
+                const firstCat = dealProducts[0]?.category;
+                const b = brandMap[firstCat] ?? DEFAULT_BRAND;
+                const prices = dealProducts.map(p => Number(p.price));
+                const minPrice = prices.length ? Math.min(...prices) : 0;
+                const maxPrice = prices.length ? Math.max(...prices) : 0;
+                const savingUnit = minPrice > 0 ? minPrice - Number(deal.bundle_price) : 0;
                 const savingTotal = savingUnit * Number(deal.min_quantity);
                 return (
                   <div key={deal.id} className="relative overflow-hidden rounded-2xl bg-white shadow-sm" style={{ border: `2px solid ${b.dot}` }}>
@@ -746,25 +751,46 @@ export default function CatalogoV2() {
                     </div>
 
                     <div className="px-4 py-4 flex items-start gap-4">
-                      {/* Imagen del producto */}
-                      <div className="w-16 h-16 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
-                        {deal.image_url
-                          ? <img src={deal.image_url} alt={deal.name} className="w-full h-full object-contain" />
-                          : <Package className="w-6 h-6 text-slate-300" />}
-                      </div>
+                      {/* Miniaturas de productos coincidentes */}
+                      {dealProducts.length > 0 && (
+                        <div className="shrink-0 flex flex-col items-center gap-1">
+                          <div className="flex -space-x-2">
+                            {dealProducts.slice(0, 4).map((p, i) => (
+                              <div key={p.id} className="w-10 h-10 rounded-xl overflow-hidden bg-slate-50 border-2 border-white flex items-center justify-center shadow-sm"
+                                style={{ zIndex: 4 - i }}>
+                                {p.image_url
+                                  ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-0.5" />
+                                  : <Package className="w-4 h-4 text-slate-200" />}
+                              </div>
+                            ))}
+                          </div>
+                          {dealProducts.length > 1 && (
+                            <p className="text-[9px] text-slate-400 font-mono">{dealProducts.length} variantes</p>
+                          )}
+                        </div>
+                      )}
 
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-slate-800 text-base leading-tight">
-                          {deal.name}{deal.memory_capacity ? ` ${deal.memory_capacity}` : ""}
-                        </p>
+                        <p className="font-bold text-slate-800 text-base leading-tight">{deal.match_name}</p>
+                        {dealProducts.length > 0 && (
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            Aplica a: {dealProducts.map(p => p.name + (p.memory_capacity ? ` ${p.memory_capacity}` : "")).join(" · ")}
+                          </p>
+                        )}
 
                         {/* Bloque de precios */}
                         <div className="flex items-center gap-2 mt-2 flex-wrap">
-                          <div className="text-center">
-                            <p className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Precio normal</p>
-                            <p className="text-sm text-slate-400 line-through font-mono">{formatCop(deal.price)}</p>
-                          </div>
-                          <ArrowRight className="w-4 h-4 text-slate-300 shrink-0" />
+                          {minPrice > 0 && (
+                            <>
+                              <div className="text-center">
+                                <p className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Precio normal</p>
+                                <p className="text-sm text-slate-400 line-through font-mono">
+                                  {minPrice === maxPrice ? formatCop(minPrice) : `${formatCop(minPrice)} – ${formatCop(maxPrice)}`}
+                                </p>
+                              </div>
+                              <ArrowRight className="w-4 h-4 text-slate-300 shrink-0" />
+                            </>
+                          )}
                           <div className="text-center">
                             <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: b.dot }}>
                               Llevando {deal.min_quantity}+ unidades
