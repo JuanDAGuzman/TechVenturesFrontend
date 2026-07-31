@@ -432,6 +432,7 @@ export default function CatalogoV2() {
   const [maxPrice, setMaxPrice] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [detailProduct, setDetailProduct] = useState(null);
+  const [bundleDeals, setBundleDeals] = useState([]);
   const catScrollRef = useRef(null);
   const [showCatHint, setShowCatHint] = useState(false);
 
@@ -440,11 +441,13 @@ export default function CatalogoV2() {
       fetch(`${API}/catalog/products`).then((r) => r.json()),
       fetch(`${API}/catalog/settings`).then((r) => r.json()),
       fetch(`${API}/catalog/categories`).then((r) => r.json()),
+      fetch(`${API}/catalog/bundle-deals`).then((r) => r.json()),
     ])
-      .then(([pData, sData, cData]) => {
+      .then(([pData, sData, cData, bdData]) => {
         if (pData.ok) setProducts(pData.products);
         if (sData.ok) setSettings(sData.settings);
         if (cData.ok) setCategories(cData.categories);
+        if (bdData.ok) setBundleDeals(bdData.deals);
       })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -701,6 +704,125 @@ export default function CatalogoV2() {
           </div>
         </div>
       )}
+
+      {/* ── Sección OFERTAS ── */}
+      {(() => {
+        const discounted = products.filter((p) => p.available && p.original_price && Number(p.original_price) > Number(p.price));
+        const hasOffers = discounted.length > 0 || bundleDeals.length > 0;
+        if (!hasOffers) return null;
+        return (
+          <div className="mb-6">
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">🏷️</span>
+              <h2 className="font-display text-xl font-bold brand-text tracking-tight">Ofertas</h2>
+              <span className="text-xs font-mono text-slate-400 border border-slate-200 rounded-full px-2 py-0.5 bg-white">
+                {discounted.length + bundleDeals.length} activa{(discounted.length + bundleDeals.length) !== 1 ? "s" : ""}
+              </span>
+            </div>
+
+            <div className="space-y-2">
+
+              {/* Bundle deals — precio por cantidad */}
+              {bundleDeals.map((deal) => {
+                const b = brandMap[deal.category] ?? DEFAULT_BRAND;
+                const saving = (Number(deal.price) - Number(deal.bundle_price)) * Number(deal.min_quantity);
+                return (
+                  <div key={deal.id}
+                    className="relative overflow-hidden rounded-2xl border-2 bg-white"
+                    style={{ borderColor: b.dot }}>
+                    {/* Franja de color a la izquierda */}
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 rounded-l-2xl" style={{ background: b.dot }} />
+
+                    <div className="pl-5 pr-4 py-4 flex items-center gap-4">
+                      {/* Info principal */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-widest px-2 py-0.5 rounded-full text-white" style={{ background: b.dot }}>
+                            Oferta por cantidad
+                          </span>
+                        </div>
+                        <p className="font-bold text-slate-800 text-sm leading-tight">
+                          {deal.name}{deal.memory_capacity ? ` ${deal.memory_capacity}` : ""}
+                        </p>
+
+                        {/* Precios */}
+                        <div className="flex items-baseline gap-3 mt-2 flex-wrap">
+                          <div>
+                            <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wide">Precio normal</p>
+                            <p className="text-sm text-slate-400 line-through font-mono">{formatCop(deal.price)}</p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-slate-300 text-lg">→</span>
+                          </div>
+                          <div>
+                            <p className="text-[10px] uppercase font-semibold tracking-wide" style={{ color: b.dot }}>Llevando {deal.min_quantity}+ unidades</p>
+                            <p className="text-xl font-black font-mono" style={{ color: b.dot }}>{formatCop(deal.bundle_price)}<span className="text-xs font-semibold ml-1 text-slate-500">c/u</span></p>
+                          </div>
+                        </div>
+
+                        {/* Aviso */}
+                        <div className="mt-2 flex items-start gap-1.5">
+                          <span className="text-amber-500 text-xs mt-px shrink-0">⚠️</span>
+                          <p className="text-[11px] text-slate-500 leading-tight">
+                            Precio exclusivo al comprar <strong>mínimo {deal.min_quantity} unidades</strong>.
+                            {saving > 0 && <span className="text-emerald-600 font-semibold"> Ahorras hasta {formatCop(saving)} en total.</span>}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Ahorro badge */}
+                      {saving > 0 && (
+                        <div className="shrink-0 flex flex-col items-center justify-center w-16 h-16 rounded-2xl text-white text-center" style={{ background: b.dot }}>
+                          <p className="text-[10px] font-semibold leading-tight">Ahorras</p>
+                          <p className="text-xs font-black leading-tight">{formatCop(Number(deal.price) - Number(deal.bundle_price))}</p>
+                          <p className="text-[9px] leading-tight opacity-80">por unidad</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Descuentos simples (original_price > price) */}
+              {discounted.length > 0 && (
+                <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+                  <div className="px-4 py-2.5 border-b border-slate-100 flex items-center gap-2">
+                    <Tag className="w-3.5 h-3.5 text-slate-500" />
+                    <p className="text-xs font-bold text-slate-600 uppercase tracking-wide">Artículos en descuento</p>
+                  </div>
+                  <div className="divide-y divide-slate-100">
+                    {discounted.map((p) => {
+                      const b = brandMap[p.category] ?? DEFAULT_BRAND;
+                      const pct = Math.round((1 - Number(p.price) / Number(p.original_price)) * 100);
+                      return (
+                        <div key={p.id} className="flex items-center gap-3 px-4 py-3">
+                          <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-50 shrink-0 border border-slate-100 flex items-center justify-center">
+                            {p.image_url
+                              ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain" />
+                              : <span className="text-slate-300 text-xl">📦</span>}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-slate-800 truncate">{p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <span className="text-xs text-slate-400 line-through font-mono">{formatCop(p.original_price)}</span>
+                              <span className="text-xs font-black font-mono" style={{ color: b.dot }}>{formatCop(p.price)}</span>
+                            </div>
+                          </div>
+                          <span className="shrink-0 text-[11px] font-black px-2 py-1 rounded-full border-2 bg-white" style={{ color: b.dot, borderColor: b.dot }}>
+                            -{pct}%
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Filtros ── */}
       <div className="mb-4 space-y-2.5">
