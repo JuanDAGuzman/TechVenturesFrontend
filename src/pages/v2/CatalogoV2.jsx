@@ -713,9 +713,9 @@ export default function CatalogoV2() {
         const totalOffers = discounted.length + bundleDeals.length;
         return (
           <div className="mb-8">
-            {/* Header — neutro, sin color de marca */}
+            {/* Header — icono usa color activo */}
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-700 shrink-0">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: activeBrand.dot }}>
                 <Tag className="w-4 h-4 text-white" />
               </div>
               <div>
@@ -737,7 +737,8 @@ export default function CatalogoV2() {
                 const savingTotal = savingUnit * Number(deal.min_quantity);
                 return (
                   <div key={deal.id}
-                    className="rounded-2xl bg-white shadow-sm border border-slate-200 border-l-4 border-l-slate-400">
+                    className="rounded-2xl bg-white shadow-sm border border-slate-200"
+                    style={{ borderLeftWidth: 4, borderLeftColor: activeBrand.dot }}>
 
                     <div className="px-4 pt-4 pb-3 flex items-start gap-4">
                       {/* Miniaturas apiladas */}
@@ -761,14 +762,16 @@ export default function CatalogoV2() {
                       )}
 
                       <div className="flex-1 min-w-0">
-                        {/* Badges neutros */}
+                        {/* Badges con color activo */}
                         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                          <span className="flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full border border-slate-300 bg-white text-slate-600">
+                          <span className="flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full border-2 bg-white"
+                            style={{ color: activeBrand.dot, borderColor: activeBrand.dot }}>
                             <Layers className="w-2.5 h-2.5 shrink-0" />
                             Oferta por cantidad
                           </span>
                           {savingPct > 0 && (
-                            <span className="flex items-center gap-0.5 text-[10px] font-black px-2 py-0.5 rounded-full border border-slate-300 bg-white text-slate-600">
+                            <span className="flex items-center gap-0.5 text-[10px] font-black px-2 py-0.5 rounded-full border-2 bg-white"
+                              style={{ color: activeBrand.dot, borderColor: activeBrand.dot }}>
                               <Tag className="w-2.5 h-2.5 shrink-0" />
                               -{savingPct}% descuento
                             </span>
@@ -808,13 +811,14 @@ export default function CatalogoV2() {
                       </div>
                     </div>
 
-                    {/* Aviso mínimo — neutro */}
-                    <div className="mx-4 mb-3 flex items-start gap-1.5 rounded-xl px-3 py-2 bg-slate-50 border border-slate-200">
-                      <AlertTriangle className="w-3 h-3 text-slate-500 shrink-0 mt-px" />
-                      <p className="text-[11px] text-slate-600 leading-tight">
+                    {/* Aviso mínimo — fondo y texto con color activo */}
+                    <div className="mx-4 mb-3 flex items-start gap-1.5 rounded-xl px-3 py-2 border"
+                      style={{ background: activeBrand.ring, borderColor: activeBrand.dot + "40" }}>
+                      <AlertTriangle className="w-3 h-3 shrink-0 mt-px" style={{ color: activeBrand.dot }} />
+                      <p className="text-[11px] leading-tight" style={{ color: activeBrand.dot }}>
                         Precio válido <strong>únicamente al comprar mínimo {deal.min_quantity} unidades</strong>.
                         {savingTotal > 0 && (
-                          <span className="font-semibold text-slate-700"> Ahorro total: {formatCop(savingTotal)}.</span>
+                          <span className="font-semibold"> Ahorro total: {formatCop(savingTotal)}.</span>
                         )}
                       </p>
                     </div>
@@ -840,7 +844,8 @@ export default function CatalogoV2() {
                               ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-1" />
                               : <Package className="w-8 h-8 text-slate-200" />}
                             <div className="absolute top-1.5 right-1.5">
-                              <span className="flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full border border-slate-300 bg-white text-slate-600 leading-none">
+                              <span className="flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full border-2 bg-white leading-none"
+                                style={{ color: activeBrand.dot, borderColor: activeBrand.dot }}>
                                 <Tag className="w-2 h-2 shrink-0" />
                                 -{pct}%
                               </span>
