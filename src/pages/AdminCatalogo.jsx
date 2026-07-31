@@ -624,6 +624,19 @@ export default function AdminCatalogo() {
       });
     });
 
+    // Ofertas por cantidad (bundle deals)
+    const activeDeals = bundleDeals.filter((d) => d.active !== false);
+    if (activeDeals.length > 0) {
+      lines.push("🏷️ OFERTAS POR CANTIDAD:");
+      lines.push("");
+      activeDeals.forEach((deal) => {
+        const bundlePrice = new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 }).format(Number(deal.bundle_price));
+        lines.push(`🔖 ${deal.match_name} — llevando ${deal.min_quantity}+ unidades: $${bundlePrice} c/u`);
+        lines.push(`   ⚠️ Precio válido ÚNICAMENTE al comprar mínimo ${deal.min_quantity} unidades.`);
+        lines.push("");
+      });
+    }
+
     lines.push(
       "💡 ¿TIENES UNA GRÁFICA USADA?",
       "¡Aceptamos gráficas como parte de pago! 🤑",
