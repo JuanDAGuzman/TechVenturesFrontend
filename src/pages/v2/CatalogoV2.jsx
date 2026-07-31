@@ -713,24 +713,22 @@ export default function CatalogoV2() {
         const totalOffers = discounted.length + bundleDeals.length;
         return (
           <div className="mb-8">
-            {/* Header */}
+            {/* Header — neutro, sin color de marca */}
             <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center brand-bg shrink-0">
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-slate-700 shrink-0">
                 <Tag className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h2 className="font-display text-xl font-bold brand-text tracking-tight leading-none">Ofertas</h2>
+                <h2 className="font-display text-xl font-bold text-slate-800 tracking-tight leading-none">Ofertas</h2>
                 <p className="text-[11px] text-slate-400 font-mono mt-0.5">{totalOffers} oferta{totalOffers !== 1 ? "s" : ""} activa{totalOffers !== 1 ? "s" : ""}</p>
               </div>
             </div>
 
             <div className="space-y-3">
 
-              {/* ── Bundle deals ── */}
+              {/* ── Bundle deals — todo neutro ── */}
               {bundleDeals.map((deal) => {
                 const dealProducts = deal.products ?? [];
-                const firstCat = dealProducts[0]?.category;
-                const b = brandMap[firstCat] ?? DEFAULT_BRAND;
                 const prices = dealProducts.map(p => Number(p.price));
                 const minPrice = prices.length ? Math.min(...prices) : 0;
                 const maxPrice = prices.length ? Math.max(...prices) : 0;
@@ -739,8 +737,7 @@ export default function CatalogoV2() {
                 const savingTotal = savingUnit * Number(deal.min_quantity);
                 return (
                   <div key={deal.id}
-                    className="relative overflow-hidden rounded-2xl bg-white shadow-sm border border-slate-200"
-                    style={{ borderLeftWidth: 4, borderLeftColor: b.dot }}>
+                    className="rounded-2xl bg-white shadow-sm border border-slate-200 border-l-4 border-l-slate-400">
 
                     <div className="px-4 pt-4 pb-3 flex items-start gap-4">
                       {/* Miniaturas apiladas */}
@@ -764,16 +761,14 @@ export default function CatalogoV2() {
                       )}
 
                       <div className="flex-1 min-w-0">
-                        {/* Badge tipo pill — igual que los badges del catálogo */}
+                        {/* Badges neutros */}
                         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                          <span className="flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full border-2 bg-white"
-                            style={{ color: b.dot, borderColor: b.dot }}>
+                          <span className="flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full border border-slate-300 bg-white text-slate-600">
                             <Layers className="w-2.5 h-2.5 shrink-0" />
                             Oferta por cantidad
                           </span>
                           {savingPct > 0 && (
-                            <span className="flex items-center gap-0.5 text-[10px] font-black px-2 py-0.5 rounded-full border-2 bg-white"
-                              style={{ color: b.dot, borderColor: b.dot }}>
+                            <span className="flex items-center gap-0.5 text-[10px] font-black px-2 py-0.5 rounded-full border border-slate-300 bg-white text-slate-600">
                               <Tag className="w-2.5 h-2.5 shrink-0" />
                               -{savingPct}% descuento
                             </span>
@@ -787,7 +782,7 @@ export default function CatalogoV2() {
                           </p>
                         )}
 
-                        {/* Precios */}
+                        {/* Precios — precio bundle en slate-800, sin color de categoría */}
                         <div className="flex items-center gap-2 mt-2.5 flex-wrap">
                           {minPrice > 0 && (
                             <>
@@ -801,10 +796,10 @@ export default function CatalogoV2() {
                             </>
                           )}
                           <div>
-                            <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: b.dot }}>
+                            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">
                               Llevando {deal.min_quantity}+ unidades
                             </p>
-                            <p className="text-xl font-black font-mono leading-none" style={{ color: b.dot }}>
+                            <p className="text-xl font-black font-mono leading-none text-slate-800">
                               {formatCop(deal.bundle_price)}
                               <span className="text-xs font-semibold text-slate-400 ml-1">c/u</span>
                             </p>
@@ -813,14 +808,13 @@ export default function CatalogoV2() {
                       </div>
                     </div>
 
-                    {/* Aviso mínimo — franja inferior */}
-                    <div className="mx-4 mb-3 flex items-start gap-1.5 rounded-xl px-3 py-2 border"
-                      style={{ background: b.ring, borderColor: b.dot + "30" }}>
-                      <AlertTriangle className="w-3 h-3 shrink-0 mt-px" style={{ color: b.dot }} />
-                      <p className="text-[11px] leading-tight" style={{ color: b.dot }}>
+                    {/* Aviso mínimo — neutro */}
+                    <div className="mx-4 mb-3 flex items-start gap-1.5 rounded-xl px-3 py-2 bg-slate-50 border border-slate-200">
+                      <AlertTriangle className="w-3 h-3 text-slate-500 shrink-0 mt-px" />
+                      <p className="text-[11px] text-slate-600 leading-tight">
                         Precio válido <strong>únicamente al comprar mínimo {deal.min_quantity} unidades</strong>.
                         {savingTotal > 0 && (
-                          <span className="font-semibold"> Ahorro total: {formatCop(savingTotal)}.</span>
+                          <span className="font-semibold text-slate-700"> Ahorro total: {formatCop(savingTotal)}.</span>
                         )}
                       </p>
                     </div>
@@ -828,46 +822,37 @@ export default function CatalogoV2() {
                 );
               })}
 
-              {/* ── Artículos en descuento — scroll horizontal ── */}
+              {/* ── Artículos en descuento — scroll horizontal, todo neutro ── */}
               {discounted.length > 0 && (
                 <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
-                  {/* Cabecera */}
                   <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50">
                     <Percent className="w-3.5 h-3.5 text-slate-500" />
                     <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Artículos con descuento</p>
                     <span className="ml-auto text-[10px] text-slate-400 font-mono">{discounted.length} artículo{discounted.length !== 1 ? "s" : ""}</span>
                   </div>
-
-                  {/* Scroll horizontal */}
                   <div className="flex gap-3 overflow-x-auto px-4 py-4 scrollbar-hide">
                     {discounted.map((p) => {
-                      const b = brandMap[p.category] ?? DEFAULT_BRAND;
                       const pct = Math.round((1 - Number(p.price) / Number(p.original_price)) * 100);
                       return (
-                        <div key={p.id} className="shrink-0 w-40 flex flex-col rounded-xl border-2 overflow-hidden bg-white"
-                          style={{ borderColor: b.ring }}>
-                          {/* Imagen */}
+                        <div key={p.id} className="shrink-0 w-40 flex flex-col rounded-xl border border-slate-200 overflow-hidden bg-white">
                           <div className="relative h-24 bg-slate-50 flex items-center justify-center">
                             {p.image_url
                               ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-1" />
                               : <Package className="w-8 h-8 text-slate-200" />}
-                            {/* Badge descuento */}
                             <div className="absolute top-1.5 right-1.5">
-                              <span className="flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full border-2 bg-white leading-none"
-                                style={{ color: b.dot, borderColor: b.dot }}>
+                              <span className="flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full border border-slate-300 bg-white text-slate-600 leading-none">
                                 <Tag className="w-2 h-2 shrink-0" />
                                 -{pct}%
                               </span>
                             </div>
                           </div>
-                          {/* Info */}
                           <div className="p-2 flex flex-col flex-1">
                             <p className="text-[11px] font-bold text-slate-800 leading-tight line-clamp-2">
                               {p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}
                             </p>
                             <div className="mt-auto pt-2">
                               <p className="text-[10px] text-slate-400 line-through font-mono leading-none">{formatCop(p.original_price)}</p>
-                              <p className="text-sm font-black font-mono leading-tight" style={{ color: b.dot }}>{formatCop(p.price)}</p>
+                              <p className="text-sm font-black font-mono leading-tight text-slate-800">{formatCop(p.price)}</p>
                             </div>
                           </div>
                         </div>
