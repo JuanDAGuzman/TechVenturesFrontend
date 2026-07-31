@@ -436,6 +436,8 @@ export default function CatalogoV2() {
   const [bundleDeals, setBundleDeals] = useState([]);
   const catScrollRef = useRef(null);
   const [showCatHint, setShowCatHint] = useState(false);
+  const discountScrollRef = useRef(null);
+  const [showDiscountHint, setShowDiscountHint] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -528,6 +530,17 @@ export default function CatalogoV2() {
     window.addEventListener("resize", check);
     return () => { el.removeEventListener("scroll", check); window.removeEventListener("resize", check); };
   }, [categories]);
+
+  // Detecta overflow en el shelf de artículos con descuento
+  useEffect(() => {
+    const el = discountScrollRef.current;
+    if (!el) return;
+    const check = () => setShowDiscountHint(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    return () => { el.removeEventListener("scroll", check); window.removeEventListener("resize", check); };
+  }, [products]);
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -837,7 +850,8 @@ export default function CatalogoV2() {
                     <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Artículos con descuento</p>
                     <span className="ml-auto text-[10px] text-slate-400 font-mono">{discounted.length} artículo{discounted.length !== 1 ? "s" : ""}</span>
                   </div>
-                  <div className="flex gap-3 overflow-x-auto px-4 py-4 scrollbar-hide">
+                  <div className="relative">
+                  <div ref={discountScrollRef} className="flex gap-3 overflow-x-auto px-4 py-4 scrollbar-hide">
                     {discounted.map((p) => {
                       const pct = Math.round((1 - Number(p.price) / Number(p.original_price)) * 100);
                       return (
@@ -866,6 +880,13 @@ export default function CatalogoV2() {
                         </div>
                       );
                     })}
+                  </div>
+                  {showDiscountHint && (
+                    <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 flex items-center justify-end pr-2 rounded-r-xl"
+                      style={{ background: "linear-gradient(to left, white 40%, transparent)" }}>
+                      <ChevronRight className="w-4 h-4 text-slate-400 opacity-70" />
+                    </div>
+                  )}
                   </div>
                 </div>
               )}

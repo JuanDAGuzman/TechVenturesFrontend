@@ -37,12 +37,12 @@ export default function NavbarV2() {
                             />
                         </motion.div>
 
-                        <div className="hidden sm:flex flex-col">
-                            <span className="font-extrabold text-xl tracking-tight leading-tight drop-shadow-sm"
+                        <div className="flex flex-col">
+                            <span className="font-extrabold text-base sm:text-xl tracking-tight leading-tight drop-shadow-sm"
                                 style={{ color: brand.dot }}>
                                 TechVenturesCO
                             </span>
-                            <span className="text-xs text-slate-500 font-bold tracking-wide uppercase">
+                            <span className="text-[9px] sm:text-xs text-slate-500 font-bold tracking-wide uppercase leading-tight">
                                 {isCatalogo ? "Tu tienda de tech · GPUs, componentes y más" : "Agenda tu cita"}
                             </span>
                         </div>
