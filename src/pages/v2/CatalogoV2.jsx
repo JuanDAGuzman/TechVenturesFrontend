@@ -814,12 +814,13 @@ export default function CatalogoV2() {
                     </div>
 
                     {/* Aviso mínimo — franja inferior */}
-                    <div className="mx-4 mb-3 flex items-start gap-1.5 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-                      <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0 mt-px" />
-                      <p className="text-[11px] text-amber-800 leading-tight">
+                    <div className="mx-4 mb-3 flex items-start gap-1.5 rounded-xl px-3 py-2 border"
+                      style={{ background: b.ring, borderColor: b.dot + "30" }}>
+                      <AlertTriangle className="w-3 h-3 shrink-0 mt-px" style={{ color: b.dot }} />
+                      <p className="text-[11px] leading-tight" style={{ color: b.dot }}>
                         Precio válido <strong>únicamente al comprar mínimo {deal.min_quantity} unidades</strong>.
                         {savingTotal > 0 && (
-                          <span className="text-emerald-700 font-semibold"> Ahorro total: {formatCop(savingTotal)}.</span>
+                          <span className="font-semibold"> Ahorro total: {formatCop(savingTotal)}.</span>
                         )}
                       </p>
                     </div>
