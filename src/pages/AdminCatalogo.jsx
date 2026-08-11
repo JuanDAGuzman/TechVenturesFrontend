@@ -63,7 +63,7 @@ function contactFooterLines(settings) {
   const wa = formatWhatsappDisplay(settings.whatsapp_number);
   const ig = settings.instagram_handle?.trim();
   const lines = [];
-  if (wa) lines.push(`📲 WhatsApp: ${wa}`);
+  if (wa) lines.push(`📲 WhatsApp: ${wa} (@JArevaloG)`);
   if (ig) lines.push(`📸 IG: ${ig.startsWith("@") ? ig : `@${ig}`}`);
   return lines;
 }
