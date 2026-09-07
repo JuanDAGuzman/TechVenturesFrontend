@@ -263,6 +263,7 @@ export default function AdminCatalogo() {
   const [loading, setLoading]       = useState(true);
   const [categoryFilter, setCategoryFilter]       = useState("Todos");
   const [availabilityFilter, setAvailabilityFilter] = useState("Todos");
+  const [nameFilter, setNameFilter] = useState("");
 
   // Categorías/secciones del catálogo
   const [categoriesOpen, setCategoriesOpen] = useState(false);
@@ -316,8 +317,12 @@ export default function AdminCatalogo() {
       : products.filter((p) => p.category === categoryFilter);
     if (availabilityFilter === "Disponible")    list = list.filter((p) => p.available);
     if (availabilityFilter === "No disponible") list = list.filter((p) => !p.available);
+    if (nameFilter.trim()) {
+      const q = nameFilter.trim().toLowerCase();
+      list = list.filter((p) => p.name.toLowerCase().includes(q));
+    }
     return list;
-  }, [products, categoryFilter, availabilityFilter]);
+  }, [products, categoryFilter, availabilityFilter, nameFilter]);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -595,8 +600,9 @@ export default function AdminCatalogo() {
   // ── Copiar inventario ─────────────────────────────────────────────────────
 
   const [copied, setCopied] = useState(false);
+  const [copyMenuOpen, setCopyMenuOpen] = useState(false);
 
-  function copyInventory() {
+  function copyInventory(spaced = true) {
     const available = products.filter((p) => p.available);
     if (!available.length) return;
 
@@ -620,7 +626,7 @@ export default function AdminCatalogo() {
       const emoji = CATEGORY_EMOJI[cat] ?? "▪️";
       items.forEach((p) => {
         lines.push(`${emoji} ${productDisplayName(p)}: ${fmt(Number(p.price))}`);
-        lines.push("");
+        if (spaced) lines.push("");
       });
     });
 
@@ -812,15 +818,39 @@ export default function AdminCatalogo() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={copyInventory}
-            disabled={!products.filter(p => p.available).length}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 transition-colors disabled:opacity-40"
-            title="Copiar listado de inventario disponible"
-          >
-            {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-            <span className="hidden sm:inline">{copied ? "¡Copiado!" : "Copiar lista"}</span>
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setCopyMenuOpen((v) => !v)}
+              disabled={!products.filter(p => p.available).length}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 transition-colors disabled:opacity-40"
+              title="Copiar listado de inventario disponible"
+            >
+              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+              <span className="hidden sm:inline">{copied ? "¡Copiado!" : "Copiar lista"}</span>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+            {copyMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setCopyMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-1.5 w-56 rounded-xl border border-slate-200 bg-white shadow-lg z-20 overflow-hidden">
+                  <button
+                    onClick={() => { copyInventory(true); setCopyMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    Con espaciado
+                    <span className="block text-xs text-slate-400 font-normal">Artículos separados por línea en blanco</span>
+                  </button>
+                  <button
+                    onClick={() => { copyInventory(false); setCopyMenuOpen(false); }}
+                    className="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors border-t border-slate-100"
+                  >
+                    Sin espaciado
+                    <span className="block text-xs text-slate-400 font-normal">Artículos juntos, sin líneas en blanco</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={downloadCatalogPdf}
             disabled={generatingPdf || !products.filter((p) => p.available).length}
@@ -838,6 +868,26 @@ export default function AdminCatalogo() {
             <span>Agregar</span>
           </button>
         </div>
+      </div>
+
+      {/* Búsqueda por nombre */}
+      <div className="relative mb-3">
+        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <input
+          type="text"
+          value={nameFilter}
+          onChange={(e) => setNameFilter(e.target.value)}
+          placeholder="Buscar artículo por nombre..."
+          className="w-full pl-9 pr-9 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none bg-white transition text-sm"
+        />
+        {nameFilter && (
+          <button
+            onClick={() => setNameFilter("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Filtro por categoría */}

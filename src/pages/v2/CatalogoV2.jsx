@@ -199,7 +199,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
         </div>
 
         {/* Descripción (si existe) — se expande por completo al hacer hover */}
-        {product.description && (
+        {product.description?.trim() && (
           <p className="text-xs sm:text-sm text-slate-400 mt-1.5 leading-relaxed uppercase line-clamp-2 sm:group-hover:line-clamp-none transition-all">
             {product.description}
           </p>
@@ -358,7 +358,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
           <h2 className="font-display font-bold text-2xl sm:text-3xl uppercase tracking-tight text-slate-900 leading-tight">
             {product.name}
           </h2>
-          {product.description && (
+          {product.description?.trim() && (
             <p className="text-sm text-slate-500 mt-3 leading-relaxed uppercase">{product.description}</p>
           )}
           {product.original_price && Number(product.original_price) > Number(product.price) && (
