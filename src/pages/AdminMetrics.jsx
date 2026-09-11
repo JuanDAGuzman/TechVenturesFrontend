@@ -34,7 +34,15 @@ const PERIODS = [
 function getRange(key) {
   const today = dayjs();
   switch (key) {
-    case "week":       return { from: today.startOf("week").format("YYYY-MM-DD"), to: today.format("YYYY-MM-DD") };
+    case "week": {
+      // dayjs sin locale configurado inicia la semana en domingo; en Colombia
+      // la semana empieza el lunes, así que se calcula explícito sin depender
+      // del locale global.
+      const dow = today.day(); // 0=domingo … 6=sábado
+      const daysSinceMonday = dow === 0 ? 6 : dow - 1;
+      const monday = today.subtract(daysSinceMonday, "day");
+      return { from: monday.format("YYYY-MM-DD"), to: today.format("YYYY-MM-DD") };
+    }
     case "month":      return { from: today.startOf("month").format("YYYY-MM-DD"), to: today.format("YYYY-MM-DD") };
     case "last_month": {
       const lm = today.subtract(1, "month");
@@ -101,6 +109,9 @@ export default function AdminMetrics() {
     setLoading(true);
     setError("");
     try {
+      if (period === "custom" && customFrom > customTo) {
+        throw new Error("La fecha 'Desde' no puede ser posterior a 'Hasta'");
+      }
       const range = period === "custom"
         ? { from: customFrom, to: customTo }
         : getRange(period);
@@ -214,7 +225,7 @@ export default function AdminMetrics() {
             <KpiCard label="En proceso"     value={ov.byStatus.confirmed} color="#f59e0b" />
             <KpiCard label="Envíos"         value={ov.byType.shipping}    color="#06b6d4" />
             <KpiCard label="Ingresos envío" value={`$${Number(ov.shippingRevenue).toLocaleString("es-CO")}`} color="#8b5cf6" sub="solo costo de envío" />
-            <KpiCard label="Clientes freq." value={data.customers.length} color="#6366f1" sub="con más de 1 cita" />
+            <KpiCard label="Clientes freq." value={data.customersTotal ?? data.customers.length} color="#6366f1" sub="con más de 1 cita" />
           </div>
 
           {/* ── Timeline ─────────────────────────────────────────────────── */}
@@ -343,7 +354,10 @@ export default function AdminMetrics() {
             <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-1">
               Clientes frecuentes
             </h2>
-            <p className="text-xs text-slate-400 mb-4">Clientes con más de 1 cita en el período</p>
+            <p className="text-xs text-slate-400 mb-4">
+              Clientes con más de 1 cita en el período
+              {data.customersTotal > 20 ? ` · mostrando los 20 más frecuentes de ${data.customersTotal}` : ""}
+            </p>
             {data.customers.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10">
                 {data.customers.slice(0, 16).map((c, i) => (
