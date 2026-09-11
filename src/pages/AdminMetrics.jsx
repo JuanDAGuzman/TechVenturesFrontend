@@ -149,6 +149,12 @@ export default function AdminMetrics() {
     { name: "Envío",             value: data.overview.byType.shipping, color: COLORS.shipping },
   ].filter(d => d.value > 0) : [];
 
+  const deliveryPie = data ? [
+    { name: "En persona", value: data.overview.byDelivery?.in_person ?? 0, color: "#6366f1" },
+    { name: "Por envío",  value: data.overview.byDelivery?.shipping ?? 0,  color: "#06b6d4" },
+  ].filter(d => d.value > 0) : [];
+  const deliveryTotal = deliveryPie.reduce((sum, d) => sum + d.value, 0);
+
   const ov = data?.overview;
   const completed = ov ? ov.byStatus.done + ov.byStatus.shipped : 0;
   const convRate  = ov?.total > 0 ? Math.round((completed / ov.total) * 100) : 0;
@@ -317,6 +323,38 @@ export default function AdminMetrics() {
                 ))
               ) : <p className="text-sm text-slate-400 text-center py-8">Sin envíos en el período</p>}
             </div>
+          </div>
+
+          {/* ── Método de entrega: en persona vs. envío ─────────────────── */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
+            <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-1">
+              Método de entrega
+            </h2>
+            <p className="text-xs text-slate-400 mb-4">Cómo reciben los clientes su pedido</p>
+            {deliveryPie.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-5 items-center">
+                <ResponsiveContainer width="100%" height={150}>
+                  <PieChart>
+                    <Pie data={deliveryPie} dataKey="value" nameKey="name" cx="50%" cy="50%" innerRadius={40} outerRadius={65} paddingAngle={3}>
+                      {deliveryPie.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip formatter={(v, n) => [v, n]} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div>
+                  {deliveryPie.map((d) => (
+                    <HBar
+                      key={d.name}
+                      label={d.name}
+                      value={d.value}
+                      max={deliveryTotal}
+                      color={d.color}
+                      sub={`(${deliveryTotal > 0 ? Math.round((d.value / deliveryTotal) * 100) : 0}%)`}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : <p className="text-sm text-slate-400 text-center py-8">Sin datos</p>}
           </div>
 
           {/* ── Productos más solicitados ──────────────────────────────── */}
