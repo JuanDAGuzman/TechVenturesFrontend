@@ -295,7 +295,14 @@ export default function AdminMetrics() {
               </h2>
               {data.cities.length > 0 ? (
                 data.cities.slice(0, 8).map(c => (
-                  <HBar key={c.city} label={c.city} value={c.total} max={data.cities[0].total} color="#06b6d4" sub="envíos" />
+                  <div key={c.city}>
+                    <HBar label={c.city} value={c.total} max={data.cities[0].total} color="#06b6d4" sub="envíos" />
+                    {c.variants?.length > 1 && (
+                      <p className="text-[10px] text-slate-400 -mt-1.5 mb-2 ml-2 truncate" title={c.variants.join(", ")}>
+                        ↳ {c.variants.slice(0, 3).join(", ")}{c.variants.length > 3 ? ` +${c.variants.length - 3}` : ""}
+                      </p>
+                    )}
+                  </div>
                 ))
               ) : <p className="text-sm text-slate-400 text-center py-8">Sin envíos en el período</p>}
             </div>
