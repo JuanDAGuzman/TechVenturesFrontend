@@ -1,9 +1,8 @@
 import { useEffect, useState, useMemo, useRef, createContext, useContext } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronRight, ArrowRight, AlertTriangle, Percent, Layers } from "lucide-react";
+import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronRight, ArrowRight, AlertTriangle, Percent, Layers, ShoppingBag } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
 import { brandFromColor, DEFAULT_BRAND } from "../../lib/categoryBrand.js";
-import { useSiteTheme } from "../../lib/SiteThemeContext.jsx";
 
 const API = (
   import.meta.env.VITE_API_BASE ??
@@ -14,8 +13,13 @@ const API = (
 
 // Provee el mapa de colores de marca por categoría a las tarjetas/modales,
 // que se construye dinámicamente a partir de las secciones del catálogo
-const TODOS_BRAND = brandFromColor("#6d28d9");
+// Un solo acento de marca (morado del logo) para todo el catálogo: ya no cambia por categoría
+const ACCENT = "#6d28d9";
+const TODOS_BRAND = brandFromColor(ACCENT);
 const BrandContext = createContext({ brandMap: {}, activeBrand: TODOS_BRAND });
+
+// Fondo gris frío donde se funden las fotos de producto (fondo blanco → multiply)
+const PHOTO_BG = "#f4f5f8";
 
 // Convierte el nombre de una categoría en un slug apto para la URL (ej. "Componentes" → "componentes")
 function slugify(name) {
@@ -47,22 +51,21 @@ function ProductThumb({ imageUrl, category, name }) {
 
   if (imageUrl && !imgErr) {
     return (
-      <div className="w-full h-full bg-white flex items-center justify-center p-2">
-        <img src={imageUrl} alt={name} className="w-full h-full object-contain" onError={() => setImgErr(true)} />
+      <div className="w-full h-full flex items-center justify-center p-3" style={{ background: PHOTO_BG }}>
+        <img
+          src={imageUrl}
+          alt={name}
+          className="w-full h-full object-contain transition-transform duration-500 ease-out group-hover:scale-105"
+          style={{ mixBlendMode: "multiply" }}
+          onError={() => setImgErr(true)}
+        />
       </div>
     );
   }
   return (
     <div
       className="w-full h-full flex items-center justify-center overflow-hidden"
-      style={{
-        background: `
-          radial-gradient(90% 80% at 50% 28%, color-mix(in srgb, ${dot} 16%, transparent), transparent 70%),
-          repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(15,23,42,0.045) 15px, rgba(15,23,42,0.045) 16px),
-          repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(15,23,42,0.045) 15px, rgba(15,23,42,0.045) 16px),
-          #ffffff
-        `,
-      }}
+      style={{ background: PHOTO_BG }}
     >
       <Silhouette
         form={form}
@@ -75,9 +78,8 @@ function ProductThumb({ imageUrl, category, name }) {
 
 // Única tarjeta — se usa tanto en vista agrupada como en vista filtrada
 function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink, index = 0 }) {
-  const { brandMap, activeBrand } = useContext(BrandContext);
+  const { brandMap } = useContext(BrandContext);
   const b = brandMap[product.category] ?? DEFAULT_BRAND;
-  const ab = activeBrand ?? b;
   const condTags = product.condition ? product.condition.split(",").map(t => t.trim().toUpperCase()).filter(Boolean) : [];
   const isNew = condTags.some(t => t === "NUEVO" || t === "SELLADO" || t === "OPEN BOX");
   const hasBox = condTags.includes("CON CAJA");
@@ -85,12 +87,12 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
   return (
     <div
       onClick={() => onOpenDetail(product)}
-      className={`catalog-card-in group bg-white rounded-2xl overflow-hidden shadow-sm flex flex-col min-w-0 w-full transition-all duration-300 ease-out border-2 cursor-pointer ${
+      className={`catalog-card-in group bg-white rounded-md overflow-hidden flex flex-col min-w-0 w-full transition-all duration-300 ease-out border cursor-pointer ${
         !product.available
           ? "border-slate-100 opacity-60"
           : isSelected
-          ? "shadow-md"
-          : "border-slate-200 hover:-translate-y-1.5 hover:border-[var(--brand)] hover:shadow-[0_12px_32px_-12px_var(--brand-ring)]"
+          ? "border-2"
+          : "border-slate-200 hover:-translate-y-1 hover:border-[var(--brand)]"
       }`}
       style={{
         "--ca": b.dot,
@@ -98,31 +100,23 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
         ...(product.available && isSelected ? { borderColor: "var(--brand)" } : {}),
       }}
     >
-      {/* Parte superior: fondo blanco + ícono centrado */}
+      {/* Parte superior: foto sobre gris frío */}
       <div className="h-36 sm:h-44 relative border-b border-slate-100">
         <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
-
-        {/* Marco técnico tipo "viewfinder" — aparece al hover */}
-        <div className="pointer-events-none absolute inset-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <span className="absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 rounded-tl" style={{ borderColor: "var(--brand)" }} />
-          <span className="absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 rounded-tr" style={{ borderColor: "var(--brand)" }} />
-          <span className="absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 rounded-bl" style={{ borderColor: "var(--brand)" }} />
-          <span className="absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2 rounded-br" style={{ borderColor: "var(--brand)" }} />
-        </div>
 
         {(tier || product.is_flagship) && (
           <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
             {tier && (
-              <span className="text-[9px] font-mono font-bold uppercase tracking-widest px-2 py-1 rounded-full border shadow-sm text-slate-800 bg-white border-slate-400">
+              <span className="text-[9px] font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-sm text-slate-700 bg-white/90 border border-slate-300">
                 Gama {tier}
               </span>
             )}
             {product.is_flagship && (
               <span
-                className="text-[9px] font-mono font-bold uppercase tracking-widest px-2 py-1 rounded-full border border-transparent text-white shadow-sm"
+                className="text-[9px] font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-sm text-white"
                 style={{ background: "var(--brand)" }}
               >
-                Marca Insignia
+                Insignia
               </span>
             )}
           </div>
@@ -137,7 +131,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
         {product.available && product.original_price && Number(product.original_price) > Number(product.price) && !isSelected && (
           <div className="absolute bottom-2 right-2">
             <span
-              className="flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-full shadow-lg tracking-wide border-2 bg-white"
+              className="flex items-center gap-1 text-[10px] font-black px-2 py-1 rounded-sm tracking-wide border bg-white"
               style={{ color: b.dot, borderColor: b.dot }}
             >
               <Tag className="w-2.5 h-2.5 shrink-0" />
@@ -147,7 +141,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
         )}
         {isSelected && (
           <div
-            className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center shadow-sm"
+            className="absolute top-2 right-2 w-6 h-6 rounded-sm flex items-center justify-center"
             style={{ background: "var(--brand)" }}
           >
             <Check className="w-3.5 h-3.5 text-white" />
@@ -157,45 +151,31 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
 
       {/* Parte inferior: información */}
       <div className="p-3 sm:p-4 flex flex-col flex-1">
-        {/* Marca/categoría + punto de color */}
-        <div className="flex items-center gap-1.5 mb-1">
-          <span className="text-[10px] font-mono font-medium uppercase tracking-[0.2em] text-slate-400">{product.category}</span>
-          <span className="w-1.5 h-1.5 rounded-full ml-auto" style={{ background: b.dot }} />
-        </div>
+        <span className="text-[10px] font-mono font-medium uppercase tracking-[0.2em] text-slate-400 mb-1">{product.category}</span>
 
         <p className="font-display font-semibold text-slate-900 text-sm sm:text-base leading-snug line-clamp-2 uppercase tracking-tight">{product.name}</p>
 
-        {/* Badges: memoria + condición */}
-        <div className="flex flex-wrap gap-1 mt-1.5">
+        {/* Ficha numerada: memoria + estado */}
+        <div className="mt-2.5 flex flex-col gap-1">
           {product.memory_capacity && (
-            <span className="text-xs text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-full uppercase">
-              {product.memory_capacity}
-            </span>
+            <p className="flex gap-2 text-[11px] sm:text-xs text-slate-500 uppercase">
+              <span className="font-mono text-slate-300 w-4 shrink-0">01</span>
+              <span>Memoria — <span className="text-slate-700 font-medium">{product.memory_capacity}</span></span>
+            </p>
           )}
-          {product.condition &&
-            product.condition.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag, i) => {
-              const t = tag.toUpperCase();
-              const highlighted = t === "NUEVO" || t === "CON CAJA" || t === "SELLADO" || t === "OPEN BOX";
-              return (
-                <span
-                  key={i}
-                  className={`text-xs px-1.5 py-0.5 rounded-full uppercase font-medium ${highlighted ? "ring-1" : "text-slate-500 bg-slate-100"}`}
-                  style={highlighted ? { background: ab.badge.background, color: ab.badge.color, "--tw-ring-color": ab.ring } : undefined}
-                >
-                  {tag}
-                </span>
-              );
-            })}
-          {!isNew && (
-            <span className="text-xs px-1.5 py-0.5 rounded-full uppercase font-medium text-slate-500 bg-slate-100">
-              Usado
+          <p className="flex gap-2 text-[11px] sm:text-xs text-slate-500 uppercase">
+            <span className="font-mono text-slate-300 w-4 shrink-0">{product.memory_capacity ? "02" : "01"}</span>
+            <span>
+              Estado —{" "}
+              <span className={`font-medium ${isNew ? "brand-text" : "text-slate-700"}`}>
+                {[
+                  ...condTags.map((t) => t),
+                  !isNew ? "USADO" : null,
+                  !hasBox ? "SIN CAJA" : null,
+                ].filter(Boolean).join(" · ")}
+              </span>
             </span>
-          )}
-          {!hasBox && (
-            <span className="text-xs px-1.5 py-0.5 rounded-full uppercase font-medium text-slate-500 bg-slate-100">
-              Sin caja
-            </span>
-          )}
+          </p>
         </div>
 
         {/* Descripción (si existe) — se expande por completo al hacer hover */}
@@ -215,7 +195,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
             <div className="mt-2 flex gap-2">
               <button
                 onClick={(e) => { e.stopPropagation(); onToggle(product); }}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold transition-all btn-primary`}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-md text-sm font-semibold transition-all btn-primary`}
                 style={isSelected ? { filter: "brightness(0.78)" } : {}}
               >
                 {isSelected ? (
@@ -230,13 +210,13 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
                 rel="noopener noreferrer"
                 onClick={(e) => e.stopPropagation()}
                 title="Contactar por WhatsApp"
-                className="shrink-0 w-11 flex items-center justify-center rounded-xl border-2 border-slate-200 text-slate-500 hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
+                className="shrink-0 w-11 flex items-center justify-center rounded-md border border-slate-200 text-slate-500 hover:border-[var(--brand)] hover:text-[var(--brand)] transition-all"
               >
                 <MessageCircle className="w-4 h-4" />
               </a>
             </div>
           ) : (
-            <div className="mt-2 py-2.5 rounded-xl bg-slate-100 text-center text-sm text-slate-400 font-medium">
+            <div className="mt-2 py-2.5 rounded-md bg-slate-100 text-center text-sm text-slate-400 font-medium">
               No disponible
             </div>
           )}
@@ -310,7 +290,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
       onClick={onClose}
     >
       <div
-        className="modal-pop bg-white rounded-3xl shadow-2xl w-full max-w-3xl relative overflow-hidden"
+        className="modal-pop bg-white rounded-lg shadow-2xl w-full max-w-3xl relative overflow-hidden"
         style={{ "--ca": b.dot }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -326,14 +306,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
         {/* Visual */}
         <div
           className="relative min-h-[240px] md:min-h-[360px] border-b md:border-b-0 md:border-r border-slate-100 flex items-center justify-center p-8"
-          style={{
-            background: `
-              radial-gradient(80% 70% at 50% 35%, color-mix(in srgb, ${b.dot} 14%, transparent), transparent 70%),
-              repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(15,23,42,0.04) 27px, rgba(15,23,42,0.04) 28px),
-              repeating-linear-gradient(90deg, transparent, transparent 27px, rgba(15,23,42,0.04) 27px, rgba(15,23,42,0.04) 28px),
-              #ffffff
-            `,
-          }}
+          style={{ background: PHOTO_BG }}
         >
           {product.image_url ? (
             <img
@@ -357,7 +330,6 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
         {/* Info */}
         <div className="p-6 sm:p-8 flex flex-col">
           <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-slate-400 mb-2">
-            <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: b.dot }} />
             {product.category}{tier ? ` · Gama ${tier}` : ""}{product.is_flagship ? " · Marca Insignia" : ""}
           </div>
           <h2 className="font-display font-bold text-2xl sm:text-3xl uppercase tracking-tight text-slate-900 leading-tight">
@@ -369,7 +341,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
           {product.original_price && Number(product.original_price) > Number(product.price) && (
             <div className="flex items-center gap-2 mt-4">
               <span
-                className="flex items-center gap-1 text-sm font-black px-2.5 py-1 rounded-full border-2 bg-white"
+                className="flex items-center gap-1 text-sm font-black px-2.5 py-1 rounded-sm border bg-white"
                 style={{ color: b.dot, borderColor: b.dot }}
               >
                 <Tag className="w-3.5 h-3.5 shrink-0" />
@@ -393,7 +365,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
             {product.available && (
               <button
                 onClick={() => onToggle(product)}
-                className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap btn-primary"
+                className="flex items-center justify-center gap-1.5 w-full py-3 rounded-md text-sm font-semibold transition-all whitespace-nowrap btn-primary"
                 style={isSelected ? { filter: "brightness(0.78)" } : {}}
               >
                 {isSelected ? (
@@ -407,7 +379,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
               href={waLink(product)}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-1.5 w-full py-3 rounded-xl text-sm font-semibold border-2 border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all whitespace-nowrap"
+              className="flex items-center justify-center gap-1.5 w-full py-3 rounded-md text-sm font-semibold border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all whitespace-nowrap"
             >
               <MessageCircle className="w-4 h-4 shrink-0" /> Preguntar por WhatsApp
             </a>
@@ -417,7 +389,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
 
         {/* Indicador de scroll: avisa que hay más contenido debajo (mobile) */}
         {showScrollHint && (
-          <div className="md:hidden pointer-events-none absolute bottom-0 inset-x-0 h-14 rounded-b-3xl bg-gradient-to-t from-white via-white/90 to-transparent flex items-end justify-center pb-1.5">
+          <div className="md:hidden pointer-events-none absolute bottom-0 inset-x-0 h-14 rounded-b-lg bg-gradient-to-t from-white via-white/90 to-transparent flex items-end justify-center pb-1.5">
             <ChevronDown className="w-5 h-5 text-slate-400 animate-bounce" />
           </div>
         )}
@@ -466,7 +438,7 @@ export default function CatalogoV2() {
   const CATEGORIES = useMemo(() => ["Todos", ...CATEGORY_ORDER], [CATEGORY_ORDER]);
   const brandMap = useMemo(() => {
     const map = {};
-    categories.forEach((c) => { map[c.name] = brandFromColor(c.color); });
+    categories.forEach((c) => { map[c.name] = TODOS_BRAND; });
     return map;
   }, [categories]);
 
@@ -632,15 +604,13 @@ export default function CatalogoV2() {
     setMaxPrice("");
   }
 
-  // CSS variables que se aplican dinámicamente según la categoría activa
-  const activeBrand = useMemo(() => brandMap[category] ?? TODOS_BRAND, [category, brandMap]);
-  const { setBrand } = useSiteTheme();
-  useEffect(() => { setBrand(activeBrand); }, [activeBrand, setBrand]);
-  const themeVars = useMemo(() => {
-    if (!brandMap[category]) return {};     // "Todos" → usa el indigo del root
-    const b = brandMap[category];
-    return { "--brand": b.dot, "--brand-hover": b.hover, "--brand-ring": b.ring };
-  }, [category, brandMap]);
+  // Acento único: las variables --brand quedan fijas en el morado de marca
+  const activeBrand = TODOS_BRAND;
+  const themeVars = {
+    "--brand": TODOS_BRAND.dot,
+    "--brand-hover": TODOS_BRAND.hover,
+    "--brand-ring": TODOS_BRAND.ring,
+  };
 
   const trade   = settings.trade_in_note;
   const payment = settings.payment_methods;
@@ -649,49 +619,40 @@ export default function CatalogoV2() {
   return (
     <BrandContext.Provider value={{ brandMap, activeBrand }}>
     <div className="relative w-full min-w-0" style={themeVars}>
-      {/* Fondo técnico: cuadrícula sutil + resplandor de marca */}
-      <div
-        className="absolute inset-0 -z-10 pointer-events-none"
-        style={{
-          background: `
-            radial-gradient(60% 32rem at 50% 0%, var(--brand-ring), transparent 70%),
-            repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(15,23,42,0.035) 39px, rgba(15,23,42,0.035) 40px),
-            repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(15,23,42,0.035) 39px, rgba(15,23,42,0.035) 40px)
-          `,
-        }}
-      />
-
       <div className="container-page pb-8 w-full min-w-0">
 
-      {/* Cabecera */}
-      <div className="mb-4 flex items-end justify-between gap-3 flex-wrap">
+      {/* Cabecera editorial */}
+      <div className="pt-4 pb-7 mb-6 border-b border-slate-200 flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.35em] text-slate-400 mb-1">
-            TechVenturesCO
+          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.3em] text-slate-400 mb-2">
+            TechVenturesCO · Hardware verificado
           </p>
-          <h1 className="font-display text-3xl sm:text-4xl font-bold brand-text tracking-tight">Catálogo</h1>
-          <p className="text-sm text-slate-500 mt-1">Hardware usado · GPUs y más</p>
+          <h1 className="font-display text-5xl sm:text-7xl font-bold text-slate-900 tracking-tight leading-[0.95]">
+            Catálogo<span className="brand-text">.</span>
+          </h1>
+          <p className="text-sm sm:text-base text-slate-500 mt-3 max-w-md">
+            GPUs, componentes y más. Cada pieza con su estado real, sin sorpresas.
+          </p>
         </div>
         {!loading && (
-          <div className="font-mono text-xs text-slate-400 border border-slate-200 rounded-full px-3 py-1.5 bg-white shrink-0">
-            <span className="font-semibold brand-text">{categoryCounts.Todos}</span> productos disponibles
-          </div>
+          <p className="font-mono text-xs text-slate-400 shrink-0">
+            <span className="font-bold text-slate-900 text-base">{categoryCounts.Todos}</span> referencias disponibles
+          </p>
         )}
       </div>
 
       {/* ── Banner de información ── */}
       {(trade || payment || price) && (
-        <div className="mb-5 rounded-2xl bg-white border border-slate-200 shadow-sm overflow-hidden">
-          <div className="h-1" style={{ background: "var(--brand)" }} />
+        <div className="mb-8 rounded-md bg-white border border-slate-200 overflow-hidden">
           <div className="px-4 py-2 border-b border-slate-100">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-              📋 Antes de comprar — léelo
+            <p className="font-mono text-[11px] font-medium text-slate-400 uppercase tracking-[0.2em]">
+              Antes de comprar
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-100">
             {trade && (
               <div className="flex items-start gap-3 px-3 py-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: "var(--brand-ring)" }}>
+                <div className="w-8 h-8 rounded-sm flex items-center justify-center shrink-0 mt-0.5" style={{ background: "var(--brand-ring)" }}>
                   <Repeat2 className="w-4 h-4 brand-text" />
                 </div>
                 <div className="min-w-0 overflow-hidden">
@@ -702,7 +663,7 @@ export default function CatalogoV2() {
             )}
             {payment && (
               <div className="flex items-start gap-3 px-3 py-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: "var(--brand-ring)" }}>
+                <div className="w-8 h-8 rounded-sm flex items-center justify-center shrink-0 mt-0.5" style={{ background: "var(--brand-ring)" }}>
                   <CreditCard className="w-4 h-4 brand-text" />
                 </div>
                 <div className="min-w-0 overflow-hidden">
@@ -713,7 +674,7 @@ export default function CatalogoV2() {
             )}
             {price && (
               <div className="flex items-start gap-3 px-3 py-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5" style={{ background: "var(--brand-ring)" }}>
+                <div className="w-8 h-8 rounded-sm flex items-center justify-center shrink-0 mt-0.5" style={{ background: "var(--brand-ring)" }}>
                   <Tag className="w-4 h-4 brand-text" />
                 </div>
                 <div className="min-w-0 overflow-hidden">
@@ -735,14 +696,9 @@ export default function CatalogoV2() {
         return (
           <div className="mb-8">
             {/* Header — icono usa color activo */}
-            <div className="flex items-center gap-2.5 mb-4">
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: activeBrand.dot }}>
-                <Tag className="w-4 h-4 text-white" />
-              </div>
-              <div>
-                <h2 className="font-display text-xl font-bold text-slate-800 tracking-tight leading-none">Ofertas</h2>
-                <p className="text-[11px] text-slate-400 font-mono mt-0.5">{totalOffers} oferta{totalOffers !== 1 ? "s" : ""} activa{totalOffers !== 1 ? "s" : ""}</p>
-              </div>
+            <div className="flex items-end gap-3 mb-4 pb-3 border-b border-slate-200">
+              <h2 className="font-display text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-none">Ofertas</h2>
+              <p className="text-[11px] text-slate-400 font-mono uppercase tracking-wider pb-0.5">{totalOffers} activa{totalOffers !== 1 ? "s" : ""}</p>
             </div>
 
             <div className="space-y-3">
@@ -758,8 +714,8 @@ export default function CatalogoV2() {
                 const savingTotal = savingUnit * Number(deal.min_quantity);
                 return (
                   <div key={deal.id}
-                    className="rounded-2xl bg-white shadow-sm border border-slate-200"
-                    style={{ borderLeftWidth: 4, borderLeftColor: activeBrand.dot }}>
+                    className="rounded-md bg-white border border-slate-200"
+                    style={{ borderLeftWidth: 3, borderLeftColor: activeBrand.dot }}>
 
                     <div className="px-4 pt-4 pb-3 flex items-start gap-4">
                       {/* Miniaturas apiladas */}
@@ -768,10 +724,10 @@ export default function CatalogoV2() {
                           <div className="flex -space-x-3">
                             {dealProducts.slice(0, 4).map((p, i) => (
                               <div key={p.id}
-                                className="w-11 h-11 rounded-xl overflow-hidden bg-slate-50 border-2 border-white flex items-center justify-center shadow-sm"
-                                style={{ zIndex: 4 - i }}>
+                                className="w-11 h-11 rounded-sm overflow-hidden border-2 border-white flex items-center justify-center"
+                                style={{ zIndex: 4 - i, background: PHOTO_BG }}>
                                 {p.image_url
-                                  ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-0.5" />
+                                  ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-0.5" style={{ mixBlendMode: "multiply" }} />
                                   : <Package className="w-4 h-4 text-slate-200" />}
                               </div>
                             ))}
@@ -785,13 +741,13 @@ export default function CatalogoV2() {
                       <div className="flex-1 min-w-0">
                         {/* Badges con color activo */}
                         <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                          <span className="flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-full border-2 bg-white"
+                          <span className="flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded-sm border bg-white"
                             style={{ color: activeBrand.dot, borderColor: activeBrand.dot }}>
                             <Layers className="w-2.5 h-2.5 shrink-0" />
                             Oferta por cantidad
                           </span>
                           {savingPct > 0 && (
-                            <span className="flex items-center gap-0.5 text-[10px] font-black px-2 py-0.5 rounded-full border-2 bg-white"
+                            <span className="flex items-center gap-0.5 text-[10px] font-black px-2 py-0.5 rounded-sm border bg-white"
                               style={{ color: activeBrand.dot, borderColor: activeBrand.dot }}>
                               <Tag className="w-2.5 h-2.5 shrink-0" />
                               -{savingPct}% descuento
@@ -833,7 +789,7 @@ export default function CatalogoV2() {
                     </div>
 
                     {/* Aviso mínimo — fondo y texto con color activo */}
-                    <div className="mx-4 mb-3 flex items-start gap-1.5 rounded-xl px-3 py-2 border"
+                    <div className="mx-4 mb-3 flex items-start gap-1.5 rounded-sm px-3 py-2 border"
                       style={{ background: activeBrand.ring, borderColor: activeBrand.dot + "40" }}>
                       <AlertTriangle className="w-3 h-3 shrink-0 mt-px" style={{ color: activeBrand.dot }} />
                       <p className="text-[11px] leading-tight" style={{ color: activeBrand.dot }}>
@@ -849,7 +805,7 @@ export default function CatalogoV2() {
 
               {/* ── Artículos en descuento — scroll horizontal, todo neutro ── */}
               {discounted.length > 0 && (
-                <div className="rounded-2xl overflow-hidden border border-slate-200 bg-white shadow-sm">
+                <div className="rounded-md overflow-hidden border border-slate-200 bg-white">
                   <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100 bg-slate-50">
                     <Percent className="w-3.5 h-3.5 text-slate-500" />
                     <p className="text-xs font-bold text-slate-700 uppercase tracking-wide">Artículos con descuento</p>
@@ -860,13 +816,13 @@ export default function CatalogoV2() {
                     {discounted.map((p) => {
                       const pct = Math.round((1 - Number(p.price) / Number(p.original_price)) * 100);
                       return (
-                        <div key={p.id} className="shrink-0 w-40 flex flex-col rounded-xl border border-slate-200 overflow-hidden bg-white">
-                          <div className="relative h-24 bg-slate-50 flex items-center justify-center">
+                        <div key={p.id} className="shrink-0 w-40 flex flex-col rounded-md border border-slate-200 overflow-hidden bg-white">
+                          <div className="relative h-24 flex items-center justify-center" style={{ background: PHOTO_BG }}>
                             {p.image_url
-                              ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-1" />
-                              : <Package className="w-8 h-8 text-slate-200" />}
+                              ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-1" style={{ mixBlendMode: "multiply" }} />
+                              : <Package className="w-8 h-8 text-slate-300" />}
                             <div className="absolute top-1.5 right-1.5">
-                              <span className="flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-full border-2 bg-white leading-none"
+                              <span className="flex items-center gap-0.5 text-[10px] font-black px-1.5 py-0.5 rounded-sm border bg-white leading-none"
                                 style={{ color: activeBrand.dot, borderColor: activeBrand.dot }}>
                                 <Tag className="w-2 h-2 shrink-0" />
                                 -{pct}%
@@ -905,28 +861,21 @@ export default function CatalogoV2() {
       <div className="mb-4 space-y-2.5">
         {/* Chips de categoría */}
         <div className="relative min-w-0 w-full">
-        <div ref={catScrollRef} className="flex gap-2 overflow-x-auto pb-1 min-w-0 w-full scrollbar-hide">
+        <div ref={catScrollRef} className="flex gap-6 overflow-x-auto min-w-0 w-full scrollbar-hide border-b border-slate-200">
           {CATEGORIES.map((cat) => {
-            const b = brandMap[cat];
             const active = category === cat;
             const count = categoryCounts[cat] ?? 0;
             return (
               <button
                 key={cat}
                 onClick={() => selectCategory(cat)}
-                style={active ? { background: "var(--brand)", color: "#fff", borderColor: "transparent" } : {}}
-                className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide border transition-all ${
-                  active ? "shadow-sm" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                style={active ? { borderBottomColor: "var(--brand)" } : {}}
+                className={`shrink-0 inline-flex items-baseline gap-1.5 pb-3 pt-1 text-xs font-bold uppercase tracking-wide border-b-2 -mb-px transition-colors ${
+                  active ? "text-slate-900" : "text-slate-400 border-transparent hover:text-slate-700"
                 }`}
               >
-                {b && (
-                  <span
-                    className="w-1.5 h-1.5 rounded-full shrink-0"
-                    style={{ background: active ? "#fff" : b.dot }}
-                  />
-                )}
                 {cat}
-                <span className={`font-mono font-medium normal-case ${active ? "text-white/70" : "text-slate-400"}`}>
+                <span className={`font-mono font-medium normal-case ${active ? "brand-text" : "text-slate-300"}`}>
                   {count}
                 </span>
               </button>
@@ -949,7 +898,7 @@ export default function CatalogoV2() {
             placeholder="Buscar producto..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2.5 rounded-xl border-2 border-slate-200 input-themed outline-none text-sm bg-white"
+            className="w-full pl-9 pr-3 py-2.5 rounded-md border border-slate-200 input-themed outline-none text-sm bg-white"
           />
         </div>
 
@@ -957,17 +906,17 @@ export default function CatalogoV2() {
         <div className="flex gap-2">
           <input type="number" min="0" placeholder="Precio mín" value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
-            className="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-200 input-themed outline-none text-sm bg-white"
+            className="flex-1 px-3 py-2.5 rounded-md border border-slate-200 input-themed outline-none text-sm bg-white"
           />
           <input type="number" min="0" placeholder="Precio máx" value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
-            className="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-200 input-themed outline-none text-sm bg-white"
+            className="flex-1 px-3 py-2.5 rounded-md border border-slate-200 input-themed outline-none text-sm bg-white"
           />
         </div>
 
         {/* Slider de precio máximo */}
         {priceBounds.max > 0 && (
-          <div className="bg-white rounded-xl border-2 border-slate-200 px-3.5 py-3">
+          <div className="bg-white rounded-md border border-slate-200 px-3.5 py-3">
             <div className="flex justify-between items-baseline mb-2">
               <span className="text-[11px] font-mono text-slate-400">{formatCop(priceBounds.min)}</span>
               <span className="text-xs font-mono font-semibold brand-text">
@@ -1013,7 +962,7 @@ export default function CatalogoV2() {
       {loading ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {[...Array(8)].map((_, i) => (
-            <div key={i} className="h-64 bg-slate-100 rounded-2xl animate-pulse" />
+            <div key={i} className="h-64 bg-slate-100 rounded-md animate-pulse" />
           ))}
         </div>
       ) : filtered.length === 0 ? (
@@ -1033,23 +982,17 @@ export default function CatalogoV2() {
         /* Vista agrupada por categoría con encabezados */
         <div className="space-y-7">
           {groups.map(({ cat, items }) => {
-            const b = brandMap[cat] ?? DEFAULT_BRAND;
             const avail = items.filter((p) => p.available).length;
             return (
               <section key={cat}>
                 {/* Encabezado de categoría — estilo uniforme para todas */}
-                <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-1.5 h-6 rounded-full shrink-0" style={{ background: b.dot }} />
-                  <h2
-                    className="font-display font-bold text-base sm:text-lg uppercase tracking-[0.2em]"
-                    style={{ color: b.dot }}
-                  >
+                <div className="flex items-baseline gap-3 mb-4 pb-3 border-b border-slate-200">
+                  <h2 className="font-display font-bold text-2xl sm:text-3xl uppercase tracking-tight text-slate-900 leading-none">
                     {cat}
                   </h2>
-                  <span className="font-mono text-[11px] text-slate-400 ml-auto sm:ml-0">
-                    {avail} disponible{avail !== 1 ? "s" : ""} · {items.length} total
+                  <span className="font-mono text-[11px] text-slate-400 ml-auto uppercase tracking-wider">
+                    {avail} disponible{avail !== 1 ? "s" : ""}
                   </span>
-                  <div className="hidden sm:block flex-1 h-px ml-2" style={{ background: `${b.dot}22` }} />
                 </div>
                 {/* Cuadrícula — igual para todas las categorías */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 w-full min-w-0">
@@ -1079,8 +1022,9 @@ export default function CatalogoV2() {
 
             {/* Fila superior: título + limpiar todo */}
             <div className="flex items-center justify-between">
-              <p className="text-sm font-extrabold text-slate-800">
-                🛒 {selectedIds.size} artículo{selectedIds.size !== 1 ? "s" : ""} en consulta
+              <p className="flex items-center gap-2 text-sm font-extrabold text-slate-800">
+                <ShoppingBag className="w-4 h-4 brand-text" />
+                {selectedIds.size} artículo{selectedIds.size !== 1 ? "s" : ""} en consulta
               </p>
               <button
                 onClick={() => setSelectedIds(new Set())}
@@ -1097,7 +1041,7 @@ export default function CatalogoV2() {
                 return (
                   <div
                     key={p.id}
-                    className="shrink-0 flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-full text-xs font-semibold border"
+                    className="shrink-0 flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 rounded-sm text-xs font-semibold border"
                     style={{ borderColor: b.dot, color: b.dot, background: `${b.dot}18` }}
                   >
                     <span className="max-w-[130px] truncate">{p.name}</span>
@@ -1119,7 +1063,7 @@ export default function CatalogoV2() {
                 href={waLinkMulti(selectedProducts)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl btn-primary text-sm font-bold"
+                className="flex items-center justify-center gap-2 w-full py-3 rounded-md btn-primary text-sm font-bold"
               >
                 <MessageCircle className="w-4 h-4" />
                 Consultar {selectedIds.size > 1 ? `los ${selectedIds.size} artículos` : "artículo"} por WhatsApp
@@ -1135,7 +1079,7 @@ export default function CatalogoV2() {
                     href={waLinkMulti(group)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl btn-primary text-sm font-bold"
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-md btn-primary text-sm font-bold"
                   >
                     <MessageCircle className="w-4 h-4 shrink-0" />
                     <span className="truncate">
