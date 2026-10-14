@@ -14,7 +14,7 @@ const API = (
 ).replace(/\/+$/, "");
 
 const CATEGORY_EMOJI = {
-  NVIDIA: "⬛", AMD: "⬜", Intel: "🟦", Componentes: "⚙️", Celulares: "📱",
+  NVIDIA: "⬛", AMD: "⬜", INTEL: "🟦", COMPONENTES: "⚙️", CELULARES: "📱",
 };
 
 function productDisplayName(p) {
@@ -1030,8 +1030,8 @@ export default function AdminCatalogo() {
               <input
                 type="text"
                 value={newCategory.name}
-                onChange={(e) => setNewCategory((c) => ({ ...c, name: e.target.value }))}
-                placeholder="Ej. Periféricos, Monitores..."
+                onChange={(e) => setNewCategory((c) => ({ ...c, name: e.target.value.toUpperCase() }))}
+                placeholder="EJ. PERIFÉRICOS, MONITORES..."
                 className="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm"
               />
               <button

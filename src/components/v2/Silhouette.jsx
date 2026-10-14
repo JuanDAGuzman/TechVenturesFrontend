@@ -61,9 +61,9 @@ const PATHS = {
 export const CATEGORY_FORM = {
   NVIDIA: "gpu",
   AMD: "gpu",
-  Intel: "gpu",
-  Componentes: "component",
-  Celulares: "phone",
+  INTEL: "gpu",
+  COMPONENTES: "component",
+  CELULARES: "phone",
 };
 
 export default function Silhouette({ form, className }) {
