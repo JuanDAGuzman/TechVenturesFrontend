@@ -134,7 +134,7 @@ function mergeModelTokens(model) {
   return out;
 }
 
-function classify(raw) {
+function classify(raw, hintType = "") {
   let s = normalize(raw);
   if (!s) return null;
 
@@ -187,7 +187,7 @@ function classify(raw) {
   }
 
   // Fuentes: "750" sin la W (típico en títulos de tienda) es la potencia
-  if (out.type === "FUENTE" && !out.specs.some((x) => POWER_RE.test(x))) {
+  if ((out.type || hintType) === "FUENTE" && !out.specs.some((x) => POWER_RE.test(x))) {
     const i = out.model.findIndex((m) => /^\d{3,4}$/.test(m) && +m >= 300 && +m <= 2000);
     if (i >= 0) { out.specs.push(`${out.model[i]}W`); out.model.splice(i, 1); if (out.brandPos > i) out.brandPos -= 1; }
   }
@@ -338,7 +338,7 @@ export function suggestNames(typed, { category = "", titles = [], max = 5 } = {}
 
   // b) variantes de los títulos de Google: solo si son del mismo producto que lo escrito
   for (const title of titles) {
-    const c = classify(cleanTitle(title));
+    const c = classify(cleanTitle(title), base.type);
     if (!c) continue;
     if (base.brand && c.brand && base.brand !== c.brand) continue;       // otra marca: otro producto
     if (base.primary && c.primary && base.primary !== c.primary) continue; // otro modelo de GPU/CPU
