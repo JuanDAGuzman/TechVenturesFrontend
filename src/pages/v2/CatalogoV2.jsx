@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
-import { motion, useMotionValue, useSpring, useTransform, useReducedMotion } from "framer-motion";
+import { motion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowDown, AlertTriangle, Layers, ShoppingBag } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
@@ -279,88 +279,6 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
   );
 }
 
-// Interruptor de la muestra "3D": en false el detalle usa la foto plana de siempre
-const MODAL_3D = true;
-
-// Foto con efecto de profundidad (no es un modelo 3D real): entra girando en perspectiva,
-// flota y se balancea, se inclina siguiendo el mouse/dedo y un reflejo de luz recorre la pieza.
-// La capa de la foto lleva el mismo gris plano del panel para que el fondo blanco de la foto
-// siga fundiéndose (multiply) aunque las transformaciones 3D aíslen la mezcla.
-function Product3DStage({ src, alt }) {
-  const reduce = useReducedMotion();
-  const mx = useMotionValue(0);
-  const my = useMotionValue(0);
-  const sx = useSpring(mx, { stiffness: 120, damping: 14, mass: 0.6 });
-  const sy = useSpring(my, { stiffness: 120, damping: 14, mass: 0.6 });
-  const rotateY = useTransform(sx, [-0.5, 0.5], [-20, 20]);
-  const rotateX = useTransform(sy, [-0.5, 0.5], [15, -15]);
-  const sheenPos = useTransform(sx, [-0.5, 0.5], ["72% 0%", "28% 0%"]);
-  // El reflejo solo aparece cuando la pieza se inclina (en reposo no debe aclarar el fondo)
-  const sheenOpacity = useTransform(sx, [-0.5, -0.12, 0, 0.12, 0.5], [0.5, 0.35, 0, 0.35, 0.5]);
-  const shadowX = useTransform(sx, [-0.5, 0.5], [26, -26]);
-  const shadowScale = useTransform(sy, [-0.5, 0.5], [1.1, 0.88]);
-
-  const onMove = (e) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    mx.set((e.clientX - r.left) / r.width - 0.5);
-    my.set((e.clientY - r.top) / r.height - 0.5);
-  };
-  const onLeave = () => { mx.set(0); my.set(0); };
-
-  return (
-    <div
-      className="relative w-full h-[250px] md:h-[310px] flex items-center justify-center touch-pan-y"
-      style={{ perspective: 1100 }}
-      onPointerMove={onMove}
-      onPointerLeave={onLeave}
-    >
-      {/* Sombra en el suelo: se desplaza en sentido contrario a la inclinación */}
-      <motion.div
-        aria-hidden="true"
-        className="absolute bottom-[8%] left-1/2 -ml-[30%] w-[60%] h-6 rounded-[50%] bg-slate-900/30 blur-md"
-        style={{ x: shadowX, scale: shadowScale }}
-        animate={reduce ? undefined : { opacity: [0.9, 0.55, 0.9] }}
-        transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 1.4 }}
-      />
-
-      <motion.div
-        className="w-full h-full"
-        style={{ transformStyle: "preserve-3d" }}
-        initial={reduce ? false : { opacity: 0, rotateY: -50, rotateX: 12, y: 36, scale: 0.8 }}
-        animate={{ opacity: 1, rotateY: 0, rotateX: 0, y: 0, scale: 1 }}
-        transition={{ type: "spring", stiffness: 55, damping: 12, mass: 1 }}
-      >
-        <motion.div className="w-full h-full" style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}>
-          <motion.div
-            className="relative w-full h-full"
-            style={{ background: PHOTO_BG }}
-            animate={reduce ? undefined : { y: [0, -11, 0], rotateY: [-5, 5, -5] }}
-            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1.4 }}
-          >
-            <img src={src} alt={alt} className="w-full h-full object-contain" style={{ mixBlendMode: "multiply" }} />
-            <motion.div
-              aria-hidden="true"
-              className="absolute inset-0 pointer-events-none"
-              style={{
-                backgroundImage: "linear-gradient(105deg, transparent 43%, rgba(255,255,255,1) 50%, transparent 57%)",
-                backgroundSize: "400% 100%",
-                backgroundPosition: sheenPos,
-                opacity: sheenOpacity,
-                backgroundRepeat: "no-repeat",
-                mixBlendMode: "soft-light",
-              }}
-            />
-          </motion.div>
-        </motion.div>
-      </motion.div>
-
-      <p className="hidden md:block absolute bottom-0 left-0 font-mono text-[10px] uppercase tracking-[0.16em] text-slate-500">
-        Mueve el cursor para girar
-      </p>
-    </div>
-  );
-}
-
 // Modal de detalle — se abre al hacer clic en una tarjeta
 function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLink }) {
   const { brandMap } = useContext(BrandContext);
@@ -445,16 +363,12 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
           style={{ background: PHOTO_BG }}
         >
           {product.image_url ? (
-            MODAL_3D ? (
-              <Product3DStage src={product.image_url} alt={product.name} />
-            ) : (
-              <img
-                src={product.image_url}
-                alt={product.name}
-                className="max-w-full max-h-full object-contain"
-                style={{ mixBlendMode: "multiply" }}
-              />
-            )
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="max-w-full max-h-full object-contain"
+              style={{ mixBlendMode: "multiply" }}
+            />
           ) : (
             <Silhouette form={form} className="w-[70%] max-h-full" style={{ color: b.dot }} />
           )}
