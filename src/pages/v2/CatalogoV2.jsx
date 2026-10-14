@@ -710,9 +710,97 @@ function Hero() {
   );
 }
 
+// Tira horizontal con TODOS los artículos en descuento (se monta al abrir el panel)
+function DiscountStrip({ items, onOpenProduct }) {
+  const ref = useRef(null);
+  const [hint, setHint] = useState({ left: false, right: false });
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setHint({
+      left: el.scrollLeft > 8,
+      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 8,
+    });
+    check();
+    el.addEventListener("scroll", check, { passive: true });
+    window.addEventListener("resize", check);
+    return () => { el.removeEventListener("scroll", check); window.removeEventListener("resize", check); };
+  }, [items]);
+
+  const go = (dir) => ref.current?.scrollBy({ left: dir * 520, behavior: "smooth" });
+  const pct = (p) => Math.round((1 - Number(p.price) / Number(p.original_price)) * 100);
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <p className="font-mono text-[11px] font-medium uppercase tracking-wider text-slate-600">
+          {items.length} artículo{items.length !== 1 ? "s" : ""} · de mayor a menor descuento
+        </p>
+        <div className="hidden sm:flex gap-1.5">
+          <button
+            onClick={() => go(-1)}
+            disabled={!hint.left}
+            aria-label="Anteriores"
+            className="w-9 h-9 flex items-center justify-center border border-slate-400 text-slate-800 bg-white rounded-[3px] hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => go(1)}
+            disabled={!hint.right}
+            aria-label="Siguientes"
+            className="w-9 h-9 flex items-center justify-center border border-slate-400 text-slate-800 bg-white rounded-[3px] hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-colors disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="relative">
+        <div ref={ref} className="flex gap-3 overflow-x-auto scrollbar-hide snap-x pb-1">
+          {items.map((p) => (
+            <div
+              key={p.id}
+              onClick={() => onOpenProduct(p)}
+              className="group snap-start shrink-0 w-[168px] h-[184px] bg-white border border-slate-300 rounded-[4px] flex flex-col cursor-pointer overflow-hidden hover:border-slate-900 transition-colors"
+            >
+              <div className="relative h-[88px] flex items-center justify-center p-2" style={{ background: "linear-gradient(180deg, #f8f9fc 0%, #eceff5 100%)" }}>
+                {p.image_url
+                  ? <img src={p.image_url} alt={p.name} className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105" style={{ mixBlendMode: "multiply" }} />
+                  : <Package className="w-7 h-7 text-slate-400" />}
+                <span className="absolute top-1.5 right-1.5 font-mono text-[13px] font-bold px-2 py-1 rounded-[3px] text-white leading-none" style={{ background: ACCENT }}>
+                  -{pct(p)}%
+                </span>
+              </div>
+              <div className="p-3 flex flex-col flex-1 min-h-0">
+                <p className="text-xs font-semibold text-slate-900 leading-tight line-clamp-2">
+                  {p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}
+                </p>
+                <div className="mt-auto">
+                  <p className="text-[10px] text-slate-500 line-through font-mono leading-none">{formatCop(p.original_price)}</p>
+                  <p className="text-sm font-bold font-mono leading-tight text-slate-900 mt-0.5">{formatCop(p.price)}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {hint.right && (
+          <div
+            className="pointer-events-none absolute right-0 top-0 bottom-1 w-14 flex items-center justify-end"
+            style={{ background: "linear-gradient(to left, #ffffff 35%, transparent)" }}
+          >
+            <ChevronRight className="w-4 h-4 text-slate-600" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Ofertas en dos paneles desplegables independientes (por cantidad / con descuento).
 // Cerrados ocupan una fila cada uno; solo uno abierto a la vez para no abrumar la página.
-function OffersPanel({ bundleDeals, discounted, onOpenBundle, onOpenProduct, onSeeAllDiscounts }) {
+function OffersPanel({ bundleDeals, discounted, onOpenBundle, onOpenProduct }) {
   const [open, setOpen] = useState(null);
 
   const discPct = (p) => Math.round((1 - Number(p.price) / Number(p.original_price)) * 100);
@@ -812,43 +900,7 @@ function OffersPanel({ bundleDeals, discounted, onOpenBundle, onOpenProduct, onS
                         })}
                       </div>
                     ) : (
-                      <>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                          {bestDiscounts.slice(0, 6).map((p) => (
-                            <div
-                              key={p.id}
-                              onClick={() => onOpenProduct(p)}
-                              className="group bg-white border border-slate-300 rounded-[4px] flex flex-col cursor-pointer overflow-hidden hover:border-slate-900 transition-colors"
-                            >
-                              <div className="relative h-[96px] flex items-center justify-center p-2" style={{ background: "linear-gradient(180deg, #f8f9fc 0%, #eceff5 100%)" }}>
-                                {p.image_url
-                                  ? <img src={p.image_url} alt={p.name} className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105" style={{ mixBlendMode: "multiply" }} />
-                                  : <Package className="w-7 h-7 text-slate-400" />}
-                                <span className="absolute top-1.5 right-1.5 font-mono text-[13px] font-bold px-2 py-1 rounded-[3px] text-white leading-none" style={{ background: ACCENT }}>
-                                  -{discPct(p)}%
-                                </span>
-                              </div>
-                              <div className="p-3 flex flex-col flex-1">
-                                <p className="text-xs font-semibold text-slate-900 leading-tight line-clamp-2">
-                                  {p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}
-                                </p>
-                                <div className="mt-auto pt-2">
-                                  <p className="text-[10px] text-slate-500 line-through font-mono leading-none">{formatCop(p.original_price)}</p>
-                                  <p className="text-sm font-bold font-mono leading-tight text-slate-900 mt-0.5">{formatCop(p.price)}</p>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="mt-4 flex justify-end">
-                          <button
-                            onClick={onSeeAllDiscounts}
-                            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold uppercase tracking-wide rounded-[3px] bg-slate-900 text-white hover:bg-[var(--brand)] transition-colors"
-                          >
-                            Ver los {discounted.length} en el catálogo <ArrowRight className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </>
+                      <DiscountStrip items={bestDiscounts} onOpenProduct={onOpenProduct} />
                     )}
                   </div>
                 </motion.div>
@@ -1314,16 +1366,6 @@ export default function CatalogoV2() {
     setOnlyDiscount(false);
   }
 
-  // Desde el panel de ofertas: filtra el catálogo por artículos en descuento y baja a él
-  function showAllDiscounts() {
-    selectCategory("Todos");
-    setSearch("");
-    setMinPrice("");
-    setMaxPrice("");
-    setOnlyDiscount(true);
-    setTimeout(() => document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" }), 60);
-  }
-
   // Acento único: las variables --brand quedan fijas en el morado de marca
   const activeBrand = TODOS_BRAND;
   const themeVars = {
@@ -1376,7 +1418,6 @@ export default function CatalogoV2() {
             discounted={discounted}
             onOpenBundle={setBundleModal}
             onOpenProduct={setDetailProduct}
-            onSeeAllDiscounts={showAllDiscounts}
           />
         </section>
       )}
