@@ -336,7 +336,12 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
           }}
         >
           {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="max-w-full max-h-full object-contain" />
+            <img
+              src={product.image_url}
+              alt={product.name}
+              className="max-w-full max-h-full object-contain"
+              style={{ mixBlendMode: "multiply" }}
+            />
           ) : (
             <Silhouette form={form} className="w-[70%] max-h-full" style={{ color: b.dot }} />
           )}
