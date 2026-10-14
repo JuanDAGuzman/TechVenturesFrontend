@@ -1,98 +1,53 @@
 import { Link, useLocation } from "react-router-dom";
-import { motion } from "framer-motion";
-import { ShoppingBag, MessageCircle } from "lucide-react";
-import { useSiteTheme } from "../../lib/SiteThemeContext.jsx";
 
 export default function NavbarV2() {
     const location = useLocation();
-    const { brand } = useSiteTheme();
-    const isHome     = location.pathname === "/";
-    const isCatalogo = isHome;
+    const isCatalogo = location.pathname === "/";
     const isContact  = location.pathname === "/contact";
     const hideNav    = isContact;
 
+    const linkCls = (active) =>
+        `relative pb-1 text-sm font-semibold transition-colors border-b-2 ${
+            active
+                ? "text-slate-900 border-brand-indigo"
+                : "text-slate-500 border-transparent hover:text-slate-900"
+        }`;
+
     return (
-        <motion.header
-            initial={{ y: -100 }}
-            animate={{ y: 0 }}
-            className="sticky top-0 z-50 bg-white shadow-lg w-full border-b-4"
-            style={{ borderBottomColor: brand.dot }}
+        <header
+            className="sticky top-0 z-50 w-full border-b border-slate-200 backdrop-blur"
+            style={{ background: "rgba(242,243,245,0.88)" }}
         >
-            <div className="container-page">
-                <div className="flex items-center justify-between py-3">
-                    {/* Logo */}
+            <div className="max-w-[1180px] mx-auto px-4 sm:px-6">
+                <div className="flex items-center justify-between h-16 sm:h-[72px]">
                     <Link
                         to="/"
-                        className={`flex items-center gap-3 transition-all ${isHome ? 'cursor-default pointer-events-none' : 'hover:scale-105'}`}
+                        className={`flex items-center gap-3 ${isCatalogo ? "cursor-default pointer-events-none" : ""}`}
                     >
-                        <motion.div
-                            className="relative"
-                            whileHover={{ rotate: [0, -10, 10, 0] }}
-                            transition={{ duration: 0.5 }}
-                        >
-                            <img
-                                src="/TECHVENT.png"
-                                alt="TechVenturesCO"
-                                className="w-12 h-12 object-contain"
-                            />
-                        </motion.div>
-
-                        <div className="flex flex-col">
-                            <span className="font-extrabold text-base sm:text-xl tracking-tight leading-tight drop-shadow-sm"
-                                style={{ color: brand.dot }}>
-                                TechVenturesCO
+                        <img
+                            src="/logo-mark.png"
+                            alt="TechVenturesCO"
+                            className="h-10 w-10 sm:h-11 sm:w-11 object-contain"
+                            style={{ mixBlendMode: "multiply" }}
+                        />
+                        <div className="flex flex-col leading-none">
+                            <span className="font-display font-bold text-lg sm:text-xl tracking-tight text-slate-900">
+                                TechVentures<span className="text-brand-indigo">CO</span>
                             </span>
-                            <span className="text-[9px] sm:text-xs text-slate-500 font-bold tracking-wide uppercase leading-tight">
-                                {isCatalogo ? "Tu tienda de tech · GPUs, componentes y más" : "Agenda tu cita"}
+                            <span className="mt-1 font-mono text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-slate-400">
+                                {isCatalogo ? "Tu aliado en tecnología" : "Agenda tu cita"}
                             </span>
                         </div>
                     </Link>
 
-                    {/* Navigation */}
-                    <div className="flex items-center gap-3">
+                    <nav className="flex items-center gap-5 sm:gap-7">
                         {!hideNav && (
-                            <nav className="flex gap-2 sm:gap-3">
-                                <Link
-                                    to="/"
-                                    className={`flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm ${isCatalogo
-                                        ? "text-white ring-2"
-                                        : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
-                                        }`}
-                                    style={isCatalogo ? {
-                                        background: brand.dot,
-                                        ringColor: brand.ring,
-                                        boxShadow: `0 2px 8px ${brand.ring}`,
-                                        outline: `2px solid ${brand.ring}`,
-                                        outlineOffset: "2px",
-                                    } : {}}
-                                >
-                                    <ShoppingBag className="w-4 h-4" />
-                                    <span className="hidden sm:inline">Catálogo</span>
-                                </Link>
-                            </nav>
+                            <Link to="/" className={linkCls(isCatalogo)}>Catálogo</Link>
                         )}
-
-                        <Link
-                            to="/contact"
-                            title="Contáctanos"
-                            aria-label="Contáctanos"
-                            className={`flex items-center gap-2 px-3.5 sm:px-5 py-2.5 rounded-full font-bold text-sm transition-all shadow-sm shrink-0 ${isContact
-                                ? "text-white ring-2"
-                                : "bg-slate-50 text-slate-700 hover:bg-white hover:shadow-md border border-slate-200"
-                                }`}
-                            style={isContact ? {
-                                background: brand.dot,
-                                boxShadow: `0 2px 8px ${brand.ring}`,
-                                outline: `2px solid ${brand.ring}`,
-                                outlineOffset: "2px",
-                            } : {}}
-                        >
-                            <MessageCircle className="w-4 h-4" />
-                            <span className="hidden sm:inline">Contacto</span>
-                        </Link>
-                    </div>
+                        <Link to="/contact" className={linkCls(isContact)}>Contacto</Link>
+                    </nav>
                 </div>
             </div>
-        </motion.header>
+        </header>
     );
 }
