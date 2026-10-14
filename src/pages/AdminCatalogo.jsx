@@ -380,6 +380,23 @@ export default function AdminCatalogo() {
     } catch {}
   }
 
+  // Mueve una sección dentro de otra (ej. BOARDS dentro de COMPONENTES) o la deja de primer nivel
+  async function updateCategoryParent(cat, parentId) {
+    setCategoryError("");
+    const previous = cat.parent_id ?? null;
+    setCategories((prev) => prev.map((c) => c.id === cat.id ? { ...c, parent_id: parentId } : c));
+    try {
+      const r = await fetch(`${API}/admin/categories/${cat.id}`, {
+        method: "PATCH", headers, body: JSON.stringify({ parent_id: parentId }),
+      });
+      const d = await r.json();
+      if (!d.ok) throw new Error(d.error);
+    } catch (err) {
+      setCategories((prev) => prev.map((c) => c.id === cat.id ? { ...c, parent_id: previous } : c));
+      setCategoryError("No se pudo mover la sección. Una sección con subsecciones no puede quedar dentro de otra.");
+    }
+  }
+
   async function deleteCategory(cat) {
     setCategoryError("");
     try {
@@ -995,8 +1012,10 @@ export default function AdminCatalogo() {
             <div className="space-y-2">
               {categories.map((cat) => {
                 const count = products.filter((p) => p.category === cat.name).length;
+                const hasChildren = categories.some((c) => c.parent_id === cat.id);
+                const parentOptions = categories.filter((c) => c.id !== cat.id && !c.parent_id);
                 return (
-                  <div key={cat.id} className="flex items-center gap-3 px-3 py-2 rounded-xl border border-slate-200">
+                  <div key={cat.id} className="flex items-center gap-3 px-3 py-2 rounded-xl border border-slate-200 flex-wrap sm:flex-nowrap">
                     <input
                       type="color"
                       value={cat.color}
@@ -1004,7 +1023,22 @@ export default function AdminCatalogo() {
                       className="w-8 h-8 rounded-lg border border-slate-200 cursor-pointer shrink-0"
                       title="Color de la sección"
                     />
-                    <span className="font-semibold text-slate-700 text-sm flex-1">{cat.name}</span>
+                    <span className="font-semibold text-slate-700 text-sm flex-1 min-w-[120px]">
+                      {cat.parent_id ? "↳ " : ""}{cat.name}
+                      {hasChildren && <span className="ml-2 text-[10px] font-bold uppercase text-indigo-500">agrupa subsecciones</span>}
+                    </span>
+                    <select
+                      value={cat.parent_id ?? ""}
+                      onChange={(e) => updateCategoryParent(cat, e.target.value === "" ? null : Number(e.target.value))}
+                      disabled={hasChildren}
+                      title={hasChildren ? "Esta sección agrupa otras, no puede quedar dentro de una" : "Mostrar esta sección dentro de otra en el catálogo"}
+                      className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-600 disabled:opacity-40"
+                    >
+                      <option value="">Nivel principal</option>
+                      {parentOptions.map((p) => (
+                        <option key={p.id} value={p.id}>Dentro de {p.name}</option>
+                      ))}
+                    </select>
                     <span className="text-xs text-slate-400">{count} producto{count !== 1 ? "s" : ""}</span>
                     <button
                       onClick={() => deleteCategory(cat)}

@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef, createContext, useContext } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowDown, AlertTriangle, Layers, ShoppingBag } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
@@ -508,6 +509,231 @@ function BundleModal({ deal, onClose, onOpenProduct, waHref }) {
   );
 }
 
+// Navegación de categorías sin scroll horizontal:
+// - escritorio: pestañas de primer nivel; las que agrupan (COMPONENTES) abren un panel con flecha visible
+// - móvil: un solo botón que abre una hoja inferior con todas las secciones
+function CategoryNav({ tabs, childrenOf, parentOf, treeCounts, ownCounts, category, onSelect }) {
+  const [menuOpen, setMenuOpen] = useState(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [expanded, setExpanded] = useState(null);
+  const railRef = useRef(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDown = (e) => { if (!railRef.current?.contains(e.target)) setMenuOpen(null); };
+    const onKey = (e) => e.key === "Escape" && setMenuOpen(null);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (!sheetOpen) return;
+    const onKey = (e) => e.key === "Escape" && setSheetOpen(false);
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [sheetOpen]);
+
+  const kidsOf = (parent) =>
+    (childrenOf.get(parent) ?? []).filter((k) => (ownCounts[k] ?? 0) > 0 || k === category);
+  const activeTop = parentOf.get(category) ?? category;
+  const pick = (cat) => { onSelect(cat); setMenuOpen(null); setSheetOpen(false); };
+
+  const currentLabel = category === "Todos"
+    ? "Todos"
+    : parentOf.has(category) ? `${parentOf.get(category)} · ${category}` : category;
+
+  const tabCls = (active) =>
+    `inline-flex items-center gap-1.5 pb-3 pt-3.5 text-xs font-bold uppercase tracking-wide border-b-[3px] transition-colors ${
+      active ? "text-slate-900" : "text-slate-600 border-transparent hover:text-slate-900"
+    }`;
+
+  return (
+    <div ref={railRef}>
+      {/* ── Escritorio ── */}
+      <div className="hidden md:flex flex-wrap gap-x-7">
+        <button
+          onClick={() => pick("Todos")}
+          style={category === "Todos" ? { borderBottomColor: "var(--brand)" } : {}}
+          className={tabCls(category === "Todos")}
+        >
+          Todos <span className={`font-mono font-medium ${category === "Todos" ? "brand-text" : "text-slate-500"}`}>{treeCounts.Todos}</span>
+        </button>
+
+        {tabs.map((cat) => {
+          const kids = kidsOf(cat);
+          const active = activeTop === cat;
+          const count = treeCounts[cat] ?? 0;
+
+          if (!kids.length) {
+            return (
+              <button
+                key={cat}
+                onClick={() => pick(cat)}
+                style={active ? { borderBottomColor: "var(--brand)" } : {}}
+                className={tabCls(active)}
+              >
+                {cat} <span className={`font-mono font-medium ${active ? "brand-text" : "text-slate-500"}`}>{count}</span>
+              </button>
+            );
+          }
+
+          const open = menuOpen === cat;
+          return (
+            <div key={cat} className="relative">
+              <button
+                onClick={() => setMenuOpen(open ? null : cat)}
+                aria-haspopup="true"
+                aria-expanded={open}
+                style={active || open ? { borderBottomColor: "var(--brand)" } : {}}
+                className={tabCls(active || open)}
+              >
+                {cat}
+                {parentOf.get(category) === cat && <span className="normal-case font-semibold brand-text">· {category}</span>}
+                <span className={`font-mono font-medium ${active ? "brand-text" : "text-slate-500"}`}>
+                  {parentOf.get(category) === cat ? (ownCounts[category] ?? 0) : count}
+                </span>
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${open ? "rotate-180 brand-text" : "text-slate-500"}`} />
+              </button>
+
+              {open && (
+                <div className="absolute left-0 top-full -mt-px z-50 w-[420px] bg-white border border-slate-300 shadow-xl p-2">
+                  <button
+                    onClick={() => pick(cat)}
+                    className={`w-full flex items-center justify-between px-3 py-2.5 text-sm font-bold text-left transition-colors ${
+                      category === cat ? "bg-slate-900 text-white" : "text-slate-900 hover:bg-slate-100"
+                    }`}
+                  >
+                    Todos los {cat.toLowerCase()}
+                    <span className="font-mono text-xs font-medium opacity-70">{count}</span>
+                  </button>
+                  <div className="grid grid-cols-2 gap-0.5 mt-1">
+                    {kids.map((k) => (
+                      <button
+                        key={k}
+                        onClick={() => pick(k)}
+                        className={`flex items-center justify-between gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-left transition-colors ${
+                          category === k ? "text-white" : "text-slate-700 hover:bg-slate-100"
+                        }`}
+                        style={category === k ? { background: "var(--brand)" } : undefined}
+                      >
+                        <span className="truncate">{k}</span>
+                        <span className="font-mono font-medium opacity-70">{ownCounts[k] ?? 0}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Móvil ── */}
+      <button
+        onClick={() => { setExpanded(activeTop !== "Todos" && kidsOf(activeTop).length ? activeTop : null); setSheetOpen(true); }}
+        className="md:hidden w-full flex items-center justify-between gap-3 py-3 text-left"
+      >
+        <span className="min-w-0">
+          <span className="block font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-slate-500">Categoría</span>
+          <span className="block text-sm font-bold uppercase tracking-wide text-slate-900 truncate">{currentLabel}</span>
+        </span>
+        <span className="flex items-center gap-2 shrink-0 px-3 py-2 border border-slate-400 text-xs font-bold uppercase tracking-wide text-slate-900 bg-white">
+          Cambiar <ChevronDown className="w-4 h-4" />
+        </span>
+      </button>
+
+      {sheetOpen && createPortal(
+        <div className="md:hidden fixed inset-0 z-[90] bg-slate-900/50" onClick={() => setSheetOpen(false)}>
+          <div
+            className="modal-pop absolute bottom-0 inset-x-0 bg-white rounded-t-xl max-h-[78vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+            style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom, 0px))" }}
+          >
+            <div className="sticky top-0 bg-white flex items-center justify-between px-5 py-4 border-b border-slate-300">
+              <p className="font-display font-bold text-lg text-slate-900">Categorías</p>
+              <button onClick={() => setSheetOpen(false)} aria-label="Cerrar" className="w-9 h-9 flex items-center justify-center border border-slate-300 text-slate-700">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="py-1">
+              <button
+                onClick={() => pick("Todos")}
+                className={`w-full flex items-center justify-between px-5 py-3.5 text-sm font-bold uppercase tracking-wide text-left ${category === "Todos" ? "brand-text" : "text-slate-900"}`}
+              >
+                Todos <span className="font-mono text-xs font-medium text-slate-500">{treeCounts.Todos}</span>
+              </button>
+
+              {tabs.map((cat) => {
+                const kids = kidsOf(cat);
+                const count = treeCounts[cat] ?? 0;
+                const isActive = activeTop === cat;
+
+                if (!kids.length) {
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => pick(cat)}
+                      className={`w-full flex items-center justify-between px-5 py-3.5 text-sm font-bold uppercase tracking-wide text-left border-t border-slate-200 ${isActive ? "brand-text" : "text-slate-900"}`}
+                    >
+                      {cat} <span className="font-mono text-xs font-medium text-slate-500">{count}</span>
+                    </button>
+                  );
+                }
+
+                const isOpen = expanded === cat;
+                return (
+                  <div key={cat} className="border-t border-slate-200">
+                    <button
+                      onClick={() => setExpanded(isOpen ? null : cat)}
+                      aria-expanded={isOpen}
+                      className={`w-full flex items-center justify-between px-5 py-3.5 text-sm font-bold uppercase tracking-wide text-left ${isActive ? "brand-text" : "text-slate-900"}`}
+                    >
+                      <span className="flex items-center gap-2">
+                        {cat}
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                      </span>
+                      <span className="font-mono text-xs font-medium text-slate-500">{count}</span>
+                    </button>
+                    {isOpen && (
+                      <div className="pb-2 bg-slate-50">
+                        <button
+                          onClick={() => pick(cat)}
+                          className={`w-full flex items-center justify-between pl-9 pr-5 py-3 text-sm font-semibold text-left ${category === cat ? "brand-text" : "text-slate-800"}`}
+                        >
+                          Todos los {cat.toLowerCase()} <span className="font-mono text-xs text-slate-500">{count}</span>
+                        </button>
+                        {kids.map((k) => (
+                          <button
+                            key={k}
+                            onClick={() => pick(k)}
+                            className={`w-full flex items-center justify-between pl-9 pr-5 py-3 text-sm font-semibold uppercase tracking-wide text-left ${category === k ? "brand-text" : "text-slate-800"}`}
+                          >
+                            {k} <span className="font-mono text-xs text-slate-500">{ownCounts[k] ?? 0}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+    </div>
+  );
+}
+
 export default function CatalogoV2() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
@@ -523,8 +749,6 @@ export default function CatalogoV2() {
   const [bundleDeals, setBundleDeals] = useState([]);
   const [bundleModal, setBundleModal] = useState(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const catScrollRef = useRef(null);
-  const [showCatHint, setShowCatHint] = useState(false);
   const offersScrollRef = useRef(null);
   const [offersHint, setOffersHint] = useState({ left: false, right: false });
 
@@ -608,22 +832,41 @@ export default function CatalogoV2() {
     return counts;
   }, [products]);
 
-  // Pestañas: solo categorías con productos disponibles (la activa siempre se muestra)
-  const CATEGORIES = useMemo(
-    () => ["Todos", ...CATEGORY_ORDER.filter((c) => (categoryCounts[c] ?? 0) > 0 || c === category)],
-    [CATEGORY_ORDER, categoryCounts, category]
-  );
+  // Jerarquía: qué categorías viven dentro de otra (ej. BOARDS dentro de COMPONENTES)
+  const childrenOf = useMemo(() => {
+    const map = new Map();
+    categories.forEach((c) => {
+      const parent = categories.find((p) => p.id === c.parent_id);
+      if (!parent) return;
+      if (!map.has(parent.name)) map.set(parent.name, []);
+      map.get(parent.name).push(c.name);
+    });
+    return map;
+  }, [categories]);
 
-  // Detecta si el scroll de categorías tiene overflow → muestra hint visual
-  useEffect(() => {
-    const el = catScrollRef.current;
-    if (!el) return;
-    const check = () => setShowCatHint(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
-    check();
-    el.addEventListener("scroll", check, { passive: true });
-    window.addEventListener("resize", check);
-    return () => { el.removeEventListener("scroll", check); window.removeEventListener("resize", check); };
-  }, [CATEGORIES]);
+  const parentOf = useMemo(() => {
+    const map = new Map();
+    childrenOf.forEach((kids, parent) => kids.forEach((k) => map.set(k, parent)));
+    return map;
+  }, [childrenOf]);
+
+  // Conteo "de árbol": una sección que agrupa suma sus subsecciones
+  const treeCounts = useMemo(() => {
+    const counts = { Todos: categoryCounts.Todos };
+    CATEGORY_ORDER.forEach((cat) => {
+      counts[cat] = (categoryCounts[cat] ?? 0)
+        + (childrenOf.get(cat) ?? []).reduce((sum, k) => sum + (categoryCounts[k] ?? 0), 0);
+    });
+    return counts;
+  }, [categoryCounts, childrenOf, CATEGORY_ORDER]);
+
+  // Barra principal: solo secciones de primer nivel con productos (la activa siempre se muestra)
+  const tabs = useMemo(
+    () => CATEGORY_ORDER.filter(
+      (c) => !parentOf.has(c) && ((treeCounts[c] ?? 0) > 0 || c === category || parentOf.get(category) === c)
+    ),
+    [CATEGORY_ORDER, parentOf, treeCounts, category]
+  );
 
   // Detecta overflow a cada lado de la franja de ofertas
   useEffect(() => {
@@ -646,13 +889,13 @@ export default function CatalogoV2() {
   const filtered = useMemo(() => {
     return products.filter((p) => {
       if (!p.available) return false;                                                    // ocultar agotados
-      if (category !== "Todos" && p.category !== category) return false;
+      if (category !== "Todos" && p.category !== category && !(childrenOf.get(category) ?? []).includes(p.category)) return false;
       if (search.trim() && !p.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
       if (minPrice !== "" && p.price < Number(minPrice)) return false;
       if (maxPrice !== "" && p.price > Number(maxPrice)) return false;
       return true;
     });
-  }, [products, category, search, minPrice, maxPrice]);
+  }, [products, category, search, minPrice, maxPrice, childrenOf]);
 
   // Orden de la cuadrícula: por sección del catálogo y luego por precio
   const ordered = useMemo(() => {
@@ -940,35 +1183,15 @@ export default function CatalogoV2() {
           className="sticky top-16 sm:top-[72px] z-40 -mx-4 sm:-mx-6 px-4 sm:px-6 backdrop-blur border-b border-slate-300"
           style={{ background: "rgba(246,247,249,0.94)" }}
         >
-          <div className="relative min-w-0 w-full">
-            <div ref={catScrollRef} className="flex gap-6 overflow-x-auto min-w-0 w-full scrollbar-hide">
-              {CATEGORIES.map((cat) => {
-                const active = category === cat;
-                const count = categoryCounts[cat] ?? 0;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => selectCategory(cat)}
-                    style={active ? { borderBottomColor: "var(--brand)" } : {}}
-                    className={`shrink-0 inline-flex items-baseline gap-1.5 pb-3 pt-3.5 text-xs font-bold uppercase tracking-wide border-b-[3px] transition-colors ${
-                      active ? "text-slate-900" : "text-slate-600 border-transparent hover:text-slate-900"
-                    }`}
-                  >
-                    {cat}
-                    <span className={`font-mono font-medium normal-case ${active ? "brand-text" : "text-slate-500"}`}>{count}</span>
-                  </button>
-                );
-              })}
-            </div>
-            {showCatHint && (
-              <div
-                className="pointer-events-none absolute right-0 top-0 bottom-0 w-14 flex items-center justify-end"
-                style={{ background: `linear-gradient(to left, ${PAGE_BG} 35%, transparent)` }}
-              >
-                <ChevronRight className="w-4 h-4 text-slate-600" />
-              </div>
-            )}
-          </div>
+          <CategoryNav
+            tabs={tabs}
+            childrenOf={childrenOf}
+            parentOf={parentOf}
+            treeCounts={treeCounts}
+            ownCounts={categoryCounts}
+            category={category}
+            onSelect={selectCategory}
+          />
         </div>
 
         {/* Búsqueda + rango de precio en una sola fila */}
