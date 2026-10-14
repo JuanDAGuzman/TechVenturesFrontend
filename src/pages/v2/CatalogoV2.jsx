@@ -1,8 +1,8 @@
 import { useEffect, useState, useMemo, useRef, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
-import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowDown, AlertTriangle, Layers, ShoppingBag } from "lucide-react";
+import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowDown, AlertTriangle, Layers, Percent, ShoppingBag } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
 import { brandFromColor, DEFAULT_BRAND } from "../../lib/categoryBrand.js";
 
@@ -710,6 +710,157 @@ function Hero() {
   );
 }
 
+// Ofertas en dos paneles desplegables independientes (por cantidad / con descuento).
+// Cerrados ocupan una fila cada uno; solo uno abierto a la vez para no abrumar la página.
+function OffersPanel({ bundleDeals, discounted, onOpenBundle, onOpenProduct, onSeeAllDiscounts }) {
+  const [open, setOpen] = useState(null);
+
+  const discPct = (p) => Math.round((1 - Number(p.price) / Number(p.original_price)) * 100);
+  const bestDiscounts = useMemo(() => [...discounted].sort((a, b) => discPct(b) - discPct(a)), [discounted]);
+  const maxBundlePct = Math.max(0, ...bundleDeals.map((d) => dealStats(d).savingPct));
+  const maxDiscPct = bestDiscounts.length ? discPct(bestDiscounts[0]) : 0;
+
+  const rows = [
+    bundleDeals.length > 0 && {
+      key: "bundles",
+      Icon: Layers,
+      title: "Ofertas por cantidad",
+      teaser: `${bundleDeals.length} oferta${bundleDeals.length !== 1 ? "s" : ""}${maxBundlePct > 0 ? ` · hasta -${maxBundlePct}%` : ""}`,
+      preview: bundleDeals.map((d) => d.match_name).join(" · "),
+    },
+    discounted.length > 0 && {
+      key: "discounts",
+      Icon: Percent,
+      title: "Artículos con descuento",
+      teaser: `${discounted.length} artículo${discounted.length !== 1 ? "s" : ""}${maxDiscPct > 0 ? ` · hasta -${maxDiscPct}%` : ""}`,
+      preview: bestDiscounts.slice(0, 3).map((p) => p.name).join(" · "),
+    },
+  ].filter(Boolean);
+
+  if (!rows.length) return null;
+
+  return (
+    <div className="bg-white border border-slate-300 rounded-[6px] overflow-hidden">
+      {rows.map((row, i) => {
+        const isOpen = open === row.key;
+        return (
+          <div key={row.key} className={i > 0 ? "border-t border-slate-300" : ""}>
+            <button
+              onClick={() => setOpen(isOpen ? null : row.key)}
+              aria-expanded={isOpen}
+              className="w-full flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-4 text-left hover:bg-slate-50 transition-colors"
+            >
+              <span className="w-9 h-9 flex items-center justify-center rounded-[4px] shrink-0" style={{ background: "var(--brand-ring)" }}>
+                <row.Icon className="w-[18px] h-[18px] brand-text" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block font-display font-bold text-base sm:text-lg text-slate-900 leading-tight">{row.title}</span>
+                <span className="block font-mono text-[11px] font-medium uppercase tracking-wider text-slate-600 mt-0.5">{row.teaser}</span>
+              </span>
+              <span className="hidden md:block max-w-[36%] truncate text-xs text-slate-500">{row.preview}</span>
+              <span className="flex items-center gap-1.5 shrink-0 text-xs font-bold uppercase tracking-wide text-slate-800">
+                <span className="hidden sm:inline">{isOpen ? "Ocultar" : "Ver"}</span>
+                <ChevronDown className={`w-5 h-5 transition-transform duration-300 ${isOpen ? "rotate-180 brand-text" : ""}`} />
+              </span>
+            </button>
+
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  key="content"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-4 sm:px-5 pb-5 pt-1">
+                    {row.key === "bundles" ? (
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {bundleDeals.map((deal) => {
+                          const { dealProducts, minP, savingPct } = dealStats(deal);
+                          return (
+                            <button
+                              key={deal.id}
+                              onClick={() => onOpenBundle(deal)}
+                              className="bg-white border border-slate-300 border-t-[3px] border-t-[var(--brand)] rounded-[4px] p-4 flex flex-col text-left min-h-[172px] hover:border-slate-900 hover:border-t-[var(--brand)] transition-colors"
+                            >
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-wider brand-text">
+                                  <Layers className="w-3 h-3 shrink-0" /> Por cantidad
+                                </span>
+                                {savingPct > 0 && (
+                                  <span className="font-mono text-[13px] font-bold px-2 py-1 rounded-[3px] text-white leading-none" style={{ background: ACCENT }}>
+                                    -{savingPct}%
+                                  </span>
+                                )}
+                              </div>
+                              <p className="font-display font-bold text-slate-900 text-lg leading-tight mt-2 line-clamp-2">{deal.match_name}</p>
+                              <div className="mt-auto flex items-baseline justify-between gap-2">
+                                <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-700">Desde {deal.min_quantity} unidades</p>
+                                {minP > 0 && <p className="font-mono text-[11px] text-slate-500 line-through leading-none whitespace-nowrap">{formatCop(minP)}</p>}
+                              </div>
+                              <p className="font-mono font-bold text-slate-900 text-[26px] leading-none mt-1.5 whitespace-nowrap">
+                                {formatCop(deal.bundle_price)}<span className="text-[11px] font-semibold text-slate-500 ml-1">c/u</span>
+                              </p>
+                              <p className="text-[11px] font-semibold text-slate-600 mt-2 flex items-center gap-1">
+                                Ver detalle <ArrowRight className="w-3 h-3" />
+                                {dealProducts.length > 1 && <span className="ml-auto font-mono font-normal text-slate-500">{dealProducts.length} variantes</span>}
+                              </p>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                          {bestDiscounts.slice(0, 6).map((p) => (
+                            <div
+                              key={p.id}
+                              onClick={() => onOpenProduct(p)}
+                              className="group bg-white border border-slate-300 rounded-[4px] flex flex-col cursor-pointer overflow-hidden hover:border-slate-900 transition-colors"
+                            >
+                              <div className="relative h-[96px] flex items-center justify-center p-2" style={{ background: "linear-gradient(180deg, #f8f9fc 0%, #eceff5 100%)" }}>
+                                {p.image_url
+                                  ? <img src={p.image_url} alt={p.name} className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105" style={{ mixBlendMode: "multiply" }} />
+                                  : <Package className="w-7 h-7 text-slate-400" />}
+                                <span className="absolute top-1.5 right-1.5 font-mono text-[13px] font-bold px-2 py-1 rounded-[3px] text-white leading-none" style={{ background: ACCENT }}>
+                                  -{discPct(p)}%
+                                </span>
+                              </div>
+                              <div className="p-3 flex flex-col flex-1">
+                                <p className="text-xs font-semibold text-slate-900 leading-tight line-clamp-2">
+                                  {p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}
+                                </p>
+                                <div className="mt-auto pt-2">
+                                  <p className="text-[10px] text-slate-500 line-through font-mono leading-none">{formatCop(p.original_price)}</p>
+                                  <p className="text-sm font-bold font-mono leading-tight text-slate-900 mt-0.5">{formatCop(p.price)}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 flex justify-end">
+                          <button
+                            onClick={onSeeAllDiscounts}
+                            className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold uppercase tracking-wide rounded-[3px] bg-slate-900 text-white hover:bg-[var(--brand)] transition-colors"
+                          >
+                            Ver los {discounted.length} en el catálogo <ArrowRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // Navegación de categorías sin scroll horizontal:
 // - escritorio: pestañas de primer nivel; las que agrupan (COMPONENTES) abren un panel con flecha visible
 // - móvil: un solo botón que abre una hoja inferior con todas las secciones
@@ -950,8 +1101,7 @@ export default function CatalogoV2() {
   const [bundleDeals, setBundleDeals] = useState([]);
   const [bundleModal, setBundleModal] = useState(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const offersScrollRef = useRef(null);
-  const [offersHint, setOffersHint] = useState({ left: false, right: false });
+  const [onlyDiscount, setOnlyDiscount] = useState(false);
 
   useEffect(() => {
     Promise.all([
@@ -1069,24 +1219,6 @@ export default function CatalogoV2() {
     [CATEGORY_ORDER, parentOf, treeCounts, category]
   );
 
-  // Detecta overflow a cada lado de la franja de ofertas
-  useEffect(() => {
-    const el = offersScrollRef.current;
-    if (!el) return;
-    const check = () => setOffersHint({
-      left: el.scrollLeft > 8,
-      right: el.scrollLeft + el.clientWidth < el.scrollWidth - 8,
-    });
-    check();
-    el.addEventListener("scroll", check, { passive: true });
-    window.addEventListener("resize", check);
-    return () => { el.removeEventListener("scroll", check); window.removeEventListener("resize", check); };
-  }, [products, bundleDeals]);
-
-  function scrollOffers(dir) {
-    offersScrollRef.current?.scrollBy({ left: dir * 520, behavior: "smooth" });
-  }
-
   const filtered = useMemo(() => {
     return products.filter((p) => {
       if (!p.available) return false;                                                    // ocultar agotados
@@ -1094,9 +1226,10 @@ export default function CatalogoV2() {
       if (search.trim() && !p.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
       if (minPrice !== "" && p.price < Number(minPrice)) return false;
       if (maxPrice !== "" && p.price > Number(maxPrice)) return false;
+      if (onlyDiscount && !(p.original_price && Number(p.original_price) > Number(p.price))) return false;
       return true;
     });
-  }, [products, category, search, minPrice, maxPrice, childrenOf]);
+  }, [products, category, search, minPrice, maxPrice, childrenOf, onlyDiscount]);
 
   // Orden de la cuadrícula: por sección del catálogo y luego por precio
   const ordered = useMemo(() => {
@@ -1107,7 +1240,7 @@ export default function CatalogoV2() {
   }, [filtered, CATEGORY_ORDER]);
 
   // Al cambiar cualquier filtro se vuelve a la primera página
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [category, search, minPrice, maxPrice]);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [category, search, minPrice, maxPrice, onlyDiscount]);
 
   const visible = ordered.slice(0, visibleCount);
   const remaining = ordered.length - visible.length;
@@ -1171,13 +1304,24 @@ export default function CatalogoV2() {
     return [...groups.values()];
   }, [selectedProducts, settings]);
 
-  const hasActiveFilters = category !== "Todos" || search.trim() || minPrice || maxPrice;
+  const hasActiveFilters = category !== "Todos" || search.trim() || minPrice || maxPrice || onlyDiscount;
 
   function clearFilters() {
     selectCategory("Todos");
     setSearch("");
     setMinPrice("");
     setMaxPrice("");
+    setOnlyDiscount(false);
+  }
+
+  // Desde el panel de ofertas: filtra el catálogo por artículos en descuento y baja a él
+  function showAllDiscounts() {
+    selectCategory("Todos");
+    setSearch("");
+    setMinPrice("");
+    setMaxPrice("");
+    setOnlyDiscount(true);
+    setTimeout(() => document.getElementById("catalogo")?.scrollIntoView({ behavior: "smooth" }), 60);
   }
 
   // Acento único: las variables --brand quedan fijas en el morado de marca
@@ -1224,116 +1368,16 @@ export default function CatalogoV2() {
         </section>
       )}
 
-      {/* ── Ofertas: una sola franja compacta con scroll horizontal ── */}
+      {/* ── Ofertas: dos paneles desplegables, cerrados por defecto ── */}
       {totalOffers > 0 && (
-        <section className="py-7 sm:py-8 border-b border-slate-300">
-          <div className="flex items-center gap-3 mb-4">
-            <h2 className="font-display font-bold text-2xl tracking-tight text-slate-900 leading-none">Ofertas</h2>
-            <span className="font-mono text-[11px] font-medium text-slate-600 uppercase tracking-wider">
-              {totalOffers} activa{totalOffers !== 1 ? "s" : ""}
-            </span>
-            <div className="ml-auto hidden sm:flex gap-1.5">
-              <button
-                onClick={() => scrollOffers(-1)}
-                disabled={!offersHint.left}
-                aria-label="Ofertas anteriores"
-                className="w-9 h-9 flex items-center justify-center border border-slate-400 text-slate-800 bg-white hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-colors disabled:opacity-30 disabled:pointer-events-none"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => scrollOffers(1)}
-                disabled={!offersHint.right}
-                aria-label="Más ofertas"
-                className="w-9 h-9 flex items-center justify-center border border-slate-400 text-slate-800 bg-white hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-colors disabled:opacity-30 disabled:pointer-events-none"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div className="relative">
-            <div ref={offersScrollRef} className="flex gap-3 overflow-x-auto scrollbar-hide snap-x pb-1">
-
-              {/* Ofertas por cantidad: primero, con acento propio */}
-              {bundleDeals.map((deal) => {
-                const { dealProducts, minP, savingPct } = dealStats(deal);
-                return (
-                  <button
-                    key={`deal-${deal.id}`}
-                    onClick={() => setBundleModal(deal)}
-                    className="snap-start shrink-0 w-[250px] h-[184px] bg-white border border-slate-300 border-t-[3px] border-t-[var(--brand)] p-4 flex flex-col text-left hover:border-slate-900 hover:border-t-[var(--brand)] transition-colors"
-                  >
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-wider brand-text">
-                        <Layers className="w-3 h-3 shrink-0" /> Por cantidad
-                      </span>
-                      {savingPct > 0 && (
-                        <span className="font-mono text-[13px] font-bold px-2 py-1 rounded-[3px] text-white leading-none" style={{ background: ACCENT }}>
-                          -{savingPct}%
-                        </span>
-                      )}
-                    </div>
-                    <p className="font-display font-bold text-slate-900 text-lg leading-tight mt-2 line-clamp-2">{deal.match_name}</p>
-                    <div className="mt-auto flex items-baseline justify-between gap-2">
-                      <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-700">
-                        Desde {deal.min_quantity} unidades
-                      </p>
-                      {minP > 0 && <p className="font-mono text-[11px] text-slate-500 line-through leading-none whitespace-nowrap">{formatCop(minP)}</p>}
-                    </div>
-                    <p className="font-mono font-bold text-slate-900 text-[26px] leading-none mt-1.5 whitespace-nowrap">
-                      {formatCop(deal.bundle_price)}<span className="text-[11px] font-semibold text-slate-500 ml-1">c/u</span>
-                    </p>
-                    <p className="text-[11px] font-semibold text-slate-600 mt-2 flex items-center gap-1">
-                      Ver detalle <ArrowRight className="w-3 h-3" />
-                      {dealProducts.length > 1 && <span className="ml-auto font-mono font-normal text-slate-500">{dealProducts.length} variantes</span>}
-                    </p>
-                  </button>
-                );
-              })}
-
-              {/* Artículos con descuento */}
-              {discounted.map((p) => {
-                const pct = Math.round((1 - Number(p.price) / Number(p.original_price)) * 100);
-                return (
-                  <div
-                    key={p.id}
-                    onClick={() => setDetailProduct(p)}
-                    className="group snap-start shrink-0 w-[168px] h-[184px] bg-white border border-slate-300 flex flex-col cursor-pointer hover:border-slate-900 transition-colors"
-                  >
-                    <div className="relative h-[84px] flex items-center justify-center p-2">
-                      {p.image_url
-                        ? <img src={p.image_url} alt={p.name} className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105" style={{ mixBlendMode: "multiply" }} />
-                        : <Package className="w-7 h-7 text-slate-400" />}
-                      <span
-                        className="absolute top-1.5 right-1.5 font-mono text-[13px] font-bold px-2 py-1 rounded-[3px] text-white leading-none"
-                        style={{ background: ACCENT }}
-                      >
-                        -{pct}%
-                      </span>
-                    </div>
-                    <div className="px-3 pb-3 flex flex-col flex-1 min-h-0">
-                      <p className="text-xs font-semibold text-slate-900 leading-tight line-clamp-2">
-                        {p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}
-                      </p>
-                      <div className="mt-auto">
-                        <p className="text-[10px] text-slate-500 line-through font-mono leading-none">{formatCop(p.original_price)}</p>
-                        <p className="text-sm font-bold font-mono leading-tight text-slate-900 mt-0.5">{formatCop(p.price)}</p>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {offersHint.right && (
-              <div
-                className="pointer-events-none absolute right-0 top-0 bottom-1 w-14 flex items-center justify-end"
-                style={{ background: `linear-gradient(to left, ${PAGE_BG} 35%, transparent)` }}
-              >
-                <ChevronRight className="w-4 h-4 text-slate-600" />
-              </div>
-            )}
-          </div>
+        <section className="py-6 sm:py-7 border-b border-slate-300">
+          <OffersPanel
+            bundleDeals={bundleDeals}
+            discounted={discounted}
+            onOpenBundle={setBundleModal}
+            onOpenProduct={setDetailProduct}
+            onSeeAllDiscounts={showAllDiscounts}
+          />
         </section>
       )}
 
@@ -1382,6 +1426,19 @@ export default function CatalogoV2() {
             onChange={(e) => setMaxPrice(e.target.value)}
             className="w-[46%] sm:w-36 px-3 py-2.5 border border-slate-400 input-themed outline-none text-sm bg-white placeholder:text-slate-500"
           />
+          {discounted.length > 0 && (
+            <button
+              onClick={() => setOnlyDiscount((v) => !v)}
+              aria-pressed={onlyDiscount}
+              className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 border text-sm font-bold transition-colors ${
+                onlyDiscount ? "text-white border-transparent" : "bg-white text-slate-800 border-slate-400 hover:border-slate-900"
+              }`}
+              style={onlyDiscount ? { background: "var(--brand)" } : undefined}
+            >
+              <Tag className="w-4 h-4" /> En descuento
+              <span className={`font-mono text-xs font-medium ${onlyDiscount ? "opacity-80" : "text-slate-500"}`}>{discounted.length}</span>
+            </button>
+          )}
         </div>
 
         {/* Slider de precio máximo */}
