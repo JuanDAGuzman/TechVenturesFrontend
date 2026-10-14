@@ -76,7 +76,7 @@ function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }
         {p.image_url ? (
           <img src={p.image_url} alt={p.name} className="h-full w-full object-contain p-1" />
         ) : (
-          <Package className="w-6 h-6" style={{ color: dot }} />
+          <Package className="w-6 h-6 text-slate-400" />
         )}
       </div>
 
@@ -86,12 +86,12 @@ function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }
         {(p.tier || p.is_flagship) && (
           <div className="flex flex-wrap gap-1 mt-0.5">
             {p.tier && (
-              <span className="inline-block w-fit text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600">
+              <span className="inline-block w-fit text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-[3px] bg-violet-50 text-brand-indigo">
                 Gama {p.tier}
               </span>
             )}
             {p.is_flagship && (
-              <span className="inline-flex items-center gap-0.5 w-fit text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-600">
+              <span className="inline-flex items-center gap-0.5 w-fit text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-[3px] bg-violet-50 text-violet-600">
                 <Star className="w-2.5 h-2.5 fill-current" />
                 Marca Insignia
               </span>
@@ -102,9 +102,9 @@ function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }
           <div className="flex flex-wrap gap-1 mt-0.5">
             {p.condition.split(",").map((tag) => tag.trim()).filter(Boolean).map((tag, i) => {
               const t = tag.toUpperCase();
-              const highlighted = t === "NUEVO" || t === "CON CAJA" || t === "SELLADO";
+              const highlighted = t === "NUEVO" || t === "CON CAJA" || t === "SELLADO" || t === "OPEN BOX";
               return (
-                <span key={i} className={`text-xs px-1.5 py-0.5 rounded-full ${highlighted ? "bg-emerald-100 text-emerald-700 font-medium" : "text-slate-400 bg-slate-100"}`}>
+                <span key={i} className={`text-xs px-1.5 py-0.5 rounded-[3px] ${highlighted ? "bg-violet-100 text-brand-indigo font-semibold" : "text-slate-600 bg-slate-100"}`}>
                   {tag}
                 </span>
               );
@@ -115,8 +115,7 @@ function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }
           {p.original_price && Number(p.original_price) > Number(p.price) && (
             <div className="flex items-center gap-1 mb-0.5">
               <span
-                className="flex items-center gap-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 bg-white"
-                style={{ color: dot, borderColor: dot }}
+                className="flex items-center gap-1 font-mono text-[11px] font-bold px-1.5 py-1 rounded-[3px] bg-brand-indigo text-white leading-none"
               >
                 <Tag className="w-2.5 h-2.5 shrink-0" />
                 -{Math.round((1 - p.price / p.original_price) * 100)}% descuento
@@ -176,8 +175,8 @@ function BundleFormFields({ form, setForm, products, error, onSave, onCancel, sa
     setForm(f => ({ ...f, match_name: val }));
   }
 
-  const inputCls = "w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-amber-400 outline-none transition text-sm";
-  const editCls  = "w-full px-3 py-2 rounded-lg border-2 border-amber-300 focus:border-amber-500 outline-none text-sm";
+  const inputCls = "w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-violet-400 outline-none transition text-sm";
+  const editCls  = "w-full px-3 py-2 rounded-lg border-2 border-violet-300 focus:border-violet-500 outline-none text-sm";
   const cls = mode === "edit" ? editCls : inputCls;
 
   return (
@@ -205,7 +204,7 @@ function BundleFormFields({ form, setForm, products, error, onSave, onCancel, sa
               </p>
               <div className="flex flex-wrap gap-1">
                 {matches.map(p => (
-                  <span key={p.id} className="text-[10px] bg-white border border-emerald-200 text-slate-700 px-2 py-0.5 rounded-full font-medium">
+                  <span key={p.id} className="text-[10px] bg-white border border-emerald-200 text-slate-700 px-2 py-0.5 rounded-[3px] font-medium">
                     {p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}
                   </span>
                 ))}
@@ -237,7 +236,7 @@ function BundleFormFields({ form, setForm, products, error, onSave, onCancel, sa
 
       <div className="flex gap-2">
         <button onClick={onSave} disabled={saving}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 disabled:opacity-60 transition-colors text-sm">
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-indigo text-white font-semibold hover:bg-brand-hover disabled:opacity-60 transition-colors text-sm">
           <Save className="w-4 h-4" />
           {mode === "edit" ? "Guardar" : "Crear oferta"}
         </button>
@@ -311,10 +310,18 @@ export default function AdminCatalogo() {
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
 
+  // Sección elegida + sus subsecciones (si agrupa otras)
+  const filterNames = useMemo(() => {
+    if (categoryFilter === "Todos") return null;
+    const parent = categories.find((c) => c.name === categoryFilter);
+    const kids = parent ? categories.filter((c) => c.parent_id === parent.id).map((c) => c.name) : [];
+    return new Set([categoryFilter, ...kids]);
+  }, [categoryFilter, categories]);
+
   const visibleProducts = useMemo(() => {
-    let list = categoryFilter === "Todos"
+    let list = !filterNames
       ? products
-      : products.filter((p) => p.category === categoryFilter);
+      : products.filter((p) => filterNames.has(p.category));
     if (availabilityFilter === "Disponible")    list = list.filter((p) => p.available);
     if (availabilityFilter === "No disponible") list = list.filter((p) => !p.available);
     if (nameFilter.trim()) {
@@ -322,7 +329,7 @@ export default function AdminCatalogo() {
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
     return list;
-  }, [products, categoryFilter, availabilityFilter, nameFilter]);
+  }, [products, filterNames, availabilityFilter, nameFilter]);
 
   useEffect(() => { loadAll(); }, []);
 
@@ -827,10 +834,10 @@ export default function AdminCatalogo() {
     <div className="container-page pb-10">
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-brand-indigo">Catálogo</h1>
-          <p className="text-sm text-slate-500 mt-0.5">
+          <h1 className="font-display font-bold text-slate-900 tracking-tight leading-none text-4xl">Catálogo<span className="brand-text">.</span></h1>
+          <p className="font-mono text-xs text-slate-600 mt-2 uppercase tracking-wider">
             {visibleProducts.length} de {products.length} producto{products.length !== 1 ? "s" : ""}
           </p>
         </div>
@@ -839,7 +846,7 @@ export default function AdminCatalogo() {
             <button
               onClick={() => setCopyMenuOpen((v) => !v)}
               disabled={!products.filter(p => p.available).length}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 transition-colors disabled:opacity-40"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-[3px] border border-slate-400 bg-white text-slate-800 text-xs font-bold uppercase tracking-wide hover:border-slate-900 transition-colors disabled:opacity-40"
               title="Copiar listado de inventario disponible"
             >
               {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
@@ -871,7 +878,7 @@ export default function AdminCatalogo() {
           <button
             onClick={downloadCatalogPdf}
             disabled={generatingPdf || !products.filter((p) => p.available).length}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-50 transition-colors disabled:opacity-40"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-[3px] border border-slate-400 bg-white text-slate-800 text-xs font-bold uppercase tracking-wide hover:border-slate-900 transition-colors disabled:opacity-40"
             title="Generar catálogo en PDF con los productos disponibles"
           >
             {generatingPdf ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
@@ -879,7 +886,7 @@ export default function AdminCatalogo() {
           </button>
           <button
             onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-indigo text-white font-semibold hover:bg-brand-hover transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-[3px] bg-slate-900 text-white text-xs font-bold uppercase tracking-wide hover:bg-brand-indigo transition-colors"
           >
             <Plus className="w-4 h-4" />
             <span>Agregar</span>
@@ -887,57 +894,64 @@ export default function AdminCatalogo() {
         </div>
       </div>
 
-      {/* Búsqueda por nombre */}
-      <div className="relative mb-3">
-        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-        <input
-          type="text"
-          value={nameFilter}
-          onChange={(e) => setNameFilter(e.target.value)}
-          placeholder="Buscar artículo por nombre..."
-          className="w-full pl-9 pr-9 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none bg-white transition text-sm"
-        />
-        {nameFilter && (
-          <button
-            onClick={() => setNameFilter("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-      </div>
-
-      {/* Filtro por categoría */}
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-2">
-        {FILTER_CATS.map((cat) => {
-          const b = BRAND[cat];
-          const active = categoryFilter === cat;
-          return (
+      {/* Búsqueda por nombre + sección */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        <div className="relative flex-1 min-w-[220px]">
+          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={nameFilter}
+            onChange={(e) => setNameFilter(e.target.value)}
+            placeholder="Buscar artículo por nombre..."
+            className="w-full pl-9 pr-9 py-2.5 rounded-[3px] border border-slate-400 focus:border-indigo-400 outline-none bg-white transition text-sm placeholder:text-slate-500"
+          />
+          {nameFilter && (
             <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              style={active && b ? { background: b.dot, color: "#fff", borderColor: "transparent" } : {}}
-              className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide border transition-all ${
-                active ? "shadow-sm" : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
-              }`}
+              onClick={() => setNameFilter("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-800"
             >
-              {cat}
+              <X className="w-4 h-4" />
             </button>
-          );
-        })}
+          )}
+        </div>
+
+        <select
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          aria-label="Filtrar por sección"
+          className="w-full sm:w-auto sm:min-w-[260px] px-3 py-2.5 rounded-[3px] border border-slate-400 bg-white text-sm font-bold uppercase tracking-wide text-slate-900 outline-none"
+        >
+          <option value="Todos">Todas las secciones ({products.length})</option>
+          {categories.filter((c) => !c.parent_id).map((c) => {
+            const kids = categories.filter((k) => k.parent_id === c.id);
+            const own = products.filter((p) => p.category === c.name).length;
+            if (!kids.length) {
+              return <option key={c.id} value={c.name}>{c.name} ({own})</option>;
+            }
+            const total = own + kids.reduce((n, k) => n + products.filter((p) => p.category === k.name).length, 0);
+            return (
+              <optgroup key={c.id} label={c.name}>
+                <option value={c.name}>Todos los {c.name.toLowerCase()} ({total})</option>
+                {kids.map((k) => (
+                  <option key={k.id} value={k.name}>{k.name} ({products.filter((p) => p.category === k.name).length})</option>
+                ))}
+              </optgroup>
+            );
+          })}
+        </select>
       </div>
 
       {/* Filtro por disponibilidad */}
       <div className="flex gap-2 mb-5">
         {[
-          { label: "Todos",          value: "Todos",          cls: "bg-white text-slate-600 border-slate-200 hover:border-slate-300", activeCls: "bg-slate-700 text-white border-transparent" },
-          { label: "Disponible",     value: "Disponible",     cls: "bg-white text-emerald-600 border-emerald-200 hover:border-emerald-300", activeCls: "bg-emerald-500 text-white border-transparent" },
-          { label: "No disponible",  value: "No disponible",  cls: "bg-white text-slate-400 border-slate-200 hover:border-slate-300", activeCls: "bg-slate-400 text-white border-transparent" },
+          { label: "Todos",         value: "Todos",         cls: "bg-white text-slate-700 border-slate-400 hover:border-slate-900", activeCls: "bg-slate-900 text-white border-slate-900" },
+          { label: "Disponible",    value: "Disponible",    cls: "bg-white text-emerald-700 border-emerald-300 hover:border-emerald-600", activeCls: "bg-emerald-700 text-white border-emerald-700" },
+          { label: "No disponible", value: "No disponible", cls: "bg-white text-slate-600 border-slate-400 hover:border-slate-900", activeCls: "bg-slate-600 text-white border-slate-600" },
         ].map(({ label, value, cls, activeCls }) => (
           <button
             key={value}
             onClick={() => setAvailabilityFilter(value)}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide border transition-all shadow-sm ${availabilityFilter === value ? activeCls : cls}`}
+            className={`shrink-0 px-3 py-1.5 rounded-[3px] text-xs font-bold uppercase tracking-wide border transition-colors ${availabilityFilter === value ? activeCls : cls}`}
           >
             {label}
           </button>
@@ -973,10 +987,9 @@ export default function AdminCatalogo() {
               const avail = items.filter((p) => p.available).length;
               return (
                 <section key={cat}>
-                  <div className="flex items-center gap-2.5 mb-2.5">
-                    <div className="w-1 h-5 rounded-full shrink-0" style={{ background: b.dot }} />
-                    <h2 className="font-bold text-sm uppercase tracking-widest" style={{ color: b.dot }}>{cat}</h2>
-                    <span className="text-xs text-slate-400">{avail} disponible{avail !== 1 ? "s" : ""} · {items.length} total</span>
+                  <div className="flex items-baseline gap-3 mb-3 pb-2 border-b border-slate-300">
+                    <h2 className="font-display font-bold text-xl uppercase tracking-tight text-slate-900 leading-none">{cat}</h2>
+                    <span className="ml-auto font-mono text-[11px] text-slate-600 uppercase tracking-wider">{avail} disponible{avail !== 1 ? "s" : ""} · {items.length} total</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5">
                     {items.map((p) => <AdminProductCard key={p.id} p={p} dot={b.dot} onToggle={toggleAvailable} onEdit={openEdit} onDelete={setDeleteTarget} onCopy={copyProductMessage} copied={copiedProductId === p.id} />)}
@@ -1025,7 +1038,7 @@ export default function AdminCatalogo() {
                     />
                     <span className="font-semibold text-slate-700 text-sm flex-1 min-w-[120px]">
                       {cat.parent_id ? "↳ " : ""}{cat.name}
-                      {hasChildren && <span className="ml-2 text-[10px] font-bold uppercase text-indigo-500">agrupa subsecciones</span>}
+                      {hasChildren && <span className="ml-2 text-[10px] font-bold uppercase text-brand-indigo">agrupa subsecciones</span>}
                     </span>
                     <select
                       value={cat.parent_id ?? ""}
@@ -1066,7 +1079,7 @@ export default function AdminCatalogo() {
                 value={newCategory.name}
                 onChange={(e) => setNewCategory((c) => ({ ...c, name: e.target.value.toUpperCase() }))}
                 placeholder="EJ. PERIFÉRICOS, MONITORES..."
-                className="flex-1 px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm"
+                className="flex-1 px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none transition text-sm"
               />
               <button
                 onClick={addCategory}
@@ -1090,10 +1103,10 @@ export default function AdminCatalogo() {
           className="w-full flex items-center justify-between text-left"
         >
           <div className="flex items-center gap-2">
-            <Tag className="w-4 h-4 text-amber-500" />
+            <Tag className="w-4 h-4 text-violet-500" />
             <h2 className="font-bold text-slate-800">Ofertas por cantidad</h2>
             {bundleDeals.length > 0 && (
-              <span className="text-xs bg-amber-100 text-amber-700 font-semibold px-2 py-0.5 rounded-full">
+              <span className="text-xs bg-violet-100 text-violet-700 font-semibold px-2 py-0.5 rounded-[3px]">
                 {bundleDeals.filter(d => d.active).length} activa{bundleDeals.filter(d => d.active).length !== 1 ? "s" : ""}
               </span>
             )}
@@ -1110,7 +1123,7 @@ export default function AdminCatalogo() {
                 {bundleDeals.map((deal) => {
                   const matchCount = Number(deal.matching_count ?? 0);
                   return (
-                    <div key={deal.id} className={`rounded-xl border p-3 ${deal.active ? "border-amber-200 bg-amber-50" : "border-slate-200 bg-slate-50 opacity-60"}`}>
+                    <div key={deal.id} className={`rounded-xl border p-3 ${deal.active ? "border-violet-200 bg-violet-50" : "border-slate-200 bg-slate-50 opacity-60"}`}>
                       {bundleEditId === deal.id ? (
                         <BundleFormFields form={bundleForm} setForm={setBundleForm} products={products} error={bundleError}
                           onSave={saveBundle} onCancel={cancelBundleEdit} saving={savingBundle} mode="edit" />
@@ -1119,12 +1132,12 @@ export default function AdminCatalogo() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-sm font-bold text-slate-800">"{deal.match_name}"</p>
-                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${matchCount > 0 ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
+                              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-[3px] ${matchCount > 0 ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-500"}`}>
                                 {matchCount} producto{matchCount !== 1 ? "s" : ""} coincide{matchCount !== 1 ? "n" : ""}
                               </span>
                             </div>
                             <p className="text-xs text-slate-500 mt-0.5">
-                              Lleva <span className="font-bold text-amber-600">{deal.min_quantity}+</span> unidades → <span className="font-bold text-amber-600">{formatPrice(deal.bundle_price)}</span> c/u
+                              Lleva <span className="font-bold text-violet-600">{deal.min_quantity}+</span> unidades → <span className="font-bold text-violet-600">{formatPrice(deal.bundle_price)}</span> c/u
                             </p>
                           </div>
                           <div className="flex items-center gap-1 shrink-0">
@@ -1132,7 +1145,7 @@ export default function AdminCatalogo() {
                               className={`text-xs px-2 py-1 rounded-lg font-semibold transition-colors ${deal.active ? "bg-emerald-50 text-emerald-600 hover:bg-emerald-100" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>
                               {deal.active ? "Activa" : "Inactiva"}
                             </button>
-                            <button onClick={() => openBundleEdit(deal)} className="p-1.5 rounded-lg hover:bg-amber-100 text-amber-600 transition-colors">
+                            <button onClick={() => openBundleEdit(deal)} className="p-1.5 rounded-lg hover:bg-violet-100 text-violet-600 transition-colors">
                               <Pencil className="w-3.5 h-3.5" />
                             </button>
                             <button onClick={() => deleteBundle(deal.id)} className="p-1.5 rounded-lg hover:bg-red-100 text-red-500 transition-colors">
@@ -1149,8 +1162,8 @@ export default function AdminCatalogo() {
 
             {/* Formulario nueva oferta */}
             {bundleEditId === null && (
-              <div className="border-2 border-dashed border-amber-200 rounded-xl p-4 space-y-3">
-                <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Nueva oferta por cantidad</p>
+              <div className="border-2 border-dashed border-violet-200 rounded-xl p-4 space-y-3">
+                <p className="text-xs font-semibold text-violet-700 uppercase tracking-wide">Nueva oferta por cantidad</p>
                 <BundleFormFields form={bundleForm} setForm={setBundleForm} products={products} error={bundleError}
                   onSave={saveBundle} onCancel={null} saving={savingBundle} mode="create" />
               </div>
@@ -1211,7 +1224,7 @@ export default function AdminCatalogo() {
                   value={settingsForm[key] || ""}
                   onChange={(e) => setSettingsForm((f) => ({ ...f, [key]: e.target.value }))}
                   placeholder={placeholder}
-                  className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm"
+                  className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none transition text-sm"
                 />
               </div>
             ))}
@@ -1272,7 +1285,7 @@ export default function AdminCatalogo() {
                       )}
                     </div>
                     <div
-                      className="relative w-full h-40 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 overflow-hidden cursor-pointer hover:border-indigo-300 hover:bg-indigo-50 transition-colors group"
+                      className="relative w-full h-40 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 overflow-hidden cursor-pointer hover:border-violet-300 hover:bg-violet-50 transition-colors group"
                       onClick={() => fileInputRef.current?.click()}
                     >
                       {currentImageSrc ? (
@@ -1332,7 +1345,7 @@ export default function AdminCatalogo() {
                             key={i}
                             type="button"
                             onClick={() => selectSearchImage(img)}
-                            className="aspect-square rounded-xl overflow-hidden border-2 border-slate-200 hover:border-brand-indigo transition-all"
+                            className="aspect-square rounded-xl overflow-hidden border border-slate-300 hover:border-brand-indigo transition-all"
                             title={img.title}
                           >
                             <img
@@ -1356,7 +1369,7 @@ export default function AdminCatalogo() {
                       value={form.name}
                       onChange={(e) => setForm((f) => ({ ...f, name: e.target.value.toUpperCase() }))}
                       placeholder="ej. RTX 3080 10GB EVGA XC3"
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm uppercase"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none transition text-sm uppercase"
                     />
                   </div>
 
@@ -1369,7 +1382,7 @@ export default function AdminCatalogo() {
                       <select
                         value={form.category}
                         onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none bg-white transition text-sm"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none bg-white transition text-sm"
                       >
                         {CATEGORIES.map((c) => (
                           <option key={c} value={c}>{c}</option>
@@ -1383,7 +1396,7 @@ export default function AdminCatalogo() {
                         value={form.memory_capacity}
                         onChange={(e) => setForm((f) => ({ ...f, memory_capacity: e.target.value.toUpperCase() }))}
                         placeholder="8GB, 1TB, 256GB..."
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm uppercase"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none transition text-sm uppercase"
                       />
                     </div>
                   </div>
@@ -1400,7 +1413,7 @@ export default function AdminCatalogo() {
                         value={form.price}
                         onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
                         placeholder="1200000"
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none transition text-sm"
                       />
                     </div>
                     <div>
@@ -1414,11 +1427,11 @@ export default function AdminCatalogo() {
                         value={form.original_price}
                         onChange={(e) => setForm((f) => ({ ...f, original_price: e.target.value }))}
                         placeholder="1500000"
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-amber-200 focus:border-amber-400 outline-none transition text-sm"
+                        className="w-full px-3 py-2.5 rounded-xl border-2 border-violet-200 focus:border-violet-400 outline-none transition text-sm"
                       />
                       {form.original_price && form.price &&
                        Number(form.original_price) > Number(form.price) && (
-                        <p className="text-xs text-amber-600 font-semibold mt-0.5">
+                        <p className="text-xs text-violet-600 font-semibold mt-0.5">
                           Descuento: {Math.round((1 - Number(form.price) / Number(form.original_price)) * 100)}% OFF
                         </p>
                       )}
@@ -1433,7 +1446,7 @@ export default function AdminCatalogo() {
                         value={form.condition}
                         onChange={(e) => setForm((f) => ({ ...f, condition: e.target.value.toUpperCase() }))}
                         placeholder="CON CAJA, OPEN BOX, COIL WHINE... (SEPARA CON COMAS)"
-                        className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm uppercase"
+                        className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none transition text-sm uppercase"
                       />
                     </div>
                   </div>
@@ -1447,7 +1460,7 @@ export default function AdminCatalogo() {
                     <select
                       value={form.tier}
                       onChange={(e) => setForm((f) => ({ ...f, tier: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none bg-white transition text-sm"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none bg-white transition text-sm"
                     >
                       <option value="">Sin definir (automático)</option>
                       {TIER_OPTIONS.map((t) => (
@@ -1462,7 +1475,7 @@ export default function AdminCatalogo() {
                       type="checkbox"
                       checked={form.is_flagship}
                       onChange={(e) => setForm((f) => ({ ...f, is_flagship: e.target.checked }))}
-                      className="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                      className="w-4 h-4 rounded border-slate-300 text-brand-indigo"
                     />
                     <span className="text-sm text-slate-700 font-medium">
                       ¿Es la línea insignia de su marca?{" "}
@@ -1481,7 +1494,7 @@ export default function AdminCatalogo() {
                       value={form.whatsapp_number}
                       onChange={(e) => setForm((f) => ({ ...f, whatsapp_number: e.target.value }))}
                       placeholder="Ej: 313 329 3644 — déjalo vacío para usar el WhatsApp general"
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition text-sm"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none transition text-sm"
                     />
                     <p className="text-xs text-slate-400 mt-1">
                       Útil si este producto lo maneja otra persona. El botón "Contactar por WhatsApp" del catálogo apuntará a este número.
@@ -1499,7 +1512,7 @@ export default function AdminCatalogo() {
                       value={form.description}
                       onChange={(e) => setForm((f) => ({ ...f, description: e.target.value.toUpperCase() }))}
                       placeholder="DETALLES ADICIONALES, ESTADO DE LA BATERÍA, NOTAS..."
-                      className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition resize-none text-sm uppercase"
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none transition resize-none text-sm uppercase"
                     />
                   </div>
 
@@ -1509,7 +1522,7 @@ export default function AdminCatalogo() {
                       type="checkbox"
                       checked={form.available}
                       onChange={(e) => setForm((f) => ({ ...f, available: e.target.checked }))}
-                      className="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                      className="w-4 h-4 rounded border-slate-300 text-brand-indigo"
                     />
                     <span className="text-sm text-slate-700 font-medium">
                       Disponible para la venta

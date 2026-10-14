@@ -92,18 +92,18 @@ function InfoModal({ open, onClose }) {
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden mt-10 border-4 border-amber-500"
+                className="bg-white rounded-[6px] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden mt-10 border border-slate-300"
             >
-                <div className="bg-amber-500 p-1" />
+                <div className="h-1" style={{ background: "var(--brand)" }} />
 
                 <div className="p-6 sm:p-8">
                     <div className="flex items-start gap-4 mb-6">
-                        <div className="flex-shrink-0 w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
-                            <AlertCircle className="w-6 h-6 text-amber-600" />
+                        <div className="flex-shrink-0 w-12 h-12 rounded-[4px] flex items-center justify-center" style={{ background: "var(--brand-ring)" }}>
+                            <AlertCircle className="w-6 h-6 text-brand-indigo" />
                         </div>
 
                         <div className="flex-1">
-                            <h2 className="text-2xl font-black text-slate-900 mb-2">
+                            <h2 className="font-display text-2xl font-bold tracking-tight text-slate-900 mb-2">
                                 Información importante
                             </h2>
                         </div>
@@ -133,7 +133,7 @@ function InfoModal({ open, onClose }) {
                                 transition={{ delay: 0.1 * (idx + 1) }}
                                 className="flex items-start gap-3"
                             >
-                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-amber-100 flex items-center justify-center text-xs font-bold text-amber-700">
+                                <span className="flex-shrink-0 w-6 h-6 rounded-[3px] bg-slate-900 flex items-center justify-center font-mono text-xs font-bold text-white">
                                     {idx + 1}
                                 </span>
                                 <p className="text-slate-700 text-sm leading-relaxed">{text}</p>
@@ -178,7 +178,7 @@ function CustomerDataModal({ open, onClose, customerData, onConfirm }) {
                         </div>
 
                         <div className="flex-1">
-                            <h2 className="text-2xl font-black text-slate-900 mb-2">
+                            <h2 className="font-display text-2xl font-bold tracking-tight text-slate-900 mb-2">
                                 Datos encontrados
                             </h2>
                             <p className="text-slate-600">
@@ -605,7 +605,7 @@ export default function BookingV2() {
             } else {
                 // ⚠️ Manejo especial para usuarios en blacklist
                 if (responseBody?.error === "CUSTOMER_BLACKLISTED") {
-                    toast.error("⛔ No puedes agendar citas", {
+                    toast.error("No puedes agendar citas", {
                         description: responseBody?.message || "Has incumplido previamente. Contacta al administrador.",
                         duration: 10000,
                         icon: <AlertCircle className="w-5 h-5" />,
@@ -943,7 +943,7 @@ export default function BookingV2() {
                                                         initial={{ opacity: 0, scale: 0.95 }}
                                                         animate={{ opacity: 1, scale: 1 }}
                                                         exit={{ opacity: 0, scale: 0.95 }}
-                                                        className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4"
+                                                        className="bg-amber-50 border border-amber-300 rounded-xl p-4"
                                                     >
                                                         <div className="flex items-start gap-3">
                                                             <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />

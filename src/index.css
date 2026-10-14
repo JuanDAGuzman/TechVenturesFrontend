@@ -53,26 +53,27 @@
 /* =================== Contenedores =================== */
 @layer components {
   .container-page {
-    @apply max-w-5xl mx-auto p-4 sm:p-6 lg:p-8;
+    @apply max-w-[1180px] mx-auto px-4 sm:px-6 py-6 sm:py-8;
   }
   .card {
-    @apply bg-white border border-slate-200 rounded-2xl p-5 sm:p-6 shadow;
+    @apply bg-white border border-slate-300 rounded-[6px] p-5 sm:p-6;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 14px 30px -22px rgba(15, 23, 42, 0.2);
   }
   .lbl {
-    @apply block font-semibold mb-2 text-slate-800;
+    @apply block font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600 mb-2;
   }
   .muted {
-    @apply text-slate-500 text-sm;
+    @apply text-slate-600 text-sm;
   }
   .err {
-    @apply text-rose-600 text-sm;
+    @apply text-rose-700 text-sm font-medium;
   }
 }
 
 /* =================== Pills =================== */
 @layer components {
   .pill {
-    @apply w-full sm:w-auto px-4 py-3 rounded-full border border-slate-200 bg-white text-slate-800 font-semibold hover:shadow transition;
+    @apply w-full sm:w-auto px-4 py-3 rounded-[3px] border border-slate-300 bg-white text-slate-800 font-semibold hover:border-slate-900 transition;
   }
 
   /* Las "on" ahora usan el color de marca dinámico */
@@ -97,9 +98,9 @@
 @layer components {
   .slot {
     @apply inline-flex items-center justify-center 
-         w-full px-3 py-2 rounded-xl border border-slate-200 bg-white 
+         w-full px-3 py-2 rounded-[3px] border border-slate-300 bg-white 
          text-sm font-semibold text-slate-800 
-         whitespace-nowrap leading-5 hover:shadow transition;
+         whitespace-nowrap leading-5 transition;
   }
   .slot:hover {
     border-color: var(--brand);
@@ -117,7 +118,7 @@
 /* =================== CTA =================== */
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center w-full px-5 py-3 rounded-xl font-extrabold text-white shadow-lg;
+    @apply inline-flex items-center justify-center w-full px-5 py-3 rounded-[3px] font-bold uppercase tracking-wide text-[13px] text-white;
     background: var(--brand);
     transition: filter 0.2s ease, transform 0.02s ease;
   }
@@ -132,8 +133,8 @@
 .callout {
   background: #f8fafc; /* slate-50 */
   border: 1px solid #e2e8f0; /* slate-200 */
-  border-left: 6px solid var(--brand);
-  border-radius: 0.75rem; /* rounded-xl */
+  border-left: 4px solid var(--brand);
+  border-radius: 4px;
   padding: 0.9rem 1rem;
 }
 
@@ -229,4 +230,47 @@
 }
 .modal-pop {
   animation: modal-pop 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* =================== Identidad "Atelier" (aplica a todas las pantallas) =================== */
+/* Oculta la barra de scroll de los contenedores con desplazamiento horizontal */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Esquinas sobrias y sombras discretas en el panel admin, agendar y contacto sin
+   tener que tocar cada clase: se normalizan los radios y sombras heredados. */
+.atelier .rounded-3xl,
+.atelier .rounded-2xl {
+  border-radius: 6px;
+}
+.atelier .rounded-xl,
+.atelier .rounded-lg {
+  border-radius: 4px;
+}
+.atelier .shadow,
+.atelier .shadow-sm,
+.atelier .shadow-md {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+}
+.atelier .shadow-lg,
+.atelier .shadow-xl {
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 14px 30px -18px rgba(15, 23, 42, 0.28);
+}
+.atelier h1,
+.atelier h2,
+.atelier h3 {
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.01em;
+}
+.atelier input:focus,
+.atelier select:focus,
+.atelier textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px var(--brand-ring);
 }

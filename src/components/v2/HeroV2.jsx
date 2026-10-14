@@ -3,35 +3,20 @@ import { motion } from "framer-motion";
 export default function HeroV2() {
     return (
         <motion.div
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: -12 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-10 relative py-10 px-4 rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 shadow-sm"
+            className="mb-8 pb-7 border-b border-slate-300"
         >
-            {/* Background decorations */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-                <motion.div
-                    className="absolute top-[-10%] left-[-10%] w-40 h-40 bg-brand-indigo/5 rounded-full blur-3xl"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 5, repeat: Infinity }}
-                />
-                <motion.div
-                    className="absolute bottom-[-10%] right-[-10%] w-40 h-40 bg-brand-blue/5 rounded-full blur-3xl"
-                    animate={{ scale: [1, 1.2, 1] }}
-                    transition={{ duration: 7, repeat: Infinity }}
-                />
-            </div>
-
-            <div className="relative z-10">
-
-                <h1 className="text-4xl sm:text-5xl font-black text-slate-900 mb-4 tracking-tight">
-                    Agendar cita — <span className="text-brand-indigo">TechVenturesCO</span>
-                </h1>
-
-                <p className="text-slate-600 text-lg max-w-2xl mx-auto leading-relaxed">
-                    Elige el método y agenda tu visita o envío. <br className="hidden sm:block" />
-                    <span className="font-semibold text-brand-green">¡Todo en 30 segundos!</span>
-                </p>
-            </div>
+            <p className="font-mono text-[11px] sm:text-xs font-medium uppercase tracking-[0.2em] text-slate-600">
+                Visitas y envíos
+            </p>
+            <h1 className="font-display font-bold text-slate-900 tracking-tight leading-[0.98] mt-2 text-[40px] sm:text-6xl">
+                Agenda tu cita<span className="brand-text">.</span>
+            </h1>
+            <p className="text-slate-700 text-base sm:text-lg mt-3 max-w-[52ch] leading-relaxed">
+                Elige el método y agenda tu visita o envío.{" "}
+                <span className="font-semibold text-slate-900">Todo en 30 segundos.</span>
+            </p>
         </motion.div>
     );
 }

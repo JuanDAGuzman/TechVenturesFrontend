@@ -4,7 +4,14 @@ export default function NavbarV2() {
     const location = useLocation();
     const isCatalogo = location.pathname === "/";
     const isContact  = location.pathname === "/contact";
+    const isAdmin    = location.pathname.startsWith("/admin");
     const hideNav    = isContact;
+
+    // Texto bajo el nombre según la sección
+    const tagline = isCatalogo ? "Tu aliado en tecnología"
+        : isAdmin ? "Panel de administración"
+        : isContact ? "Contacto"
+        : "Agenda tu cita";
 
     const linkCls = (active) =>
         `relative pb-1 text-sm font-bold transition-colors border-b-2 ${
@@ -35,7 +42,7 @@ export default function NavbarV2() {
                                 TechVentures<span className="text-brand-indigo">CO</span>
                             </span>
                             <span className="mt-1 font-mono text-[9px] sm:text-[10px] font-medium uppercase tracking-[0.16em] text-slate-600">
-                                {isCatalogo ? "Tu aliado en tecnología" : "Agenda tu cita"}
+                                {tagline}
                             </span>
                         </div>
                     </Link>

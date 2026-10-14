@@ -10,13 +10,13 @@ const API = import.meta.env.VITE_API_BASE || "http://localhost:4000/api";
 
 // ── Paleta de colores ──────────────────────────────────────────────────────────
 const COLORS = {
-  done:      "#6366f1",
-  shipped:   "#8b5cf6",
+  done:      "#6d28d9",
+  shipped:   "#a78bfa",
   confirmed: "#f59e0b",
   cancelled: "#ef4444",
   no_show:   "#94a3b8",
-  tryout:    "#6366f1",
-  pickup:    "#8b5cf6",
+  tryout:    "#6d28d9",
+  pickup:    "#a78bfa",
   shipping:  "#06b6d4",
 };
 
@@ -56,12 +56,12 @@ function getRange(key) {
 }
 
 // ── Tarjeta de KPI ─────────────────────────────────────────────────────────────
-function KpiCard({ label, value, sub, color = "#6366f1" }) {
+function KpiCard({ label, value, sub, color = "#6d28d9" }) {
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
-      <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">{label}</p>
+    <div className="bg-white rounded-2xl border border-slate-300 shadow-sm p-4">
+      <p className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-1">{label}</p>
       <p className="text-3xl font-extrabold font-mono" style={{ color }}>{value}</p>
-      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+      {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -82,13 +82,13 @@ function CustomTooltip({ active, payload, label }) {
 }
 
 // ── Barra horizontal simple (lista de productos / clientes) ───────────────────
-function HBar({ label, value, max, color = "#6366f1", sub }) {
+function HBar({ label, value, max, color = "#6d28d9", sub }) {
   const pct = max > 0 ? Math.round((value / max) * 100) : 0;
   return (
     <div className="mb-2.5">
       <div className="flex justify-between text-xs mb-0.5">
         <span className="font-semibold text-slate-700 truncate max-w-[65%]" title={label}>{label}</span>
-        <span className="font-mono font-bold text-slate-500 shrink-0 ml-2">{value} {sub && <span className="text-slate-400 font-normal">{sub}</span>}</span>
+        <span className="font-mono font-bold text-slate-500 shrink-0 ml-2">{value} {sub && <span className="text-slate-500 font-normal">{sub}</span>}</span>
       </div>
       <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
         <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: color }} />
@@ -150,7 +150,7 @@ export default function AdminMetrics() {
   ].filter(d => d.value > 0) : [];
 
   const deliveryPie = data ? [
-    { name: "En persona", value: data.overview.byDelivery?.in_person ?? 0, color: "#6366f1" },
+    { name: "En persona", value: data.overview.byDelivery?.in_person ?? 0, color: "#6d28d9" },
     { name: "Por envío",  value: data.overview.byDelivery?.shipping ?? 0,  color: "#06b6d4" },
   ].filter(d => d.value > 0) : [];
   const deliveryTotal = deliveryPie.reduce((sum, d) => sum + d.value, 0);
@@ -171,8 +171,8 @@ export default function AdminMetrics() {
 
       {/* ── Encabezado ────────────────────────────────────────────────────── */}
       <div className="mb-5">
-        <h1 className="text-2xl font-extrabold text-brand-indigo">Métricas</h1>
-        <p className="text-sm text-slate-500 mt-0.5">Análisis de citas, ventas y clientes frecuentes</p>
+        <h1 className="font-display font-bold text-slate-900 tracking-tight leading-none text-4xl">Métricas<span className="brand-text">.</span></h1>
+        <p className="font-mono text-xs text-slate-600 mt-2 uppercase tracking-wider">Análisis de citas, ventas y clientes frecuentes</p>
       </div>
 
       {/* ── Selector de período ───────────────────────────────────────────── */}
@@ -181,10 +181,10 @@ export default function AdminMetrics() {
           <button
             key={p.key}
             onClick={() => setPeriod(p.key)}
-            className={`px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide border transition-all ${
+            className={`px-3 py-1.5 rounded-[3px] text-xs font-bold uppercase tracking-wide border transition-colors ${
               period === p.key
-                ? "bg-brand-indigo text-white border-transparent shadow-sm"
-                : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                ? "bg-slate-900 text-white border-slate-900"
+                : "bg-white text-slate-700 border-slate-400 hover:border-slate-900"
             }`}
           >
             {p.label}
@@ -221,7 +221,7 @@ export default function AdminMetrics() {
         <>
           {/* ── KPIs ────────────────────────────────────────────────────── */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            <KpiCard label="Total citas"    value={ov.total}          color="#6366f1" />
+            <KpiCard label="Total citas"    value={ov.total}          color="#6d28d9" />
             <KpiCard label="Completadas"    value={completed}         color="#10b981" sub={`${convRate}% conversión`} />
             <KpiCard label="Canceladas"     value={ov.byStatus.cancelled} color="#ef4444" />
             <KpiCard label="No shows"       value={ov.byStatus.no_show}   color="#94a3b8" />
@@ -230,13 +230,13 @@ export default function AdminMetrics() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
             <KpiCard label="En proceso"     value={ov.byStatus.confirmed} color="#f59e0b" />
             <KpiCard label="Envíos"         value={ov.byType.shipping}    color="#06b6d4" />
-            <KpiCard label="Ingresos envío" value={`$${Number(ov.shippingRevenue).toLocaleString("es-CO")}`} color="#8b5cf6" sub="solo costo de envío" />
-            <KpiCard label="Clientes freq." value={data.customersTotal ?? data.customers.length} color="#6366f1" sub="con más de 1 cita" />
+            <KpiCard label="Ingresos envío" value={`$${Number(ov.shippingRevenue).toLocaleString("es-CO")}`} color="#a78bfa" sub="solo costo de envío" />
+            <KpiCard label="Clientes freq." value={data.customersTotal ?? data.customers.length} color="#6d28d9" sub="con más de 1 cita" />
           </div>
 
           {/* ── Timeline ─────────────────────────────────────────────────── */}
           {timelineData.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
+            <div className="bg-white rounded-2xl border border-slate-300 shadow-sm p-5 mb-5">
               <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">
                 Citas por {showMonthly ? "mes" : "día"}
               </h2>
@@ -246,8 +246,8 @@ export default function AdminMetrics() {
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: "#94a3b8" }} interval={showMonthly ? 0 : "preserveStartEnd"} />
                   <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} allowDecimals={false} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="total"      name="Total"      fill="#e0e7ff" radius={[4,4,0,0]} />
-                  <Bar dataKey="completadas" name="Completadas" fill="#6366f1" radius={[4,4,0,0]} />
+                  <Bar dataKey="total"      name="Total"      fill="#ede9fe" radius={[4,4,0,0]} />
+                  <Bar dataKey="completadas" name="Completadas" fill="#6d28d9" radius={[4,4,0,0]} />
                   {!showMonthly && <Bar dataKey="canceladas" name="Canceladas" fill="#fca5a5" radius={[4,4,0,0]} />}
                 </BarChart>
               </ResponsiveContainer>
@@ -257,7 +257,7 @@ export default function AdminMetrics() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
 
             {/* ── Día de la semana ─────────────────────────────────────── */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <div className="bg-white rounded-2xl border border-slate-300 shadow-sm p-5">
               <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">Días más activos</h2>
               <ResponsiveContainer width="100%" height={180}>
                 <BarChart data={data.weekdays} margin={{ top: 0, right: 4, left: -24, bottom: 0 }} barSize={24}>
@@ -265,13 +265,13 @@ export default function AdminMetrics() {
                   <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#94a3b8" }} />
                   <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} allowDecimals={false} />
                   <Tooltip content={<CustomTooltip />} />
-                  <Bar dataKey="total" name="Citas" fill="#6366f1" radius={[4,4,0,0]} />
+                  <Bar dataKey="total" name="Citas" fill="#6d28d9" radius={[4,4,0,0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
             {/* ── Estado de citas ──────────────────────────────────────── */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <div className="bg-white rounded-2xl border border-slate-300 shadow-sm p-5">
               <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">Estado de citas</h2>
               {statusPie.length > 0 ? (
                 <ResponsiveContainer width="100%" height={180}>
@@ -283,14 +283,14 @@ export default function AdminMetrics() {
                     <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : <p className="text-sm text-slate-400 text-center py-8">Sin datos</p>}
+              ) : <p className="text-sm text-slate-500 text-center py-8">Sin datos</p>}
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
 
             {/* ── Tipo de cita ─────────────────────────────────────────── */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <div className="bg-white rounded-2xl border border-slate-300 shadow-sm p-5">
               <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">Tipo de cita</h2>
               {typePie.length > 0 ? (
                 <ResponsiveContainer width="100%" height={180}>
@@ -302,11 +302,11 @@ export default function AdminMetrics() {
                     <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
                   </PieChart>
                 </ResponsiveContainer>
-              ) : <p className="text-sm text-slate-400 text-center py-8">Sin datos</p>}
+              ) : <p className="text-sm text-slate-500 text-center py-8">Sin datos</p>}
             </div>
 
             {/* ── Ciudades de envío ─────────────────────────────────────── */}
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <div className="bg-white rounded-2xl border border-slate-300 shadow-sm p-5">
               <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-4">
                 Ciudades de envío
               </h2>
@@ -315,22 +315,22 @@ export default function AdminMetrics() {
                   <div key={c.city}>
                     <HBar label={c.city} value={c.total} max={data.cities[0].total} color="#06b6d4" sub="envíos" />
                     {c.variants?.length > 1 && (
-                      <p className="text-[10px] text-slate-400 -mt-1.5 mb-2 ml-2 truncate" title={c.variants.join(", ")}>
+                      <p className="text-[10px] text-slate-500 -mt-1.5 mb-2 ml-2 truncate" title={c.variants.join(", ")}>
                         ↳ {c.variants.slice(0, 3).join(", ")}{c.variants.length > 3 ? ` +${c.variants.length - 3}` : ""}
                       </p>
                     )}
                   </div>
                 ))
-              ) : <p className="text-sm text-slate-400 text-center py-8">Sin envíos en el período</p>}
+              ) : <p className="text-sm text-slate-500 text-center py-8">Sin envíos en el período</p>}
             </div>
           </div>
 
           {/* ── Método de entrega: en persona vs. envío ─────────────────── */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
+          <div className="bg-white rounded-2xl border border-slate-300 shadow-sm p-5 mb-5">
             <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-1">
               Método de entrega
             </h2>
-            <p className="text-xs text-slate-400 mb-4">Cómo reciben los clientes su pedido</p>
+            <p className="text-xs text-slate-500 mb-4">Cómo reciben los clientes su pedido</p>
             {deliveryPie.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-[160px_1fr] gap-5 items-center">
                 <ResponsiveContainer width="100%" height={150}>
@@ -354,15 +354,15 @@ export default function AdminMetrics() {
                   ))}
                 </div>
               </div>
-            ) : <p className="text-sm text-slate-400 text-center py-8">Sin datos</p>}
+            ) : <p className="text-sm text-slate-500 text-center py-8">Sin datos</p>}
           </div>
 
           {/* ── Productos más solicitados ──────────────────────────────── */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 mb-5">
+          <div className="bg-white rounded-2xl border border-slate-300 shadow-sm p-5 mb-5">
             <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-1">
               Artículos más solicitados
             </h2>
-            <p className="text-xs text-slate-400 mb-4">
+            <p className="text-xs text-slate-500 mb-4">
               Agrupados automáticamente por modelo (se ignoran marca y serie exacta)
             </p>
             {data.products.length > 0 ? (
@@ -373,26 +373,26 @@ export default function AdminMetrics() {
                       label={`${i + 1}. ${p.name}`}
                       value={p.count}
                       max={topProduct}
-                      color={i === 0 ? "#6366f1" : i === 1 ? "#8b5cf6" : i === 2 ? "#a78bfa" : "#c4b5fd"}
+                      color={i === 0 ? "#6d28d9" : i === 1 ? "#a78bfa" : i === 2 ? "#a78bfa" : "#c4b5fd"}
                       sub={p.count === 1 ? "cita" : "citas"}
                     />
                     {p.variants?.length > 1 && (
-                      <p className="text-[10px] text-slate-400 -mt-1.5 mb-2 ml-2 truncate" title={p.variants.join(", ")}>
+                      <p className="text-[10px] text-slate-500 -mt-1.5 mb-2 ml-2 truncate" title={p.variants.join(", ")}>
                         ↳ {p.variants.slice(0, 3).join(", ")}{p.variants.length > 3 ? ` +${p.variants.length - 3}` : ""}
                       </p>
                     )}
                   </div>
                 ))}
               </div>
-            ) : <p className="text-sm text-slate-400 text-center py-8">Sin productos registrados en el período</p>}
+            ) : <p className="text-sm text-slate-500 text-center py-8">Sin productos registrados en el período</p>}
           </div>
 
           {/* ── Clientes frecuentes ───────────────────────────────────────── */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+          <div className="bg-white rounded-2xl border border-slate-300 shadow-sm p-5">
             <h2 className="text-sm font-bold uppercase tracking-widest text-slate-500 mb-1">
               Clientes frecuentes
             </h2>
-            <p className="text-xs text-slate-400 mb-4">
+            <p className="text-xs text-slate-500 mb-4">
               Clientes con más de 1 cita en el período
               {data.customersTotal > 20 ? ` · mostrando los 20 más frecuentes de ${data.customersTotal}` : ""}
             </p>
@@ -404,18 +404,18 @@ export default function AdminMetrics() {
                       label={`${i + 1}. ${c.name}`}
                       value={c.total}
                       max={topCustomer}
-                      color="#6366f1"
+                      color="#6d28d9"
                       sub={`citas · última ${dayjs(c.last_date).format("DD/MM/YY")}`}
                     />
                     {c.id_number && (
-                      <p className="text-[10px] text-slate-400 -mt-1.5 mb-0.5 ml-2">
+                      <p className="text-[10px] text-slate-500 -mt-1.5 mb-0.5 ml-2">
                         CC {c.id_number}{c.phone ? ` · ${c.phone}` : ""}
                       </p>
                     )}
                   </div>
                 ))}
               </div>
-            ) : <p className="text-sm text-slate-400 text-center py-8">Sin clientes frecuentes en el período</p>}
+            ) : <p className="text-sm text-slate-500 text-center py-8">Sin clientes frecuentes en el período</p>}
           </div>
         </>
       )}

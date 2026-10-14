@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import dayjs from "dayjs";
+import { Ban, ShieldCheck, Camera } from "lucide-react";
 import "dayjs/locale/es";
 import { getAdminToken } from "../lib/adminSession.js";
 import {
@@ -871,23 +872,21 @@ export default function AdminPage() {
 
   return (
     <div className="container-page">
-      {/* Header Principal */}
-      <div className="relative overflow-hidden rounded-2xl bg-brand-indigo p-5 sm:p-8 shadow-2xl">
-        <div className="absolute inset-0 bg-black/10"></div>
-        <div className="relative z-10">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-2">
-            Panel de Administración
-          </h1>
-          <p className="text-indigo-100 text-sm sm:text-lg hidden sm:block">
-            TechVenturesCO — Gestión completa de citas y horarios
-          </p>
-        </div>
-        <div className="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
-        <div className="absolute -left-8 -top-8 w-40 h-40 bg-white/10 rounded-full blur-3xl"></div>
+      {/* Cabecera */}
+      <div className="pb-7 mb-6 border-b border-slate-300">
+        <p className="font-mono text-[11px] sm:text-xs font-medium uppercase tracking-[0.2em] text-slate-600">
+          TechVenturesCO · Gestión
+        </p>
+        <h1 className="font-display font-bold text-slate-900 tracking-tight leading-[0.98] mt-2 text-4xl sm:text-5xl">
+          Citas y horarios<span className="brand-text">.</span>
+        </h1>
+        <p className="text-slate-700 mt-2 max-w-[60ch] hidden sm:block">
+          Agenda y reagenda citas, abre horarios y administra a tus clientes desde un solo lugar.
+        </p>
       </div>
 
       {/* Configuración */}
-      <section className="card border-2 border-slate-200">
+      <section className="card">
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
           Configuración
         </h2>
@@ -905,12 +904,12 @@ export default function AdminPage() {
                 placeholder="Ingresa tu token de admin"
                 autoComplete="new-password"
                 spellCheck={false}
-                className="w-full flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all outline-none font-mono"
+                className="w-full flex-1 px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all outline-none font-mono"
               />
               <button
                 type="button"
                 onClick={() => setShowToken((s) => !s)}
-                className="w-full sm:w-auto min-h-[44px] px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 transition-all font-medium"
+                className="w-full sm:w-auto min-h-[44px] px-5 py-3 rounded-[3px] bg-white border border-slate-400 hover:border-slate-900 transition-colors text-xs font-bold uppercase tracking-wide"
                 title={showToken ? "Ocultar token" : "Mostrar token"}
               >
                 {showToken ? "Ocultar" : "Mostrar"}
@@ -929,14 +928,14 @@ export default function AdminPage() {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all outline-none"
+              className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all outline-none"
             />
           </div>
         </div>
       </section>
 
       {/* Citas del Día */}
-      <section className="card border-2 border-slate-200">
+      <section className="card">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -949,20 +948,20 @@ export default function AdminPage() {
           <div className="flex flex-wrap gap-3">
             <button
               onClick={() => { setShowQbModal(true); setQbForm({ ...QB_EMPTY, date }); setQbSlots([]); setQbErrors({}); }}
-              className="px-5 py-2.5 rounded-xl text-white font-medium bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all"
+              className="px-5 py-2.5 rounded-[3px] text-white text-xs font-bold uppercase tracking-wide bg-slate-900 hover:bg-brand-indigo transition-colors"
             >
               Agendar cita
             </button>
             <button
               onClick={fetchAppts}
-              className="px-5 py-2.5 rounded-xl bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-700 flex items-center gap-2"
+              className="px-5 py-2.5 rounded-[3px] bg-white border border-slate-400 hover:border-slate-900 transition-colors text-xs font-bold uppercase tracking-wide text-slate-800 flex items-center gap-2"
             >
               Actualizar
             </button>
             <button
               onClick={delSelected}
               disabled={Object.keys(selected).filter(k => selected[k]).length === 0}
-              className="px-5 py-2.5 rounded-xl text-white font-medium bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-red-500/30 transition-all flex items-center gap-2"
+              className="px-5 py-2.5 rounded-[3px] text-white text-xs font-bold uppercase tracking-wide bg-rose-700 hover:bg-rose-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
             >
               Eliminar ({Object.keys(selected).filter(k => selected[k]).length})
             </button>
@@ -987,7 +986,7 @@ export default function AdminPage() {
           {/* Vista móvil — tarjetas */}
           <div className="md:hidden space-y-3">
             {rows.map((r) => (
-              <div key={r.id} className="bg-white border-2 border-slate-200 rounded-xl p-4">
+              <div key={r.id} className="bg-white border border-slate-300 rounded-xl p-4">
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <input
@@ -996,24 +995,24 @@ export default function AdminPage() {
                       checked={!!selected[r.id]}
                       onChange={() => toggle(r.id)}
                     />
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${r.type_code === 'TRYOUT' ? 'bg-red-100 text-red-700' : r.type_code === 'PICKUP' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                    <span className={`px-2.5 py-1 rounded-[3px] text-xs font-semibold ${r.type_code === 'TRYOUT' ? 'bg-red-100 text-red-700' : r.type_code === 'PICKUP' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
                       {mapTypeEs(r.type_code)}
                     </span>
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusBadgeClass(r.status)}`}>
+                    <span className={`px-2.5 py-1 rounded-[3px] text-xs font-semibold ${statusBadgeClass(r.status)}`}>
                       {mapStatusEs(r.status)}
                     </span>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <button
                       onClick={() => openEditor(r.id)}
-                      className="px-3 py-2 rounded-xl bg-red-100 text-red-700 hover:bg-red-200 font-medium text-sm"
+                      className="px-3 py-2 rounded-[3px] border border-slate-400 bg-white text-slate-800 hover:border-slate-900 text-xs font-bold uppercase tracking-wide transition-colors"
                     >
                       Editar
                     </button>
                     {(r.type_code === "TRYOUT" || r.type_code === "PICKUP") && (
                       <button
                         onClick={() => openRescheduleModal(r)}
-                        className="px-3 py-2 rounded-xl bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-medium text-sm"
+                        className="px-3 py-2 rounded-[3px] border border-brand-indigo bg-white text-brand-indigo hover:bg-brand-indigo hover:text-white text-xs font-bold uppercase tracking-wide transition-colors"
                       >
                         Reagendar
                       </button>
@@ -1034,7 +1033,7 @@ export default function AdminPage() {
           </div>
 
           {/* Vista escritorio — tabla */}
-          <div className="hidden md:block overflow-x-auto rounded-xl border-2 border-slate-200">
+          <div className="hidden md:block overflow-x-auto rounded-xl border border-slate-300">
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 border-b-2 border-slate-200">
                 <tr>
@@ -1074,7 +1073,7 @@ export default function AdminPage() {
                     </td>
 
                     <td className="py-4 px-4">
-                      <span className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${r.type_code === 'TRYOUT'
+                      <span className={`inline-flex px-3 py-1.5 rounded-[3px] text-xs font-semibold ${r.type_code === 'TRYOUT'
                         ? 'bg-red-100 text-red-700'
                         : r.type_code === 'PICKUP'
                           ? 'bg-emerald-100 text-emerald-700'
@@ -1125,7 +1124,7 @@ export default function AdminPage() {
 
                     <td className="py-4 px-4">
                       <span
-                        className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${r.delivery_method === "SHIPPING"
+                        className={`inline-flex px-3 py-1.5 rounded-[3px] text-xs font-semibold ${r.delivery_method === "SHIPPING"
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-red-100 text-red-700"
                           }`}
@@ -1136,7 +1135,7 @@ export default function AdminPage() {
 
                     <td className="py-4 px-4">
                       <span
-                        className={`inline-flex px-3 py-1.5 rounded-full text-xs font-semibold ${statusBadgeClass(
+                        className={`inline-flex px-3 py-1.5 rounded-[3px] text-xs font-semibold ${statusBadgeClass(
                           r.status
                         )}`}
                       >
@@ -1148,14 +1147,14 @@ export default function AdminPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => openEditor(r.id)}
-                          className="px-4 py-2 rounded-lg bg-red-100 text-red-700 hover:bg-red-200 font-medium transition-colors"
+                          className="px-3 py-2 rounded-[3px] border border-slate-400 bg-white text-slate-800 hover:border-slate-900 text-xs font-bold uppercase tracking-wide transition-colors"
                         >
                           Editar
                         </button>
                         {(r.type_code === "TRYOUT" || r.type_code === "PICKUP") && (
                           <button
                             onClick={() => openRescheduleModal(r)}
-                            className="px-4 py-2 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 font-medium transition-colors"
+                            className="px-3 py-2 rounded-[3px] border border-brand-indigo bg-white text-brand-indigo hover:bg-brand-indigo hover:text-white text-xs font-bold uppercase tracking-wide transition-colors"
                           >
                             Reagendar
                           </button>
@@ -1178,7 +1177,7 @@ export default function AdminPage() {
       </section>
 
       {/* Acceso rápido para envíos */}
-      <section className="card border-2 border-slate-200">
+      <section className="card">
         <div className="mb-4">
           <h2 className="font-bold text-xl mb-1">Link de Envío</h2>
           <p className="text-sm text-slate-500">
@@ -1220,7 +1219,7 @@ export default function AdminPage() {
         </div>
 
         {/* Formulario de Apertura */}
-        <div className="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl p-4 sm:p-6 mb-6 border border-red-100">
+        <div className="bg-white rounded-[6px] p-4 sm:p-6 mb-6 border border-slate-300">
           <h3 className="font-semibold text-lg mb-4 text-slate-800">Abrir nuevo horario</h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-4">
@@ -1232,7 +1231,7 @@ export default function AdminPage() {
                 type="date"
                 value={wDate}
                 onChange={(e) => setWDate(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
               />
             </div>
 
@@ -1243,7 +1242,7 @@ export default function AdminPage() {
               <select
                 value={wType}
                 onChange={(e) => setWType(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none bg-white"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none bg-white"
               >
                 <option value="TRYOUT">Ensayar</option>
                 <option value="PICKUP">Prueba remota</option>
@@ -1259,7 +1258,7 @@ export default function AdminPage() {
                 step={60}
                 value={wStart}
                 onChange={(e) => setWStart(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
               />
             </div>
 
@@ -1272,7 +1271,7 @@ export default function AdminPage() {
                 step={60}
                 value={wEnd}
                 onChange={(e) => setWEnd(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
               />
             </div>
 
@@ -1283,7 +1282,7 @@ export default function AdminPage() {
               <select
                 value={slotSizeW}
                 onChange={(e) => setSlotSizeW(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none bg-white"
+                className="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none bg-white"
               >
                 <option value={15}>15 minutos</option>
                 <option value={20}>20 minutos</option>
@@ -1295,23 +1294,23 @@ export default function AdminPage() {
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={addWeekdayWindow}
-              className="w-full sm:w-auto min-h-[44px] px-6 py-3 rounded-xl text-white font-medium bg-brand-indigo hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 transition-all"
+              className="w-full sm:w-auto min-h-[44px] px-6 py-3 rounded-[3px] text-white text-xs font-bold uppercase tracking-wide bg-brand-indigo hover:bg-brand-hover transition-colors"
             >
               Abrir horario
             </button>
             <button
               onClick={fetchWeekdayWindows}
-              className="w-full sm:w-auto min-h-[44px] px-5 py-3 rounded-xl bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-700"
+              className="w-full sm:w-auto min-h-[44px] px-5 py-3 rounded-[3px] bg-white border border-slate-400 hover:border-slate-900 transition-colors text-xs font-bold uppercase tracking-wide text-slate-800"
             >
               Actualizar lista
             </button>
           </div>
 
           {lastCreatedLink && (
-            <div className="mt-4 p-4 bg-indigo-50 border border-indigo-200 rounded-xl">
-              <p className="text-sm font-semibold text-indigo-700 mb-2">Link generado — compártelo con el cliente:</p>
+            <div className="mt-4 p-4 bg-violet-50 border border-violet-200 rounded-xl">
+              <p className="text-sm font-semibold text-brand-indigo mb-2">Link generado — compártelo con el cliente:</p>
               <div className="flex gap-2 items-center">
-                <code className="text-xs bg-white border border-indigo-200 rounded-lg px-3 py-2 flex-1 truncate text-slate-700">
+                <code className="text-xs bg-white border border-violet-200 rounded-lg px-3 py-2 flex-1 truncate text-slate-700">
                   {lastCreatedLink}
                 </code>
                 <button
@@ -1320,12 +1319,12 @@ export default function AdminPage() {
                     navigator.clipboard.writeText(msg);
                     setToast("Mensaje copiado al portapapeles.");
                   }}
-                  className="shrink-0 min-h-[36px] px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
+                  className="shrink-0 min-h-[36px] px-4 py-2 rounded-lg bg-brand-indigo text-white text-sm font-medium hover:bg-brand-hover transition-colors"
                 >
                   Copiar mensaje
                 </button>
               </div>
-              <p className="text-xs text-indigo-500 mt-2">
+              <p className="text-xs text-brand-indigo mt-2">
                 Al abrirlo, el cliente llega directamente al formulario con la fecha y hora seleccionadas.
               </p>
             </div>
@@ -1339,7 +1338,7 @@ export default function AdminPage() {
               <h3 className="font-semibold text-base sm:text-lg text-slate-800">
                 Horarios para {dayjs(wDate).format("DD/MM/YYYY")}
               </h3>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${wType === 'TRYOUT'
+              <span className={`px-3 py-1 rounded-[3px] text-xs font-medium ${wType === 'TRYOUT'
                 ? 'bg-red-100 text-red-700'
                 : 'bg-emerald-100 text-emerald-700'
                 }`}>
@@ -1441,7 +1440,7 @@ export default function AdminPage() {
                             Editar
                           </button>
                           <button
-                            className="flex-1 px-3 py-2 rounded-lg bg-indigo-50 text-indigo-700 text-sm font-medium hover:bg-indigo-100 transition-colors"
+                            className="flex-1 px-3 py-2 rounded-lg bg-violet-50 text-brand-indigo text-sm font-medium hover:bg-violet-100 transition-colors"
                             onClick={() => {
                               const link = `${window.location.origin}/agendar?type=${wType}&date=${wDate}&start=${r.start}&end=${r.end}`;
                               const msg = buildBookingMessage(wType, wDate, r.start, r.end, link);
@@ -1469,7 +1468,7 @@ export default function AdminPage() {
       </section>
 
       {/* Buscador de Clientes */}
-      <section className="card border-2 border-slate-200">
+      <section className="card">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="font-bold text-2xl mb-1">Buscador de Clientes</h2>
@@ -1479,7 +1478,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-slate-50 to-red-50 rounded-2xl p-6 border border-slate-200">
+        <div className="bg-slate-50 rounded-[6px] p-6 border border-slate-300">
           <div className="flex gap-3 mb-6">
             <input
               type="text"
@@ -1487,11 +1486,11 @@ export default function AdminPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && searchCustomer()}
-              className="flex-1 px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
+              className="flex-1 px-4 py-3 rounded-xl border border-slate-300 focus:border-red-400 focus:ring-2 focus:ring-red-100 transition-all outline-none"
             />
             <button
               onClick={searchCustomer}
-              className="px-6 py-3 rounded-xl text-white font-medium bg-brand-indigo hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/40 transition-all transform hover:scale-105"
+              className="px-6 py-3 rounded-[3px] text-white text-xs font-bold uppercase tracking-wide bg-brand-indigo hover:bg-brand-hover transition-colors"
             >
               Buscar
             </button>
@@ -1499,7 +1498,7 @@ export default function AdminPage() {
 
           {/* Lista de candidatos (resultados múltiples) */}
           {searchCandidates.length > 0 && (
-            <div className="bg-white rounded-xl border-2 border-slate-200 overflow-hidden mb-6">
+            <div className="bg-white rounded-xl border border-slate-300 overflow-hidden mb-6">
               <div className="bg-slate-50 px-6 py-3 border-b border-slate-200">
                 <h3 className="font-semibold text-slate-700">
                   Resultados encontrados ({searchCandidates.length})
@@ -1520,7 +1519,7 @@ export default function AdminPage() {
                       </div>
                     </div>
                     {c.is_blacklisted && (
-                      <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold">
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-[3px] font-bold">
                         BLOQUEADO
                       </span>
                     )}
@@ -1534,7 +1533,7 @@ export default function AdminPage() {
           )}
 
           {searchResult && (
-            <div className="bg-white rounded-xl border-2 border-slate-200 overflow-hidden">
+            <div className="bg-white rounded-xl border border-slate-300 overflow-hidden">
               {!searchResult.found ? (
                 <div className="p-8 text-center">
                   <p className="text-slate-600 font-medium">
@@ -1554,11 +1553,11 @@ export default function AdminPage() {
                         </p>
                       </div>
                       {searchResult.blacklisted ? (
-                        <span className="px-4 py-2 rounded-full bg-red-100 text-red-800 font-semibold text-sm">
+                        <span className="px-4 py-2 rounded-[3px] bg-red-100 text-red-800 font-semibold text-sm">
                           Bloqueado
                         </span>
                       ) : (
-                        <span className="px-4 py-2 rounded-full bg-green-100 text-green-800 font-semibold text-sm">
+                        <span className="px-4 py-2 rounded-[3px] bg-green-100 text-green-800 font-semibold text-sm">
                           Activo
                         </span>
                       )}
@@ -1632,11 +1631,11 @@ export default function AdminPage() {
                         Relación con la Tienda
                       </h4>
                       <div className="grid grid-cols-3 gap-3 mb-3">
-                        <div className="bg-indigo-50 rounded-xl p-4 text-center">
-                          <div className="text-2xl font-bold text-indigo-700">
+                        <div className="bg-violet-50 rounded-xl p-4 text-center">
+                          <div className="text-2xl font-bold text-brand-indigo">
                             {searchResult.customer.tryout || 0}
                           </div>
-                          <div className="text-xs text-indigo-500 mt-1">Pruebas</div>
+                          <div className="text-xs text-brand-indigo mt-1">Pruebas</div>
                         </div>
                         <div className="bg-violet-50 rounded-xl p-4 text-center">
                           <div className="text-2xl font-bold text-violet-700">
@@ -1655,7 +1654,7 @@ export default function AdminPage() {
                         <div className="flex items-center gap-2 flex-wrap text-sm">
                           <span className="font-medium text-slate-700">Ciudades de envío:</span>
                           {searchResult.customer.cities.map((c) => (
-                            <span key={c} className="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium">
+                            <span key={c} className="px-2.5 py-1 rounded-[3px] bg-slate-100 text-slate-600 text-xs font-medium">
                               {c}
                             </span>
                           ))}
@@ -1682,7 +1681,7 @@ export default function AdminPage() {
                                     {h.shipping_city ? ` · ${h.shipping_city}` : ""}
                                   </p>
                                 </div>
-                                <span className={`shrink-0 text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
+                                <span className={`shrink-0 text-[10px] font-bold uppercase px-2 py-1 rounded-[3px] ${
                                   h.status === "CANCELLED" ? "bg-red-100 text-red-700" :
                                   h.status === "NO_SHOW" ? "bg-slate-200 text-slate-600" :
                                   h.status === "DONE" || h.status === "SHIPPED" ? "bg-emerald-100 text-emerald-700" :
@@ -1737,7 +1736,7 @@ export default function AdminPage() {
                           onClick={() =>
                             removeFromBlacklist(searchResult.customer.customer_id_number)
                           }
-                          className="px-6 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 transition-all transform hover:scale-105"
+                          className="px-6 py-3 rounded-[3px] text-white text-xs font-bold uppercase tracking-wide bg-emerald-700 hover:bg-emerald-800 transition-colors"
                         >
                           Desbloquear cliente
                         </button>
@@ -1749,7 +1748,7 @@ export default function AdminPage() {
                             const notes = prompt("Notas adicionales (opcional):");
                             addToBlacklist(reason, notes || "");
                           }}
-                          className="px-6 py-3 rounded-xl text-white font-medium bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40 transition-all transform hover:scale-105"
+                          className="px-6 py-3 rounded-[3px] text-white text-xs font-bold uppercase tracking-wide bg-rose-700 hover:bg-rose-800 transition-colors"
                         >
                           Bloquear cliente
                         </button>
@@ -1764,10 +1763,10 @@ export default function AdminPage() {
       </section>
 
       {/* Gestión de Blacklist */}
-      <section className="card border-2 border-red-200 bg-red-50/30">
+      <section className="card !border-rose-300">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="font-bold text-2xl mb-1">🚫 Clientes Bloqueados</h2>
+            <h2 className="font-display font-bold text-2xl mb-1 flex items-center gap-2"><Ban className="w-6 h-6 text-rose-600" /> Clientes bloqueados</h2>
             <p className="text-sm text-slate-500">
               Lista de clientes que no pueden agendar citas
             </p>
@@ -1777,9 +1776,9 @@ export default function AdminPage() {
               setShowBlacklist(!showBlacklist);
               if (!showBlacklist) fetchBlacklist();
             }}
-            className="px-5 py-2.5 rounded-xl bg-white border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 transition-all font-medium text-slate-700"
+            className="px-5 py-2.5 rounded-[3px] bg-white border border-slate-400 hover:border-slate-900 transition-colors text-xs font-bold uppercase tracking-wide text-slate-800"
           >
-            {showBlacklist ? "🔼 Ocultar" : "🔽 Mostrar"}
+            {showBlacklist ? "Ocultar" : "Mostrar"}
           </button>
         </div>
 
@@ -1787,7 +1786,7 @@ export default function AdminPage() {
           <div className="bg-white rounded-xl border-2 border-red-200 overflow-hidden">
             {blacklistItems.length === 0 ? (
               <div className="p-8 text-center">
-                <div className="text-6xl mb-4">✅</div>
+                <ShieldCheck className="w-12 h-12 text-emerald-600 mx-auto mb-4" />
                 <p className="text-slate-600 font-medium">
                   No hay clientes bloqueados
                 </p>
@@ -1800,7 +1799,7 @@ export default function AdminPage() {
                 {blacklistItems.map((item) => (
                   <div
                     key={item.id}
-                    className="bg-white rounded-xl border-2 border-slate-200 hover:border-red-300 hover:shadow-md transition-all overflow-hidden"
+                    className="bg-white rounded-xl border border-slate-300 hover:border-red-300 hover:shadow-md transition-all overflow-hidden"
                   >
                     <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex items-center justify-between">
                       <div>
@@ -1811,7 +1810,7 @@ export default function AdminPage() {
                           Cédula: {item.customer_id_number}
                         </p>
                       </div>
-                      <span className="px-3 py-1 rounded-full bg-red-100 text-red-800 font-semibold text-xs">
+                      <span className="px-3 py-1 rounded-[3px] bg-red-100 text-red-800 font-semibold text-xs">
                         {item.reason}
                       </span>
                     </div>
@@ -1853,9 +1852,9 @@ export default function AdminPage() {
                     <div className="px-4 pb-4">
                       <button
                         onClick={() => removeFromBlacklist(item.customer_id_number)}
-                        className="w-full px-4 py-2 rounded-lg text-white font-medium bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 transition-all"
+                        className="w-full px-4 py-2 rounded-[3px] text-white text-xs font-bold uppercase tracking-wide bg-emerald-700 hover:bg-emerald-800 transition-all"
                       >
-                        ✅ Desbloquear
+                        Desbloquear
                       </button>
                     </div>
                   </div>
@@ -2140,7 +2139,7 @@ export default function AdminPage() {
                             <div className="mt-2 flex flex-wrap gap-2">
                               {evidenceFiles.map((f, i) => (
                                 <span key={i} className="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-lg px-2 py-1">
-                                  📷 {f.name}
+                                  <Camera className="inline w-3.5 h-3.5 mr-1 -mt-0.5" />{f.name}
                                 </span>
                               ))}
                             </div>
@@ -2306,7 +2305,7 @@ export default function AdminPage() {
                 <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none">
                   <input
                     type="checkbox"
-                    className="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                    className="w-4 h-4 rounded border-slate-300 text-brand-indigo"
                     checked={notifyOnSave}
                     onChange={(e) => setNotifyOnSave(e.target.checked)}
                   />
@@ -2321,7 +2320,7 @@ export default function AdminPage() {
                   </button>
                   <button
                     onClick={saveEditor}
-                    className="min-h-[44px] px-4 py-2 rounded-xl text-white font-medium bg-[var(--brand)] hover:bg-[var(--brand-hover)]"
+                    className="min-h-[44px] px-4 py-2 rounded-[3px] text-white text-xs font-bold uppercase tracking-wide bg-[var(--brand)] hover:bg-[var(--brand-hover)]"
                   >
                     Guardar cambios
                   </button>
@@ -2356,7 +2355,7 @@ export default function AdminPage() {
                           setQbForm((f) => ({ ...f, type_code: t, start_time: "", end_time: "" }));
                           fetchQbSlots(qbForm.date, t);
                         }}
-                        className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${qbForm.type_code === t ? "bg-indigo-600 text-white border-indigo-600" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}
+                        className={`py-2.5 rounded-xl text-sm font-semibold border-2 transition-all ${qbForm.type_code === t ? "bg-brand-indigo text-white border-brand-indigo" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}
                       >
                         {t === "TRYOUT" ? "Ensayar" : t === "PICKUP" ? "Prueba remota" : "Envío"}
                       </button>
@@ -2396,7 +2395,7 @@ export default function AdminPage() {
                                   key={`${s.start}-${s.end}`}
                                   type="button"
                                   onClick={() => { setQbForm((f) => ({ ...f, start_time: s.start, end_time: s.end })); setQbErrors((er) => ({ ...er, slot: undefined })); }}
-                                  className={`py-1.5 px-2 rounded-lg text-xs font-medium border-2 transition-all ${active ? "bg-indigo-600 text-white border-indigo-600" : "border-slate-200 hover:border-indigo-300"}`}
+                                  className={`py-1.5 px-2 rounded-lg text-xs font-medium border-2 transition-all ${active ? "bg-brand-indigo text-white border-brand-indigo" : "border-slate-200 hover:border-indigo-300"}`}
                                 >
                                   {fmt(s.start)} – {fmt(s.end)}
                                 </button>
@@ -2411,11 +2410,11 @@ export default function AdminPage() {
 
                   {/* Banner de confirmación de datos encontrados */}
                   {qbFoundCustomer && (
-                    <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50 p-3 flex items-start gap-3">
+                    <div className="rounded-xl border-2 border-violet-200 bg-violet-50 p-3 flex items-start gap-3">
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-indigo-800">Cliente encontrado</p>
-                        <p className="text-sm text-indigo-700 truncate">{qbFoundCustomer.customer_name}</p>
-                        <p className="text-xs text-indigo-500 mt-0.5">{qbFoundCustomer.customer_email} · {qbFoundCustomer.customer_phone}</p>
+                        <p className="text-sm text-brand-indigo truncate">{qbFoundCustomer.customer_name}</p>
+                        <p className="text-xs text-brand-indigo mt-0.5">{qbFoundCustomer.customer_email} · {qbFoundCustomer.customer_phone}</p>
                       </div>
                       <div className="flex gap-2 shrink-0">
                         <button
@@ -2428,7 +2427,7 @@ export default function AdminPage() {
                         <button
                           type="button"
                           onClick={applyQbFoundCustomer}
-                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700"
+                          className="px-3 py-1.5 rounded-lg text-xs font-medium bg-brand-indigo text-white hover:bg-brand-hover"
                         >
                           Cargar datos
                         </button>
@@ -2448,7 +2447,7 @@ export default function AdminPage() {
                         <label className="block text-sm font-medium text-slate-700 mb-1">
                           {label} {required && <span className="text-red-500">*</span>}
                           {key === "customer_id_number" && qbLookingUp && (
-                            <span className="ml-2 text-xs text-indigo-500 font-normal">Buscando...</span>
+                            <span className="ml-2 text-xs text-brand-indigo font-normal">Buscando...</span>
                           )}
                         </label>
                         <input
@@ -2478,7 +2477,7 @@ export default function AdminPage() {
 
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Notas <span className="text-slate-400 text-xs font-normal">(opcional)</span></label>
-                    <textarea rows={2} value={qbForm.notes} onChange={(e) => setQbForm((f) => ({ ...f, notes: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border-2 border-slate-200 focus:border-indigo-400 outline-none transition resize-none" />
+                    <textarea rows={2} value={qbForm.notes} onChange={(e) => setQbForm((f) => ({ ...f, notes: e.target.value }))} className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none transition resize-none" />
                   </div>
 
                   {/* Campos de envío */}
@@ -2523,7 +2522,7 @@ export default function AdminPage() {
                   <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none pt-1">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                      className="w-4 h-4 rounded border-slate-300 text-brand-indigo"
                       checked={qbForm.send_email}
                       onChange={(e) => setQbForm((f) => ({ ...f, send_email: e.target.checked }))}
                     />
@@ -2538,7 +2537,7 @@ export default function AdminPage() {
                   <button
                     onClick={submitQuickBook}
                     disabled={qbSubmitting}
-                    className="min-h-[44px] px-5 py-2 rounded-xl text-white font-medium bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+                    className="min-h-[44px] px-5 py-2 rounded-[3px] text-white text-xs font-bold uppercase tracking-wide bg-slate-900 hover:bg-brand-indigo disabled:opacity-60 transition-colors"
                   >
                     {qbSubmitting ? "Agendando..." : "Agendar"}
                   </button>
@@ -2578,7 +2577,7 @@ export default function AdminPage() {
                   type="date"
                   value={rescheduleModal.date}
                   onChange={(e) => setRescheduleModal((s) => ({ ...s, date: e.target.value }))}
-                  className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -2589,7 +2588,7 @@ export default function AdminPage() {
                     step={60}
                     value={rescheduleModal.start}
                     onChange={(e) => setRescheduleModal((s) => ({ ...s, start: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
                   />
                 </div>
                 <div>
@@ -2599,7 +2598,7 @@ export default function AdminPage() {
                     step={60}
                     value={rescheduleModal.end}
                     onChange={(e) => setRescheduleModal((s) => ({ ...s, end: e.target.value }))}
-                    className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
                   />
                 </div>
               </div>
@@ -2607,7 +2606,7 @@ export default function AdminPage() {
               <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none pt-1">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 rounded border-slate-300 text-indigo-600"
+                  className="w-4 h-4 rounded border-slate-300 text-brand-indigo"
                   checked={notifyReschedule}
                   onChange={(e) => setNotifyReschedule(e.target.checked)}
                 />
@@ -2624,7 +2623,7 @@ export default function AdminPage() {
               </button>
               <button
                 onClick={submitReschedule}
-                className="min-h-[44px] px-5 py-2 rounded-xl text-white font-medium bg-indigo-600 hover:bg-indigo-700 transition-colors"
+                className="min-h-[44px] px-5 py-2 rounded-[3px] text-white text-xs font-bold uppercase tracking-wide bg-slate-900 hover:bg-brand-indigo transition-colors"
               >
                 Confirmar reagendamiento
               </button>

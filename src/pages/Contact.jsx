@@ -9,9 +9,9 @@ const SocialCard = ({ href, icon, label, description, color, delay }) => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay }}
-            whileHover={{ scale: 1.02, y: -2 }}
+            whileHover={{ y: -3 }}
             whileTap={{ scale: 0.98 }}
-            className={`flex flex-col items-center justify-center p-4 rounded-xl bg-white shadow-md border border-slate-100 hover:shadow-lg transition-all duration-300 group cursor-pointer relative overflow-hidden h-full`}
+            className={`flex flex-col items-center justify-center p-5 rounded-[6px] bg-white shadow-sm border border-slate-300 hover:border-slate-900 transition-colors duration-300 group cursor-pointer relative overflow-hidden h-full`}
         >
             <div className={`absolute inset-0 opacity-0 group-hover:opacity-5 transition-opacity duration-300 ${color}`}></div>
             <div className="w-12 h-12 mb-2 flex items-center justify-center">
@@ -20,10 +20,10 @@ const SocialCard = ({ href, icon, label, description, color, delay }) => {
             <span className="font-bold text-base text-slate-800 group-hover:text-slate-900 transition-colors">
                 {label}
             </span>
-            <span className="text-xs text-slate-500 mt-1 font-medium text-center px-2">
+            <span className="text-xs text-slate-600 mt-1 font-medium text-center px-2">
                 {description}
             </span>
-            <span className="text-xs text-brand-indigo mt-2 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="font-mono text-[11px] uppercase tracking-wider text-brand-indigo mt-2 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
                 Contactar
             </span>
         </motion.a>
@@ -64,7 +64,7 @@ const FacebookIcon = () => (
 
 export default function Contact() {
     return (
-        <div className="flex-1 flex flex-col items-center justify-center p-4 bg-slate-50">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-14">
             <div className="w-full max-w-4xl">
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
@@ -72,10 +72,10 @@ export default function Contact() {
                     transition={{ duration: 0.6 }}
                     className="text-center mb-8"
                 >
-                    <h1 className="text-3xl md:text-4xl font-extrabold mb-2 text-brand-indigo">
-                        Contáctanos
+                    <h1 className="font-display font-bold text-slate-900 tracking-tight leading-none text-5xl md:text-6xl mb-4">
+                        Contáctanos<span className="brand-text">.</span>
                     </h1>
-                    <p className="text-slate-600 text-base max-w-md mx-auto">
+                    <p className="text-slate-700 text-base max-w-md mx-auto">
                         Elige tu plataforma favorita para conectar.
                     </p>
                 </motion.div>
