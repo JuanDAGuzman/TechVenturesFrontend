@@ -1,186 +1,188 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Heart, Github, Linkedin, Mail, Code } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useSiteTheme } from "../../lib/SiteThemeContext.jsx";
+import { ArrowUp, ArrowUpRight, Github, Linkedin, Mail, MapPin, MessageCircle, Instagram } from "lucide-react";
 
-function SocialIcon({ icon: Icon, href, label, dot }) {
-    const [hovered, setHovered] = useState(false);
-    return (
-        <motion.a
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            whileHover={{ scale: 1.15, y: -3 }}
-            whileTap={{ scale: 0.95 }}
-            aria-label={label}
-        >
-            <div
-                className="w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm hover:shadow-md border border-slate-200"
-                style={{
-                    background: hovered ? dot : "white",
-                    color: hovered ? "white" : "#64748b",
-                }}
-                onMouseEnter={() => setHovered(true)}
-                onMouseLeave={() => setHovered(false)}
-            >
-                <Icon className="w-5 h-5" />
-            </div>
-        </motion.a>
-    );
+const API = (
+    import.meta.env.VITE_API_BASE ??
+    import.meta.env.VITE_API ??
+    window.__API_BASE__ ??
+    "http://localhost:4000/api"
+).replace(/\/+$/, "");
+
+const DEFAULT_WHATSAPP = "573108216274";
+
+// Quita tildes y arma el slug que usa el catálogo en ?categoria=
+function slugify(name) {
+    return name
+        .normalize("NFD")
+        .split("")
+        .filter((ch) => {
+            const code = ch.codePointAt(0);
+            return code < 0x0300 || code > 0x036f;
+        })
+        .join("")
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, "-");
 }
 
-function NavLink({ href, label, dot }) {
-    const [hovered, setHovered] = useState(false);
-    return (
-        <li>
-            <Link
-                to={href}
-                className="text-slate-600 transition text-sm flex items-center gap-2 group font-medium"
-                style={{ color: hovered ? dot : undefined }}
-                onMouseEnter={() => setHovered(true)}
-                onMouseLeave={() => setHovered(false)}
-            >
-                <span
-                    className="w-1.5 h-1.5 rounded-full transition-colors"
-                    style={{ background: hovered ? dot : "#cbd5e1" }}
-                />
-                <span>{label}</span>
-            </Link>
-        </li>
-    );
+function scrollToTop() {
+    // La página hace scroll en el body (html y body tienen overflow-x: hidden)
+    document.body.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
+
+const colTitle = "font-mono text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500 mb-4";
+const linkCls = "group inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-brand-indigo transition-colors";
 
 export default function FooterV2() {
-    const currentYear = new Date().getFullYear();
-    const location = useLocation();
-    const { brand } = useSiteTheme();
-    const isContact = location.pathname === "/contact";
+    const year = new Date().getFullYear();
+    const { pathname } = useLocation();
+    const [categories, setCategories] = useState([]);
+    const [settings, setSettings] = useState({});
+    const [products, setProducts] = useState([]);
 
-    const socials = [
-        { icon: Github, label: "GitHub", href: "https://github.com/JuanDAGuzman" },
-        { icon: Linkedin, label: "LinkedIn", href: "https://www.linkedin.com/in/juan-diego-ar%C3%A9valo-guzm%C3%A1n-030b36305/" },
-        { icon: Mail, label: "Email", href: "mailto:techventuresco@gmail.com" },
-    ];
+    useEffect(() => {
+        let cancelled = false;
+        Promise.all([
+            fetch(`${API}/catalog/categories`).then((r) => r.json()),
+            fetch(`${API}/catalog/settings`).then((r) => r.json()),
+            fetch(`${API}/catalog/products`).then((r) => r.json()),
+        ])
+            .then(([c, s, p]) => {
+                if (cancelled) return;
+                if (c.ok) setCategories(c.categories);
+                if (s.ok) setSettings(s.settings);
+                if (p.ok) setProducts(p.products);
+            })
+            .catch(() => {});
+        return () => { cancelled = true; };
+    }, []);
 
-    const companyLinks = [
-        { label: "Catálogo", href: "/" },
-        { label: "Contacto", href: "/contact" },
-    ];
+    // Solo secciones de primer nivel que tengan productos disponibles (sumando sus subsecciones)
+    const shortcuts = categories
+        .filter((cat) => !cat.parent_id)
+        .filter((cat) => {
+            const ids = new Set([cat.name, ...categories.filter((k) => k.parent_id === cat.id).map((k) => k.name)]);
+            return products.some((pr) => pr.available && ids.has(pr.category));
+        });
+
+    const wa = (settings.whatsapp_number || DEFAULT_WHATSAPP).replace(/\D/g, "");
+    const waHref = `https://wa.me/${wa}?text=${encodeURIComponent("Hola, quisiera más información del catálogo.")}`;
+    const ig = settings.instagram_handle?.trim();
+    const igUser = ig ? ig.replace(/^@/, "") : null;
 
     return (
-        <footer className="relative bg-slate-50 mt-auto overflow-hidden border-t border-slate-200">
-            <div className="container-page relative py-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
+        <footer className="relative mt-auto border-t border-slate-300" style={{ background: "#f6f7f9" }}>
+            <div className="max-w-[1180px] mx-auto px-4 sm:px-6">
 
-                    {/* Brand */}
-                    <div className="lg:col-span-2">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            className="space-y-4"
-                        >
-                            <div className="flex items-center gap-3">
-                                <motion.img
-                                    src="/TECHVENT.png"
-                                    alt="TechVenturesCO"
-                                    className="w-12 h-12 object-contain"
-                                    whileHover={{ rotate: [0, -10, 10, 0] }}
-                                    transition={{ duration: 0.5 }}
-                                />
-                                <div>
-                                    <h3 className="font-black text-2xl tracking-tight" style={{ color: brand.dot }}>
-                                        TechVenturesCO
-                                    </h3>
-                                    <p className="text-slate-500 font-bold text-xs uppercase tracking-wider">Tu aliado en tecnología</p>
-                                </div>
+                <div className="grid gap-10 md:gap-8 md:grid-cols-[1.5fr_1fr_1fr] py-12 sm:py-16">
+
+                    {/* Marca */}
+                    <div>
+                        <div className="flex items-center gap-3">
+                            <img
+                                src="/logo-mark.png"
+                                alt=""
+                                aria-hidden="true"
+                                className="h-14 w-14 object-contain"
+                                style={{ mixBlendMode: "multiply" }}
+                            />
+                            <div className="leading-none">
+                                <p className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-slate-900">
+                                    TechVentures<span className="text-brand-indigo">CO</span>
+                                </p>
+                                <p className="mt-1.5 font-mono text-[10px] uppercase tracking-[0.18em] text-slate-600">
+                                    Tu aliado en tecnología
+                                </p>
                             </div>
-
-                            <p className="text-slate-600 text-sm leading-relaxed max-w-md">
-                                Tú ya sabes lo que quieres. Nosotros solo nos aseguramos de que lo consigas — rápido, sin rodeos y sin sorpresas.
-                            </p>
-
-                            <div className="flex gap-3">
-                                {socials.map((s) => (
-                                    <SocialIcon key={s.label} icon={s.icon} href={s.href} label={s.label} dot={brand.dot} />
-                                ))}
-                            </div>
-                        </motion.div>
+                        </div>
+                        <p className="mt-5 text-sm text-slate-600 leading-relaxed max-w-[42ch]">
+                            Tú ya sabes lo que quieres. Nosotros solo nos aseguramos de que lo consigas, rápido, sin rodeos y sin sorpresas.
+                        </p>
                     </div>
 
-                    {/* Quick Links */}
-                    {!isContact && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.1 }}
-                        >
-                            <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2 text-lg">
-                                Enlaces rápidos
-                            </h4>
-                            <ul className="space-y-3">
-                                {companyLinks.map((l) => (
-                                    <NavLink key={l.label} href={l.href} label={l.label} dot={brand.dot} />
-                                ))}
-                            </ul>
-                        </motion.div>
-                    )}
-
-                    {/* Contact */}
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.2 }}
-                    >
-                        <h4 className="font-bold text-slate-900 mb-4 text-lg">Contacto</h4>
-                        <ul className="space-y-4 text-sm">
-                            <li className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm"
-                                    style={{ color: brand.dot }}>
-                                    <Mail className="w-4 h-4" />
-                                </div>
-                                <a href="mailto:techventuresco@gmail.com"
-                                    className="text-slate-600 font-medium transition"
-                                    style={{ "--hover-color": brand.dot }}
-                                    onMouseEnter={e => e.currentTarget.style.color = brand.dot}
-                                    onMouseLeave={e => e.currentTarget.style.color = ""}
-                                >
-                                    techventuresco@gmail.com
-                                </a>
+                    {/* Explorar */}
+                    <div>
+                        <p className={colTitle}>Explorar</p>
+                        <ul className="space-y-2.5">
+                            <li>
+                                <Link to="/" className={linkCls} onClick={() => pathname === "/" && scrollToTop()}>
+                                    Todo el catálogo
+                                </Link>
                             </li>
-                            <li className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm"
-                                    style={{ color: brand.dot }}>
-                                    <span className="text-sm font-bold">CO</span>
-                                </div>
-                                <span className="text-slate-600 font-medium">Bogotá, Colombia</span>
+                            {shortcuts.slice(0, 6).map((cat) => (
+                                <li key={cat.id}>
+                                    <Link to={`/?categoria=${slugify(cat.name)}`} className={linkCls}>
+                                        <span className="uppercase tracking-wide text-[13px]">{cat.name}</span>
+                                    </Link>
+                                </li>
+                            ))}
+                            <li>
+                                <Link to="/contact" className={linkCls}>Contacto</Link>
                             </li>
                         </ul>
-                    </motion.div>
+                    </div>
+
+                    {/* Contacto */}
+                    <div>
+                        <p className={colTitle}>Escríbenos</p>
+                        <a
+                            href={waHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2.5 bg-slate-900 text-white px-5 py-3 text-sm font-bold rounded-[3px] transition-colors hover:bg-brand-indigo"
+                        >
+                            <MessageCircle className="w-4 h-4" />
+                            WhatsApp
+                            <ArrowUpRight className="w-4 h-4 opacity-70" />
+                        </a>
+                        <ul className="mt-5 space-y-3 text-sm text-slate-700">
+                            <li>
+                                <a href="mailto:techventuresco@gmail.com" className="inline-flex items-center gap-2.5 font-semibold hover:text-brand-indigo transition-colors">
+                                    <Mail className="w-4 h-4 text-slate-500 shrink-0" /> techventuresco@gmail.com
+                                </a>
+                            </li>
+                            {igUser && (
+                                <li>
+                                    <a href={`https://instagram.com/${igUser}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2.5 font-semibold hover:text-brand-indigo transition-colors">
+                                        <Instagram className="w-4 h-4 text-slate-500 shrink-0" /> @{igUser}
+                                    </a>
+                                </li>
+                            )}
+                            <li className="inline-flex items-center gap-2.5 font-semibold">
+                                <MapPin className="w-4 h-4 text-slate-500 shrink-0" /> Bogotá, Colombia
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
-                {/* Bottom Bar */}
-                <div className="border-t border-slate-200 pt-8 mt-8">
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        whileInView={{ opacity: 1 }}
-                        viewport={{ once: true }}
-                        className="flex flex-col md:flex-row justify-between items-center gap-4"
-                    >
-                        <p className="text-slate-500 text-sm flex items-center gap-2">
-                            <Code className="w-4 h-4" />
-                            © {currentYear} TechVenturesCO.
-                        </p>
-                        <motion.p
-                            className="text-slate-600 text-sm flex items-center gap-2"
-                            whileHover={{ scale: 1.05 }}
+                {/* Barra inferior */}
+                <div className="border-t border-slate-300 py-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                    <p className="font-mono text-xs text-slate-600">© {year} TechVenturesCO</p>
+
+                    <p className="flex items-center gap-3 text-xs text-slate-600">
+                        <span>Desarrollado por Juan Arévalo</span>
+                        <a href="https://github.com/JuanDAGuzman" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="text-slate-500 hover:text-brand-indigo transition-colors">
+                            <Github className="w-4 h-4" />
+                        </a>
+                        <a
+                            href="https://www.linkedin.com/in/juan-diego-ar%C3%A9valo-guzm%C3%A1n-030b36305/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="LinkedIn"
+                            className="text-slate-500 hover:text-brand-indigo transition-colors"
                         >
-                            Hecho con <Heart className="w-4 h-4 text-rose-500 fill-rose-500 animate-pulse" /> por Juan Arévalo
-                        </motion.p>
-                    </motion.div>
+                            <Linkedin className="w-4 h-4" />
+                        </a>
+                    </p>
+
+                    <button
+                        onClick={scrollToTop}
+                        className="inline-flex items-center gap-2 px-3.5 py-2 border border-slate-400 text-xs font-bold uppercase tracking-wide text-slate-800 bg-white rounded-[3px] hover:bg-slate-900 hover:text-white hover:border-slate-900 transition-colors"
+                    >
+                        Volver arriba <ArrowUp className="w-3.5 h-3.5" />
+                    </button>
                 </div>
             </div>
         </footer>

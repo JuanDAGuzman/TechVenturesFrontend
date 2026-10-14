@@ -100,7 +100,22 @@ function ProductThumb({ imageUrl, category, name }) {
   );
 }
 
-// Tarjeta de producto — celda de la cuadrícula unida por líneas finas
+// Etiqueta cuadrada: NUEVO/SELLADO/OPEN BOX sólidas, CON CAJA con borde de marca, el resto neutras
+function Chip({ kind = "plain", children }) {
+  const base = "inline-flex items-center font-mono text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-[3px] leading-none";
+  if (kind === "strong") return <span className={`${base} text-white`} style={{ background: "var(--brand)" }}>{children}</span>;
+  if (kind === "tint") {
+    return (
+      <span className={base} style={{ background: "var(--brand-ring)", color: "var(--brand)", boxShadow: "inset 0 0 0 1px var(--brand)" }}>
+        {children}
+      </span>
+    );
+  }
+  if (kind === "spec") return <span className={`${base} bg-white text-slate-900 border border-slate-400`}>{children}</span>;
+  return <span className={`${base} bg-slate-100 text-slate-600 border border-slate-200`}>{children}</span>;
+}
+
+// Tarjeta de producto — separada de las demás, con presencia propia
 function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink, index = 0 }) {
   const { brandMap } = useContext(BrandContext);
   const b = brandMap[product.category] ?? DEFAULT_BRAND;
@@ -122,148 +137,143 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
   return (
     <div
       onClick={() => onOpenDetail(product)}
-      className={`catalog-card-in group relative bg-white p-3 sm:p-5 flex flex-col min-w-0 cursor-pointer border-r border-b border-slate-300 transition-[background-color,box-shadow] duration-300 hover:z-10 hover:bg-white hover:shadow-[0_22px_46px_-22px_rgba(109,40,217,0.5)] ${
+      className={`catalog-card-in group relative isolate bg-white rounded-[6px] border border-slate-200 flex flex-col min-w-0 cursor-pointer overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.05),0_10px_26px_-14px_rgba(15,23,42,0.22)] transition-[transform,box-shadow,border-color] duration-300 ease-out hover:-translate-y-1 hover:border-[rgba(109,40,217,0.4)] hover:shadow-[0_2px_4px_rgba(15,23,42,0.05),0_22px_40px_-18px_rgba(15,23,42,0.32)] ${
         !product.available ? "opacity-60" : ""
       }`}
       style={{
-        animationDelay: `${Math.min(index % PAGE_SIZE, 11) * 35}ms`,
-        ...(product.available && isSelected ? { boxShadow: "inset 0 0 0 2px var(--brand)" } : {}),
+        animationDelay: `${Math.min(index % PAGE_SIZE, 11) * 40}ms`,
+        ...(product.available && isSelected ? { boxShadow: "0 0 0 2px var(--brand), 0 18px 36px -18px rgba(109,40,217,0.5)" } : {}),
       }}
     >
-      {/* Línea de acento que se dibuja al pasar el cursor */}
-      <span
-        className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out"
-        style={{ background: "var(--brand)" }}
+      {/* Brillo muy tenue en las 4 esquinas de la tarjeta al pasar el cursor */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        style={{
+          background: [
+            "radial-gradient(circle at 0% 0%, rgba(109,40,217,0.09), transparent 42%)",
+            "radial-gradient(circle at 100% 0%, rgba(109,40,217,0.09), transparent 42%)",
+            "radial-gradient(circle at 0% 100%, rgba(109,40,217,0.09), transparent 42%)",
+            "radial-gradient(circle at 100% 100%, rgba(109,40,217,0.09), transparent 42%)",
+          ].join(","),
+        }}
       />
 
-      {/* Foto */}
-      <div className="relative h-32 sm:h-40 mb-3 sm:mb-4" onMouseMove={tiltMove} onMouseLeave={tiltLeave}>
-        <div className="w-full h-full transition-transform duration-200 ease-out will-change-transform">
-          {/* Brillo de marca detrás de la foto (la foto se funde con él por multiply) */}
+      <div className="p-3 sm:p-4 flex flex-col flex-1">
+        {/* Foto sobre panel con degradado */}
+        <div
+          className="relative h-36 sm:h-44 mb-4 rounded-[4px] overflow-hidden"
+          style={{ background: "linear-gradient(180deg, #f8f9fc 0%, #eceff5 100%)" }}
+          onMouseMove={tiltMove}
+          onMouseLeave={tiltLeave}
+        >
+          {/* El degradado vive en la misma capa que la foto: así el fondo blanco se funde (multiply) con él */}
           <div
-            className="pointer-events-none absolute inset-[-8%] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-            style={{ background: "radial-gradient(closest-side, var(--brand-ring), transparent)" }}
-          />
-          <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
+            className="w-full h-full p-3 transition-transform duration-200 ease-out will-change-transform"
+            style={{ background: "linear-gradient(180deg, #f8f9fc 0%, #eceff5 100%)" }}
+          >
+            <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
+          </div>
+
+          {(tier || product.is_flagship) && (
+            <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
+              {tier && (
+                <span className="text-[9px] font-mono font-bold uppercase tracking-widest px-1.5 py-1 rounded-[3px] text-slate-700 border border-slate-300 bg-white/90 leading-none">
+                  Gama {tier}
+                </span>
+              )}
+              {product.is_flagship && (
+                <span className="text-[9px] font-mono font-bold uppercase tracking-widest px-1.5 py-1 rounded-[3px] text-white leading-none" style={{ background: "var(--brand)" }}>
+                  Insignia
+                </span>
+              )}
+            </div>
+          )}
+          {!product.available && (
+            <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
+              <span className="text-xs font-bold text-slate-600 bg-white px-2 py-0.5 border border-slate-300">Agotado</span>
+            </div>
+          )}
+          {hasDiscount && !isSelected && (
+            <span
+              className="absolute top-2 right-2 flex items-center gap-1 text-[10px] font-black px-1.5 py-1 rounded-[3px] text-white leading-none"
+              style={{ background: b.dot }}
+            >
+              <Tag className="w-2.5 h-2.5 shrink-0" />
+              -{Math.round((1 - product.price / product.original_price) * 100)}%
+            </span>
+          )}
+          {isSelected && (
+            <div className="absolute top-2 right-2 w-6 h-6 rounded-[3px] flex items-center justify-center" style={{ background: "var(--brand)" }}>
+              <Check className="w-3.5 h-3.5 text-white" />
+            </div>
+          )}
         </div>
 
-        {(tier || product.is_flagship) && (
-          <div className="absolute top-0 left-0 flex flex-col items-start gap-1">
-            {tier && (
-              <span className="text-[9px] font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 text-slate-700 border border-slate-400 bg-white">
-                Gama {tier}
-              </span>
-            )}
-            {product.is_flagship && (
-              <span className="text-[9px] font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 text-white" style={{ background: "var(--brand)" }}>
-                Insignia
-              </span>
-            )}
-          </div>
-        )}
-        {!product.available && (
-          <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-            <span className="text-xs font-bold text-slate-600 bg-white px-2 py-0.5 border border-slate-300">Agotado</span>
-          </div>
-        )}
-        {hasDiscount && !isSelected && (
-          <span
-            className="absolute top-0 right-0 flex items-center gap-1 text-[10px] font-black px-1.5 py-0.5 border bg-white"
-            style={{ color: b.dot, borderColor: b.dot }}
-          >
-            <Tag className="w-2.5 h-2.5 shrink-0" />
-            -{Math.round((1 - product.price / product.original_price) * 100)}%
-          </span>
-        )}
-        {isSelected && (
-          <div className="absolute top-0 right-0 w-6 h-6 flex items-center justify-center" style={{ background: "var(--brand)" }}>
-            <Check className="w-3.5 h-3.5 text-white" />
-          </div>
-        )}
-      </div>
+        {/* Información */}
+        <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-slate-500">{product.category}</span>
+        <p className="font-display font-semibold text-slate-900 text-base sm:text-lg leading-tight mt-1 line-clamp-2">{product.name}</p>
 
-      {/* Información */}
-      <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-slate-500">{product.category}</span>
-      <p className="font-display font-semibold text-slate-900 text-[15px] sm:text-[17px] leading-tight mt-1 line-clamp-2">{product.name}</p>
-
-      {/* Etiquetas: memoria + estado. NUEVO/SELLADO/OPEN BOX y CON CAJA destacan en morado */}
-      <div className="flex flex-wrap gap-1.5 mt-3">
-        {product.memory_capacity && (
-          <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full border border-slate-400 bg-white text-slate-800">
-            {product.memory_capacity}
-          </span>
-        )}
-        {condTags.map((t) => {
-          const kind = (t === "NUEVO" || t === "SELLADO" || t === "OPEN BOX") ? "strong" : t === "CON CAJA" ? "tint" : "plain";
-          return (
-            <span
+        {/* Etiquetas cuadradas: memoria + estado */}
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          {product.memory_capacity && <Chip kind="spec">{product.memory_capacity}</Chip>}
+          {condTags.map((t) => (
+            <Chip
               key={t}
-              className={`text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full ${kind === "plain" ? "bg-slate-200 text-slate-700" : ""} ${kind === "strong" ? "text-white" : ""}`}
-              style={
-                kind === "strong" ? { background: "var(--brand)" }
-                : kind === "tint" ? { background: "var(--brand-ring)", color: "var(--brand)", boxShadow: "inset 0 0 0 1px var(--brand)" }
-                : undefined
-              }
+              kind={(t === "NUEVO" || t === "SELLADO" || t === "OPEN BOX") ? "strong" : t === "CON CAJA" ? "tint" : "plain"}
             >
               {t}
-            </span>
-          );
-        })}
-        {!isNew && (
-          <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">Usado</span>
-        )}
-        {!hasBox && (
-          <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">Sin caja</span>
-        )}
-      </div>
-
-      {product.description?.trim() && (
-        <p className="text-[11px] sm:text-xs text-slate-500 mt-2 leading-relaxed uppercase line-clamp-2 sm:group-hover:line-clamp-none">
-          {product.description}
-        </p>
-      )}
-
-      {/* Precio */}
-      <div className="mt-auto pt-4">
-        <div className="pt-3 border-t border-slate-300 flex items-end justify-between gap-2">
-          <div className="min-w-0">
-            {hasDiscount && (
-              <p className="text-[11px] text-slate-500 line-through font-mono leading-none mb-1">{formatPrice(product.original_price)}</p>
-            )}
-            <p className="font-mono font-bold text-slate-900 text-lg sm:text-xl tracking-tight leading-none">{formatPrice(product.price)}</p>
-          </div>
-          <ArrowRight className="w-5 h-5 text-slate-400 shrink-0 transition-all duration-200 group-hover:translate-x-1 group-hover:text-[var(--brand)]" />
+            </Chip>
+          ))}
+          {!isNew && <Chip>Usado</Chip>}
+          {!hasBox && <Chip>Sin caja</Chip>}
         </div>
 
-        {product.available ? (
-          <div className="mt-3 flex gap-2">
-            <button
-              onClick={(e) => { e.stopPropagation(); onToggle(product); }}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[11px] sm:text-xs font-bold uppercase tracking-wide border transition-colors ${
-                isSelected
-                  ? "text-white border-transparent"
-                  : "text-slate-900 border-slate-900 hover:bg-slate-900 hover:text-white"
-              }`}
-              style={isSelected ? { background: "var(--brand)" } : undefined}
-            >
-              {isSelected ? <><X className="w-3.5 h-3.5" /> Quitar</> : <><Plus className="w-3.5 h-3.5" /> Agregar</>}
-            </button>
-            <a
-              href={waLink(product)}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              title="Contactar por WhatsApp"
-              className="shrink-0 w-10 flex items-center justify-center border border-slate-400 text-slate-600 hover:border-[var(--brand)] hover:text-[var(--brand)] transition-colors"
-            >
-              <MessageCircle className="w-4 h-4" />
-            </a>
-          </div>
-        ) : (
-          <div className="mt-3 py-2 bg-slate-100 text-center text-xs text-slate-500 font-medium uppercase tracking-wide">
-            No disponible
-          </div>
+        {product.description?.trim() && (
+          <p className="text-[11px] sm:text-xs text-slate-500 mt-2.5 leading-relaxed uppercase line-clamp-2 sm:group-hover:line-clamp-none">
+            {product.description}
+          </p>
         )}
+
+        {/* Precio + acciones */}
+        <div className="mt-auto pt-4">
+          <div className="flex items-end justify-between gap-2 mb-3">
+            <div className="min-w-0">
+              {hasDiscount && (
+                <p className="text-[11px] text-slate-500 line-through font-mono leading-none mb-1">{formatPrice(product.original_price)}</p>
+              )}
+              <p className="font-mono font-bold text-slate-900 text-xl sm:text-2xl tracking-tight leading-none">{formatPrice(product.price)}</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-slate-300 shrink-0 mb-0.5 transition-all duration-200 group-hover:translate-x-1 group-hover:text-[var(--brand)]" />
+          </div>
+
+          {product.available ? (
+            <div className="flex gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggle(product); }}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-[3px] text-[11px] sm:text-xs font-bold uppercase tracking-wide transition-colors ${
+                  isSelected ? "text-white" : "bg-slate-900 text-white hover:bg-[var(--brand)]"
+                }`}
+                style={isSelected ? { background: "var(--brand)" } : undefined}
+              >
+                {isSelected ? <><X className="w-3.5 h-3.5" /> Quitar</> : <><Plus className="w-3.5 h-3.5" /> Agregar</>}
+              </button>
+              <a
+                href={waLink(product)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                title="Contactar por WhatsApp"
+                className="shrink-0 w-11 flex items-center justify-center rounded-[3px] border border-slate-300 text-slate-600 hover:border-[var(--brand)] hover:text-[var(--brand)] hover:bg-white transition-colors"
+              >
+                <MessageCircle className="w-4 h-4" />
+              </a>
+            </div>
+          ) : (
+            <div className="py-2.5 rounded-[3px] bg-slate-100 text-center text-xs text-slate-500 font-medium uppercase tracking-wide">
+              No disponible
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1415,9 +1425,9 @@ export default function CatalogoV2() {
 
         {/* ── Productos: una sola cuadrícula, 12 por página ── */}
         {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 border-t border-l border-slate-300 bg-white">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="h-72 border-r border-b border-slate-300 bg-white animate-pulse" />
+              <div key={i} className="h-80 rounded-[6px] border border-slate-200 bg-white animate-pulse" />
             ))}
           </div>
         ) : ordered.length === 0 ? (
@@ -1435,7 +1445,7 @@ export default function CatalogoV2() {
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 border-t border-l border-slate-300 bg-white w-full min-w-0">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 w-full min-w-0">
               {visible.map((p, i) => (
                 <ProductCard key={p.id} product={p} tier={tierByProductId.get(p.id)} isSelected={selectedIds.has(p.id)} onToggle={toggleSelect} onOpenDetail={setDetailProduct} waLink={waLink} index={i} />
               ))}
