@@ -9,10 +9,11 @@ export default function LayoutV2() {
     // el resto de páginas conserva el fondo animado.
     const isCatalog = pathname === "/";
 
+    // overflow-x: clip (no hidden) para no romper los elementos sticky
     return (
         <div
-            className={`min-h-screen flex flex-col font-sans text-slate-900 selection:bg-brand-indigo selection:text-white relative overflow-x-hidden w-full ${isCatalog ? "" : "bg-slate-50"}`}
-            style={isCatalog ? { background: "#f2f3f5" } : undefined}
+            className={`min-h-screen flex flex-col font-sans text-slate-900 selection:bg-brand-indigo selection:text-white relative w-full ${isCatalog ? "" : "bg-slate-50"}`}
+            style={{ overflowX: "clip", ...(isCatalog ? { background: "#f6f7f9" } : {}) }}
         >
             {!isCatalog && <AnimatedBackground />}
             <NavbarV2 />
