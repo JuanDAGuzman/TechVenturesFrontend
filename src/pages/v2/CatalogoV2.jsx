@@ -405,10 +405,10 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
           <p className={`font-mono text-2xl sm:text-3xl font-bold text-slate-900 ${hasDiscount ? "mt-1" : "mt-4"}`}>{formatPrice(product.price)}</p>
 
           <div className="mt-5 border-t border-slate-300">
-            {specs.map(([k, v], i) => (
+            {specs.map(([k, v]) => (
               <div key={k} className="flex justify-between gap-4 py-2.5 border-b border-slate-200">
                 <span className="font-mono text-[11px] uppercase tracking-wide text-slate-500 shrink-0">
-                  <span className="text-slate-400 mr-2">{String(i + 1).padStart(2, "0")}</span>{k}
+                  {k}
                 </span>
                 <span className="font-mono text-xs text-slate-800 text-right uppercase">{v}</span>
               </div>
