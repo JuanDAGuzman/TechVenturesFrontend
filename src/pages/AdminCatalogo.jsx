@@ -2,8 +2,9 @@ import { createPortal } from "react-dom";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { getAdminToken } from "../lib/adminSession.js";
 import {
-  Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X, Copy, Check, Star, FileText, Loader2, Tag,
+  Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X, Copy, Check, Star, FileText, Loader2, Tag, Sparkles, Undo2,
 } from "lucide-react";
+import { suggestNames } from "../lib/nameSuggestions.js";
 import { brandFromColor, DEFAULT_BRAND } from "../lib/categoryBrand.js";
 
 const API = (
@@ -289,6 +290,8 @@ export default function AdminCatalogo() {
   // Imagen pendiente de URL externa (búsqueda Google)
   const [pendingImageUrl, setPendingImageUrl] = useState(null);
   const [imageSearchResults, setImageSearchResults] = useState([]);
+  const [searchTitles, setSearchTitles] = useState([]);
+  const [nameBackup, setNameBackup] = useState(null);
   const [imageSearchLoading, setImageSearchLoading] = useState(false);
   const [removeImage, setRemoveImage] = useState(false);
   const fileInputRef = useRef(null);
@@ -427,7 +430,7 @@ export default function AdminCatalogo() {
     setForm({ ...EMPTY_FORM, category: CATEGORIES[0] || "" });
     setPendingImage(null);
     setPendingImageUrl(null);
-    setImageSearchResults([]);
+    setImageSearchResults([]); setSearchTitles([]); setNameBackup(null);
     setRemoveImage(false);
     setFormError("");
     setModal({ open: true, product: null });
@@ -449,7 +452,7 @@ export default function AdminCatalogo() {
     });
     setPendingImage(null);
     setPendingImageUrl(null);
-    setImageSearchResults([]);
+    setImageSearchResults([]); setSearchTitles([]); setNameBackup(null);
     setRemoveImage(false);
     setFormError("");
     setModal({ open: true, product });
@@ -459,7 +462,7 @@ export default function AdminCatalogo() {
     setModal({ open: false, product: null });
     setPendingImage(null);
     setPendingImageUrl(null);
-    setImageSearchResults([]);
+    setImageSearchResults([]); setSearchTitles([]); setNameBackup(null);
     setRemoveImage(false);
     setFormError("");
   }
@@ -493,7 +496,10 @@ export default function AdminCatalogo() {
         { headers }
       );
       const d = await r.json();
-      if (d.ok) setImageSearchResults(d.images || []);
+      if (d.ok) {
+        setImageSearchResults(d.images || []);
+        setSearchTitles((d.images || []).map((i) => i.title).filter(Boolean));
+      }
     } catch {}
     setImageSearchLoading(false);
   }
@@ -503,6 +509,16 @@ export default function AdminCatalogo() {
     setPendingImageUrl(img.thumb || img.url);
     setPendingImage(null);
     setImageSearchResults([]);
+  }
+
+  const nameSuggestions = useMemo(
+    () => suggestNames(form.name, { category: form.category, titles: searchTitles }),
+    [form.name, form.category, searchTitles]
+  );
+
+  function applySuggestion(text) {
+    setNameBackup(form.name);
+    setForm((f) => ({ ...f, name: text }));
   }
 
   // ── Guardar producto ───────────────────────────────────────────────────────
@@ -1371,6 +1387,41 @@ export default function AdminCatalogo() {
                       placeholder="ej. RTX 3080 10GB EVGA XC3"
                       className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none transition text-sm uppercase"
                     />
+                    {(nameSuggestions.length > 0 || nameBackup) && (
+                      <div className="mt-2">
+                        <div className="flex items-center gap-2 mb-1.5 font-mono text-[11px] uppercase tracking-wider text-slate-600">
+                          <Sparkles className="w-3.5 h-3.5" />
+                          <span>Nombres más cortos</span>
+                          {nameBackup && (
+                            <button
+                              type="button"
+                              onClick={() => { setForm((f) => ({ ...f, name: nameBackup })); setNameBackup(null); }}
+                              className="ml-auto inline-flex items-center gap-1 text-slate-700 hover:text-brand-indigo"
+                            >
+                              <Undo2 className="w-3.5 h-3.5" /> Deshacer
+                            </button>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {nameSuggestions.map((s) => (
+                            <button
+                              key={s.text}
+                              type="button"
+                              onClick={() => applySuggestion(s.text)}
+                              title={s.source === "google" ? "Basado en la búsqueda de imágenes" : "Basado en lo que escribiste"}
+                              className="px-2.5 py-1 rounded-[3px] border border-slate-300 bg-white text-xs font-mono text-slate-800 hover:border-brand-indigo hover:text-brand-indigo transition"
+                            >
+                              {s.text}
+                            </button>
+                          ))}
+                        </div>
+                        {nameSuggestions.length > 0 && searchTitles.length === 0 && (
+                          <p className="mt-1.5 text-[11px] text-slate-500">
+                            Busca la imagen en Google para obtener más sugerencias.
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Categoría + Memoria */}
