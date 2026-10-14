@@ -1,8 +1,6 @@
 import { motion } from "framer-motion";
 import {
   Heart,
-  Github,
-  Linkedin,
   Mail,
   ExternalLink,
   Code,
@@ -20,12 +18,6 @@ export default function Footer() {
       { label: "Contacto", href: "/contact" },
     ],
     social: [
-      { icon: Github, label: "GitHub", href: "https://github.com/JuanDAGuzman" },
-      {
-        icon: Linkedin,
-        label: "LinkedIn",
-        href: "https://www.linkedin.com/in/juan-diego-ar%C3%A9valo-guzm%C3%A1n-030b36305/", target: "_blank",
-      },
       {
         icon: Mail,
         label: "Email",

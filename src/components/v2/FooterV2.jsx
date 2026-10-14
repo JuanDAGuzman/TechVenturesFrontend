@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowUp, ArrowUpRight, Github, Linkedin, Mail, MapPin, MessageCircle, Instagram } from "lucide-react";
+import { ArrowUp, ArrowUpRight, Mail, MapPin, MessageCircle, Instagram } from "lucide-react";
 
 const API = (
     import.meta.env.VITE_API_BASE ??
@@ -161,21 +161,7 @@ export default function FooterV2() {
                 <div className="border-t border-slate-300 py-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
                     <p className="font-mono text-xs text-slate-600">© {year} TechVenturesCO</p>
 
-                    <p className="flex items-center gap-3 text-xs text-slate-600">
-                        <span>Desarrollado por Juan Arévalo</span>
-                        <a href="https://github.com/JuanDAGuzman" target="_blank" rel="noopener noreferrer" aria-label="GitHub" className="text-slate-500 hover:text-brand-indigo transition-colors">
-                            <Github className="w-4 h-4" />
-                        </a>
-                        <a
-                            href="https://www.linkedin.com/in/juan-diego-ar%C3%A9valo-guzm%C3%A1n-030b36305/"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label="LinkedIn"
-                            className="text-slate-500 hover:text-brand-indigo transition-colors"
-                        >
-                            <Linkedin className="w-4 h-4" />
-                        </a>
-                    </p>
+                    <p className="text-xs text-slate-600">Desarrollado por Juan Arévalo</p>
 
                     <button
                         onClick={scrollToTop}
