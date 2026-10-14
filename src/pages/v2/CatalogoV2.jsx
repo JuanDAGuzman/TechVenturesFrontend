@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useRef, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
+import { motion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowDown, AlertTriangle, Layers, ShoppingBag } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
@@ -107,12 +108,21 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
   const isNew = condTags.some(t => t === "NUEVO" || t === "SELLADO" || t === "OPEN BOX");
   const hasBox = condTags.includes("CON CAJA");
   const hasDiscount = product.available && product.original_price && Number(product.original_price) > Number(product.price);
-  const estado = [...condTags, !isNew ? "USADO" : null, !hasBox ? "SIN CAJA" : null].filter(Boolean).join(" · ");
+
+  // La foto se inclina en 3D siguiendo el mouse (sin re-render: escribe el transform directo)
+  const tiltMove = (e) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - box.left) / box.width - 0.5;
+    const py = (e.clientY - box.top) / box.height - 0.5;
+    e.currentTarget.firstElementChild.style.transform =
+      `perspective(700px) rotateY(${px * 12}deg) rotateX(${-py * 9}deg) scale(1.04)`;
+  };
+  const tiltLeave = (e) => { e.currentTarget.firstElementChild.style.transform = ""; };
 
   return (
     <div
       onClick={() => onOpenDetail(product)}
-      className={`catalog-card-in group relative bg-white p-3 sm:p-5 flex flex-col min-w-0 cursor-pointer border-r border-b border-slate-300 transition-colors duration-200 hover:bg-[#fbfbfd] ${
+      className={`catalog-card-in group relative bg-white p-3 sm:p-5 flex flex-col min-w-0 cursor-pointer border-r border-b border-slate-300 transition-[background-color,box-shadow] duration-300 hover:z-10 hover:bg-white hover:shadow-[0_22px_46px_-22px_rgba(109,40,217,0.5)] ${
         !product.available ? "opacity-60" : ""
       }`}
       style={{
@@ -120,9 +130,22 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
         ...(product.available && isSelected ? { boxShadow: "inset 0 0 0 2px var(--brand)" } : {}),
       }}
     >
+      {/* Línea de acento que se dibuja al pasar el cursor */}
+      <span
+        className="pointer-events-none absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300 ease-out"
+        style={{ background: "var(--brand)" }}
+      />
+
       {/* Foto */}
-      <div className="relative h-32 sm:h-40 mb-3 sm:mb-4">
-        <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
+      <div className="relative h-32 sm:h-40 mb-3 sm:mb-4" onMouseMove={tiltMove} onMouseLeave={tiltLeave}>
+        <div className="w-full h-full transition-transform duration-200 ease-out will-change-transform">
+          {/* Brillo de marca detrás de la foto (la foto se funde con él por multiply) */}
+          <div
+            className="pointer-events-none absolute inset-[-8%] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            style={{ background: "radial-gradient(closest-side, var(--brand-ring), transparent)" }}
+          />
+          <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
+        </div>
 
         {(tier || product.is_flagship) && (
           <div className="absolute top-0 left-0 flex flex-col items-start gap-1">
@@ -163,17 +186,35 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
       <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-slate-500">{product.category}</span>
       <p className="font-display font-semibold text-slate-900 text-[15px] sm:text-[17px] leading-tight mt-1 line-clamp-2">{product.name}</p>
 
-      <div className="mt-3 flex flex-col gap-1">
+      {/* Etiquetas: memoria + estado. NUEVO/SELLADO/OPEN BOX y CON CAJA destacan en morado */}
+      <div className="flex flex-wrap gap-1.5 mt-3">
         {product.memory_capacity && (
-          <p className="flex gap-2 text-[11px] sm:text-xs text-slate-600 uppercase">
-            <span className="font-mono text-slate-400 w-4 shrink-0">01</span>
-            <span>Memoria — <span className="text-slate-900 font-semibold">{product.memory_capacity}</span></span>
-          </p>
+          <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full border border-slate-400 bg-white text-slate-800">
+            {product.memory_capacity}
+          </span>
         )}
-        <p className="flex gap-2 text-[11px] sm:text-xs text-slate-600 uppercase">
-          <span className="font-mono text-slate-400 w-4 shrink-0">{product.memory_capacity ? "02" : "01"}</span>
-          <span>Estado — <span className={`font-semibold ${isNew ? "brand-text" : "text-slate-900"}`}>{estado}</span></span>
-        </p>
+        {condTags.map((t) => {
+          const kind = (t === "NUEVO" || t === "SELLADO" || t === "OPEN BOX") ? "strong" : t === "CON CAJA" ? "tint" : "plain";
+          return (
+            <span
+              key={t}
+              className={`text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full ${kind === "plain" ? "bg-slate-200 text-slate-700" : ""} ${kind === "strong" ? "text-white" : ""}`}
+              style={
+                kind === "strong" ? { background: "var(--brand)" }
+                : kind === "tint" ? { background: "var(--brand-ring)", color: "var(--brand)", boxShadow: "inset 0 0 0 1px var(--brand)" }
+                : undefined
+              }
+            >
+              {t}
+            </span>
+          );
+        })}
+        {!isNew && (
+          <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">Usado</span>
+        )}
+        {!hasBox && (
+          <span className="text-[11px] font-semibold uppercase px-2 py-0.5 rounded-full bg-slate-200 text-slate-700">Sin caja</span>
+        )}
       </div>
 
       {product.description?.trim() && (
@@ -506,6 +547,156 @@ function BundleModal({ deal, onClose, onOpenProduct, waHref }) {
         </div>
       </div>
     </div>
+  );
+}
+
+// Hero animado: el dragón aparece grande en el centro "mezclado" con el titular y
+// luego se acomoda a la derecha mientras cada palabra se desprende de él hacia su lugar.
+// Las posiciones de salida se miden en el DOM, así funciona igual en cualquier ancho.
+const HERO_WORDS = ["Hardware", "con", "historia", "propia."];
+
+function Hero() {
+  const rootRef = useRef(null);
+  const logoRef = useRef(null);
+  const wordRefs = useRef([]);
+  const [fx, setFx] = useState(null);
+  const [giveUp, setGiveUp] = useState(false);
+  const reduce = useMemo(
+    () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches,
+    []
+  );
+  const isStatic = reduce || giveUp;
+
+  useEffect(() => {
+    if (reduce) return;
+    let cancelled = false;
+    const measure = () => {
+      if (cancelled || !rootRef.current || !logoRef.current) return;
+      const root = rootRef.current.getBoundingClientRect();
+      const logo = logoRef.current.getBoundingClientRect();
+      const hx = root.left + root.width / 2;
+      const hy = root.top + root.height / 2;
+      setFx({
+        logo: { x: hx - (logo.left + logo.width / 2), y: hy - (logo.top + logo.height / 2) },
+        words: wordRefs.current.map((el) => {
+          const r = el.getBoundingClientRect();
+          return { x: hx - (r.left + r.width / 2), y: hy - (r.top + r.height / 2) };
+        }),
+      });
+    };
+    // Se espera a la tipografía para medir las palabras en su tamaño final
+    (document.fonts?.ready ?? Promise.resolve()).then(() => requestAnimationFrame(measure));
+    // Si algo falla, el contenido se muestra igual, sin animación
+    const t = setTimeout(() => !cancelled && setGiveUp(true), 2500);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [reduce]);
+
+  const ready = !!fx && !isStatic;
+  const big = typeof window !== "undefined" && window.innerWidth >= 1024 ? 1.25 : 1.6;
+
+  return (
+    <section className="border-b border-slate-300 relative overflow-hidden">
+      <div ref={rootRef} className={`${WRAP} pt-10 sm:pt-16 pb-10 sm:pb-14 relative`}>
+
+        {/* Dragón: en escritorio flota a la derecha; en móvil va arriba del titular */}
+        <div className="relative z-20 pointer-events-none w-24 sm:w-28 mb-5 lg:mb-0 lg:absolute lg:right-6 lg:top-1/2 lg:-translate-y-1/2 lg:w-60">
+          <motion.div
+            animate={ready ? { y: [0, -9, 0] } : undefined}
+            transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut", delay: 2.8 }}
+          >
+            {ready ? (
+              <motion.img
+                src="/logo-mark.png"
+                alt=""
+                aria-hidden="true"
+                width={250}
+                height={245}
+                className="w-full h-auto select-none"
+                style={{ mixBlendMode: "multiply" }}
+                initial={{ x: fx.logo.x, y: fx.logo.y, scale: big * 0.6, opacity: 0, rotate: -16 }}
+                animate={{
+                  x: [fx.logo.x, fx.logo.x, 0],
+                  y: [fx.logo.y, fx.logo.y, 0],
+                  scale: [big * 0.6, big, 1],
+                  opacity: [0, 1, 1],
+                  rotate: [-16, 0, 0],
+                }}
+                transition={{ duration: 2, times: [0, 0.4, 1], ease: "easeInOut" }}
+              />
+            ) : (
+              <img
+                ref={logoRef}
+                src="/logo-mark.png"
+                alt=""
+                aria-hidden="true"
+                width={250}
+                height={245}
+                className="w-full h-auto select-none"
+                style={{ mixBlendMode: "multiply", opacity: isStatic ? 1 : 0 }}
+              />
+            )}
+          </motion.div>
+        </div>
+
+        <h1
+          className="font-display font-bold text-slate-900 tracking-tight leading-[0.95] text-[44px] sm:text-7xl lg:text-[88px] max-w-[14ch]"
+          style={{ textWrap: "balance" }}
+        >
+          {HERO_WORDS.map((word, i) => {
+            const cls = `inline-block ${word === "historia" ? "brand-text italic font-normal" : ""}`;
+            const space = i < HERO_WORDS.length - 1 ? " " : "";
+            if (!ready) {
+              return (
+                <span key={word}>
+                  <span ref={(el) => (wordRefs.current[i] = el)} className={cls} style={{ opacity: isStatic ? 1 : 0 }}>{word}</span>
+                  {space}
+                </span>
+              );
+            }
+            const delay = 0.95 + i * 0.14;
+            return (
+              <span key={word}>
+                <motion.span
+                  className={cls}
+                  initial={{ x: fx.words[i].x, y: fx.words[i].y, scale: 0.2, opacity: 0, rotate: i % 2 ? 16 : -16, filter: "blur(10px)" }}
+                  animate={{ x: 0, y: 0, scale: 1, opacity: 1, rotate: 0, filter: "blur(0px)" }}
+                  transition={{
+                    type: "spring", stiffness: 70, damping: 15, delay,
+                    opacity: { duration: 0.35, delay },
+                    filter: { duration: 0.7, delay },
+                  }}
+                >
+                  {word}
+                </motion.span>
+                {space}
+              </span>
+            );
+          })}
+        </h1>
+
+        <div className="mt-8 sm:mt-10">
+          {ready ? (
+            <motion.a
+              href="#catalogo"
+              className="inline-flex items-center gap-2.5 bg-slate-900 text-white px-6 py-3.5 text-sm font-bold transition-colors hover:bg-[var(--brand)]"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 2, duration: 0.6 }}
+            >
+              Explorar catálogo <ArrowDown className="w-4 h-4" />
+            </motion.a>
+          ) : (
+            <a
+              href="#catalogo"
+              className="inline-flex items-center gap-2.5 bg-slate-900 text-white px-6 py-3.5 text-sm font-bold transition-colors hover:bg-[var(--brand)]"
+              style={{ opacity: isStatic ? 1 : 0 }}
+            >
+              Explorar catálogo <ArrowDown className="w-4 h-4" />
+            </a>
+          )}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -991,11 +1182,6 @@ export default function CatalogoV2() {
   const payment = settings.payment_methods;
   const price   = settings.prices_note;
 
-  const monthLabel = (() => {
-    const s = new Date().toLocaleDateString("es-CO", { month: "long", year: "numeric" });
-    return s.charAt(0).toUpperCase() + s.slice(1);
-  })();
-
   const discounted = products.filter((p) => p.available && p.original_price && Number(p.original_price) > Number(p.price));
   const totalOffers = discounted.length + bundleDeals.length;
 
@@ -1003,35 +1189,7 @@ export default function CatalogoV2() {
     <BrandContext.Provider value={{ brandMap, activeBrand }}>
     <div className="relative w-full min-w-0" style={themeVars}>
 
-      {/* ── Hero: eyebrow + titular + fila (texto a la izquierda, acción a la derecha) ── */}
-      <section className="border-b border-slate-300 relative">
-        <div className={`${WRAP} pt-10 sm:pt-16 pb-9 sm:pb-12 relative`}>
-          <img
-            src="/logo-mark.png"
-            alt=""
-            aria-hidden="true"
-            className="hidden lg:block absolute right-6 top-1/2 -translate-y-[58%] w-60 h-auto object-contain select-none pointer-events-none"
-            style={{ mixBlendMode: "multiply" }}
-          />
-          <p className="font-mono text-[11px] sm:text-xs font-medium uppercase tracking-[0.2em] text-slate-600">
-            Catálogo · {monthLabel}
-          </p>
-          <h1 className="font-display font-bold text-slate-900 tracking-tight leading-[0.95] mt-3 text-[44px] sm:text-7xl lg:text-[88px] max-w-[14ch]" style={{ textWrap: "balance" }}>
-            Hardware con <span className="brand-text italic font-normal">historia</span> propia.
-          </h1>
-          <div className="mt-8 sm:mt-10 flex flex-wrap items-end justify-between gap-x-10 gap-y-5">
-            <p className="text-slate-700 text-base sm:text-lg leading-relaxed max-w-[44ch]">
-              GPUs, componentes y más, cada pieza revisada y con su estado real. Compra, canjea tu gráfica o pide probarla antes.
-            </p>
-            <a
-              href="#catalogo"
-              className="inline-flex items-center gap-2.5 bg-slate-900 text-white px-6 py-3.5 text-sm font-bold transition-colors hover:bg-[var(--brand)]"
-            >
-              Explorar catálogo <ArrowDown className="w-4 h-4" />
-            </a>
-          </div>
-        </div>
-      </section>
+      <Hero />
 
       <div className={`${WRAP} pb-24`}>
 
