@@ -108,7 +108,7 @@ export default function FooterV2() {
                         <ul className="space-y-2.5">
                             <li>
                                 <Link to="/" className={linkCls} onClick={() => pathname === "/" && scrollToTop()}>
-                                    Todo el catálogo
+                                    <span className="uppercase tracking-wide text-[13px]">Todos</span>
                                 </Link>
                             </li>
                             {shortcuts.slice(0, 6).map((cat) => (
@@ -118,9 +118,6 @@ export default function FooterV2() {
                                     </Link>
                                 </li>
                             ))}
-                            <li>
-                                <Link to="/contact" className={linkCls}>Contacto</Link>
-                            </li>
                         </ul>
                     </div>
 
@@ -154,6 +151,9 @@ export default function FooterV2() {
                                 <MapPin className="w-4 h-4 text-slate-500 shrink-0" /> Bogotá, Colombia
                             </li>
                         </ul>
+                        <Link to="/contact" className={`${linkCls} mt-5`}>
+                            Más formas de contacto <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-brand-indigo" />
+                        </Link>
                     </div>
                 </div>
 

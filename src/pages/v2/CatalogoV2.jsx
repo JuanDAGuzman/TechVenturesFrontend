@@ -195,10 +195,10 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
           )}
           {hasDiscount && !isSelected && (
             <span
-              className="absolute top-2 right-2 flex items-center gap-1 text-[10px] font-black px-1.5 py-1 rounded-[3px] text-white leading-none"
+              className="absolute top-2 right-2 flex items-center gap-1.5 font-mono text-[14px] font-bold tracking-tight px-2.5 py-1.5 rounded-[3px] text-white leading-none shadow-sm"
               style={{ background: b.dot }}
             >
-              <Tag className="w-2.5 h-2.5 shrink-0" />
+              <Tag className="w-3.5 h-3.5 shrink-0" />
               -{Math.round((1 - product.price / product.original_price) * 100)}%
             </span>
           )}
@@ -393,8 +393,8 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
           {hasDiscount && (
             <div className="flex items-center gap-2 mt-4">
               <span
-                className="flex items-center gap-1 text-sm font-black px-2.5 py-1 border bg-white"
-                style={{ color: b.dot, borderColor: b.dot }}
+                className="flex items-center gap-1.5 font-mono text-base font-bold px-3 py-1.5 rounded-[3px] text-white"
+                style={{ background: b.dot }}
               >
                 <Tag className="w-3.5 h-3.5 shrink-0" />
                 -{Math.round((1 - product.price / product.original_price) * 100)}% descuento
@@ -503,7 +503,7 @@ function BundleModal({ deal, onClose, onOpenProduct, waHref }) {
               </p>
             </div>
             {savingPct > 0 && (
-              <span className="font-mono text-sm font-black px-2.5 py-1 border" style={{ color: ACCENT, borderColor: ACCENT }}>
+              <span className="font-mono text-base font-bold px-3 py-1.5 rounded-[3px] text-white" style={{ background: ACCENT }}>
                 -{savingPct}%
               </span>
             )}
@@ -1269,7 +1269,7 @@ export default function CatalogoV2() {
                         <Layers className="w-3 h-3 shrink-0" /> Por cantidad
                       </span>
                       {savingPct > 0 && (
-                        <span className="font-mono text-[10px] font-black px-1.5 py-0.5 border" style={{ color: ACCENT, borderColor: ACCENT }}>
+                        <span className="font-mono text-[13px] font-bold px-2 py-1 rounded-[3px] text-white leading-none" style={{ background: ACCENT }}>
                           -{savingPct}%
                         </span>
                       )}
@@ -1306,8 +1306,8 @@ export default function CatalogoV2() {
                         ? <img src={p.image_url} alt={p.name} className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105" style={{ mixBlendMode: "multiply" }} />
                         : <Package className="w-7 h-7 text-slate-400" />}
                       <span
-                        className="absolute top-1.5 right-1.5 text-[10px] font-black px-1.5 py-0.5 border bg-white leading-none"
-                        style={{ color: ACCENT, borderColor: ACCENT }}
+                        className="absolute top-1.5 right-1.5 font-mono text-[13px] font-bold px-2 py-1 rounded-[3px] text-white leading-none"
+                        style={{ background: ACCENT }}
                       >
                         -{pct}%
                       </span>
