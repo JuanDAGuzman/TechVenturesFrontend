@@ -341,25 +341,26 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="modal-pop bg-white rounded-lg shadow-2xl w-full max-w-3xl relative overflow-hidden"
+        className="modal-pop bg-white rounded-t-lg sm:rounded-lg shadow-2xl w-full max-w-3xl relative overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 z-20 w-9 h-9 bg-white/90 border border-slate-300 flex items-center justify-center text-slate-600 hover:text-slate-900 hover:border-slate-400 transition-all"
+          aria-label="Cerrar"
+          className="absolute top-3 right-3 z-20 w-10 h-10 bg-white border border-slate-300 shadow-sm flex items-center justify-center text-slate-600 hover:text-slate-900 hover:border-slate-400 transition-all"
         >
           <X className="w-4 h-4" />
         </button>
 
-        <div ref={scrollRef} className="max-h-[90vh] overflow-y-auto grid grid-cols-1 md:grid-cols-2">
+        <div ref={scrollRef} className="max-h-[88vh] max-h-[88dvh] overflow-y-auto overscroll-contain grid grid-cols-1 md:grid-cols-2">
 
         {/* Visual */}
         <div
-          className="relative min-h-[240px] md:min-h-[360px] border-b md:border-b-0 md:border-r border-slate-300 flex items-center justify-center p-8"
+          className="relative h-[26vh] h-[26dvh] min-h-[150px] md:h-auto md:min-h-[360px] border-b md:border-b-0 md:border-r border-slate-300 flex items-center justify-center p-5 md:p-8"
           style={{ background: PHOTO_BG }}
         >
           {product.image_url ? (
@@ -380,7 +381,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
         </div>
 
         {/* Info */}
-        <div className="p-6 sm:p-8 flex flex-col">
+        <div className="p-5 sm:p-8 pb-[calc(1.25rem+env(safe-area-inset-bottom))] flex flex-col">
           <div className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500 mb-2">
             {product.category}{tier ? ` · Gama ${tier}` : ""}{product.is_flagship ? " · Marca Insignia" : ""}
           </div>
@@ -415,7 +416,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
             ))}
           </div>
 
-          <div className="mt-auto pt-5 flex flex-col gap-2.5">
+          <div className="mt-auto pt-3 md:pt-5 flex flex-col gap-2.5 sticky bottom-0 bg-white -mx-5 px-5 pb-1 border-t border-slate-200 md:static md:mx-0 md:px-0 md:pb-0 md:border-t-0">
             {product.available && (
               <button
                 onClick={() => onToggle(product)}
@@ -442,11 +443,6 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
         </div>
 
         {/* Indicador de scroll: avisa que hay más contenido debajo (mobile) */}
-        {showScrollHint && (
-          <div className="md:hidden pointer-events-none absolute bottom-0 inset-x-0 h-14 bg-gradient-to-t from-white via-white/90 to-transparent flex items-end justify-center pb-1.5">
-            <ChevronDown className="w-5 h-5 text-slate-500 animate-bounce" />
-          </div>
-        )}
       </div>
     </div>
   );
