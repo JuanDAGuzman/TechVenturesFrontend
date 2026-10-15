@@ -339,7 +339,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
 
   const hasDiscount = product.original_price && Number(product.original_price) > Number(product.price);
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}
@@ -444,7 +444,8 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
 
         {/* Indicador de scroll: avisa que hay más contenido debajo (mobile) */}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -462,7 +463,7 @@ function BundleModal({ deal, onClose, onOpenProduct, waHref }) {
     };
   }, [onClose]);
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
       <div
         className="modal-pop bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative"
@@ -552,7 +553,8 @@ function BundleModal({ deal, onClose, onOpenProduct, waHref }) {
           </a>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
