@@ -280,12 +280,27 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
 }
 
 // Modal de detalle — se abre al hacer clic en una tarjeta
+// Altura realmente visible (iOS: vh/dvh no descuentan bien las barras del navegador)
+function useVisibleHeight() {
+  const read = () => Math.round(window.visualViewport?.height ?? window.innerHeight);
+  const [h, setH] = useState(read);
+  useEffect(() => {
+    const upd = () => setH(read());
+    const vv = window.visualViewport;
+    window.addEventListener("resize", upd);
+    vv?.addEventListener("resize", upd);
+    return () => { window.removeEventListener("resize", upd); vv?.removeEventListener("resize", upd); };
+  }, []);
+  return h;
+}
+
 function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLink }) {
   const { brandMap } = useContext(BrandContext);
   const b = brandMap[product.category] ?? DEFAULT_BRAND;
   const form = CATEGORY_FORM[product.category] ?? "component";
   const scrollRef = useRef(null);
   const [showScrollHint, setShowScrollHint] = useState(false);
+  const vh = useVisibleHeight();
 
   useEffect(() => {
     const onKey = (e) => e.key === "Escape" && onClose();
@@ -341,7 +356,8 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-x-0 top-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      style={{ height: vh, "--vvh": `${vh}px` }}
       onClick={onClose}
     >
       <div
@@ -356,22 +372,22 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
           <X className="w-4 h-4" />
         </button>
 
-        <div ref={scrollRef} className="max-h-[88vh] max-h-[88dvh] overflow-y-auto overscroll-contain grid grid-cols-1 md:grid-cols-2">
+        <div ref={scrollRef} className="max-h-[calc(var(--vvh)*0.88)] sm:max-h-[90vh] overflow-y-auto overscroll-contain grid grid-cols-1 md:grid-cols-2">
 
         {/* Visual */}
         <div
-          className="relative h-[26vh] h-[26dvh] min-h-[150px] md:h-auto md:min-h-[360px] border-b md:border-b-0 md:border-r border-slate-300 flex items-center justify-center p-5 md:p-8"
+          className="relative overflow-hidden h-[calc(var(--vvh)*0.27)] min-h-[140px] md:h-auto md:min-h-[360px] border-b md:border-b-0 md:border-r border-slate-300 flex items-center justify-center"
           style={{ background: PHOTO_BG }}
         >
           {product.image_url ? (
             <img
               src={product.image_url}
               alt={product.name}
-              className="max-w-full max-h-full object-contain"
+              className="absolute inset-0 w-full h-full object-contain p-5 md:p-8"
               style={{ mixBlendMode: "multiply" }}
             />
           ) : (
-            <Silhouette form={form} className="w-[70%] max-h-full" style={{ color: b.dot }} />
+            <Silhouette form={form} className="w-[60%] max-h-[80%]" style={{ color: b.dot }} />
           )}
           {!product.available && (
             <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
@@ -451,6 +467,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
 
 // Detalle de una oferta por cantidad — la tarjeta de la franja solo resume lo esencial
 function BundleModal({ deal, onClose, onOpenProduct, waHref }) {
+  const vh = useVisibleHeight();
   const { dealProducts, minP, maxP, savingPct, savingTotal } = dealStats(deal);
 
   useEffect(() => {
@@ -464,9 +481,10 @@ function BundleModal({ deal, onClose, onOpenProduct, waHref }) {
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-x-0 top-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ height: vh }} onClick={onClose}>
       <div
-        className="modal-pop bg-white rounded-lg shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto relative"
+        className="modal-pop bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-y-auto relative"
+        style={{ maxHeight: vh * 0.9 }}
         onClick={(e) => e.stopPropagation()}
       >
         <button
