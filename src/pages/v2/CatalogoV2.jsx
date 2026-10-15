@@ -177,12 +177,12 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
           {(tier || product.is_flagship) && (
             <div className="absolute top-2 left-2 flex flex-col items-start gap-1">
               {tier && (
-                <span className="text-[9px] font-mono font-bold uppercase tracking-widest px-1.5 py-1 rounded-[3px] text-slate-700 border border-slate-300 bg-white/90 leading-none">
+                <span className="text-[9px] font-mono font-bold uppercase tracking-wider sm:tracking-widest px-1.5 py-1 rounded-[3px] text-slate-700 border border-slate-300 bg-white/90 leading-none">
                   Gama {tier}
                 </span>
               )}
               {product.is_flagship && (
-                <span className="text-[9px] font-mono font-bold uppercase tracking-widest px-1.5 py-1 rounded-[3px] text-white leading-none" style={{ background: "var(--brand)" }}>
+                <span className="text-[9px] font-mono font-bold uppercase tracking-wider sm:tracking-widest px-1.5 py-1 rounded-[3px] text-white leading-none" style={{ background: "var(--brand)" }}>
                   Insignia
                 </span>
               )}
@@ -195,10 +195,10 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
           )}
           {hasDiscount && !isSelected && (
             <span
-              className="absolute top-2 right-2 flex items-center gap-1.5 font-mono text-[14px] font-bold tracking-tight px-2.5 py-1.5 rounded-[3px] text-white leading-none shadow-sm"
+              className="absolute top-2 right-2 flex items-center gap-1.5 font-mono text-[12px] sm:text-[14px] font-bold tracking-tight px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-[3px] text-white leading-none shadow-sm"
               style={{ background: b.dot }}
             >
-              <Tag className="w-3.5 h-3.5 shrink-0" />
+              <Tag className="hidden sm:block w-3.5 h-3.5 shrink-0" />
               -{Math.round((1 - product.price / product.original_price) * 100)}%
             </span>
           )}
@@ -433,6 +433,18 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
           </div>
 
           <div className="mt-auto pt-3 md:pt-5 flex flex-col gap-2.5 sticky bottom-0 bg-white -mx-5 px-5 pb-1 border-t border-slate-200 md:static md:mx-0 md:px-0 md:pb-0 md:border-t-0">
+            {showScrollHint && (
+              <div className="md:hidden pointer-events-none absolute inset-x-0 -top-8 flex justify-center">
+                <button
+                  type="button"
+                  aria-label="Ver más información"
+                  onClick={() => scrollRef.current?.scrollBy({ top: 200, behavior: "smooth" })}
+                  className="pointer-events-auto w-11 h-7 bg-white border border-slate-300 shadow-sm flex items-center justify-center text-slate-700 animate-bounce"
+                >
+                  <ChevronDown className="w-5 h-5" />
+                </button>
+              </div>
+            )}
             {product.available && (
               <button
                 onClick={() => onToggle(product)}
