@@ -239,7 +239,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
           <div className="flex items-end justify-between gap-2 mb-3">
             <div className="min-w-0">
               {hasDiscount && (
-                <p className="text-[13px] sm:text-sm font-semibold text-slate-600 line-through decoration-[1.5px] decoration-slate-500 font-mono leading-none mb-1.5">{formatPrice(product.original_price)}</p>
+                <p className="text-[13px] sm:text-sm font-semibold text-slate-600 line-through decoration-[1px] decoration-slate-500 font-mono leading-none mb-1.5">{formatPrice(product.original_price)}</p>
               )}
               <p className={`font-mono font-bold text-xl sm:text-2xl tracking-tight leading-none ${hasDiscount ? "text-[var(--brand)]" : "text-slate-900"}`}>{formatPrice(product.price)}</p>
             </div>
@@ -416,7 +416,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
                 <Tag className="w-3.5 h-3.5 shrink-0" />
                 -{Math.round((1 - product.price / product.original_price) * 100)}% descuento
               </span>
-              <span className="text-lg font-semibold text-slate-600 line-through decoration-[1.5px] decoration-slate-500 font-mono">{formatPrice(product.original_price)}</span>
+              <span className="text-lg font-semibold text-slate-600 line-through decoration-[1px] decoration-slate-500 font-mono">{formatPrice(product.original_price)}</span>
             </div>
           )}
           <p className={`font-mono text-2xl sm:text-3xl font-bold ${hasDiscount ? "mt-1 text-[var(--brand)]" : "mt-4 text-slate-900"}`}>{formatPrice(product.price)}</p>
@@ -517,7 +517,7 @@ function BundleModal({ deal, onClose, onOpenProduct, waHref }) {
           <div className="mt-5 flex items-end justify-between gap-4 flex-wrap">
             <div>
               {minP > 0 && (
-                <p className="font-mono text-base font-semibold text-slate-600 line-through decoration-[1.5px] decoration-slate-500">
+                <p className="font-mono text-base font-semibold text-slate-600 line-through decoration-[1px] decoration-slate-500">
                   {minP === maxP ? formatCop(minP) : `${formatCop(minP)} – ${formatCop(maxP)}`}
                 </p>
               )}
@@ -806,7 +806,7 @@ function DiscountStrip({ items, onOpenProduct }) {
                   {p.name}{p.memory_capacity ? ` ${p.memory_capacity}` : ""}
                 </p>
                 <div className="mt-auto">
-                  <p className="text-[12px] font-semibold text-slate-600 line-through decoration-[1.5px] decoration-slate-500 font-mono leading-none">{formatCop(p.original_price)}</p>
+                  <p className="text-[12px] font-semibold text-slate-600 line-through decoration-[1px] decoration-slate-500 font-mono leading-none">{formatCop(p.original_price)}</p>
                   <p className="text-sm font-bold font-mono leading-tight text-[var(--brand)] mt-1">{formatCop(p.price)}</p>
                 </div>
               </div>
@@ -914,7 +914,7 @@ function OffersPanel({ bundleDeals, discounted, onOpenBundle, onOpenProduct }) {
                               <p className="font-display font-bold text-slate-900 text-lg leading-tight mt-2 line-clamp-2">{deal.match_name}</p>
                               <div className="mt-auto flex items-baseline justify-between gap-2">
                                 <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-slate-700">Desde {deal.min_quantity} unidades</p>
-                                {minP > 0 && <p className="font-mono text-xs font-semibold text-slate-600 line-through decoration-[1.5px] decoration-slate-500 leading-none whitespace-nowrap">{formatCop(minP)}</p>}
+                                {minP > 0 && <p className="font-mono text-xs font-semibold text-slate-600 line-through decoration-[1px] decoration-slate-500 leading-none whitespace-nowrap">{formatCop(minP)}</p>}
                               </div>
                               <p className="font-mono font-bold text-slate-900 text-[26px] leading-none mt-1.5 whitespace-nowrap">
                                 {formatCop(deal.bundle_price)}<span className="text-[11px] font-semibold text-slate-500 ml-1">c/u</span>
