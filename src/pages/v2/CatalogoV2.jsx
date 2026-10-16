@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo, useRef, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useInView, useReducedMotion } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowDown, AlertTriangle, Layers, Percent, ShoppingBag } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
@@ -115,6 +115,39 @@ function Chip({ kind = "plain", children }) {
   return <span className={`${base} bg-slate-100 text-slate-600 border border-slate-200`}>{children}</span>;
 }
 
+// ── Animación de "armado" de las tarjetas ───────────────────────────────────
+// La tarjeta se arma con 3 bloques (foto, texto y precio/botones) que llegan desde lados
+// distintos y encajan. Solo corre la primera vez que cada tarjeta entra en pantalla desde
+// que se carga la página; al filtrar o cambiar de página aparecen ya armadas.
+const ASSEMBLED = new Set();
+const NARROW = typeof window !== "undefined" && window.innerWidth < 640;
+const ASSEMBLY = {
+  dist: 48, rot: 2.5, scale: 0.97, stiff: 220, damp: 22, stagger: 0.12,
+  order: ["photo", "text", "bottom"],
+  slots: { photo: [-1, -0.4, -1], text: [1, 0.2, 1], bottom: [0, 1, 0] },
+};
+
+function Piece({ slot, fx, className, style, children, ...rest }) {
+  const spec = fx && ASSEMBLY.slots[slot];
+  if (!spec) return <div className={className} style={style} {...rest}>{children}</div>;
+  const k = NARROW ? 0.6 : 1;
+  const away = { opacity: 0, x: spec[0] * ASSEMBLY.dist * k, y: spec[1] * ASSEMBLY.dist * k, rotate: spec[2] * ASSEMBLY.rot, scale: ASSEMBLY.scale };
+  const home = { opacity: 1, x: 0, y: 0, rotate: 0, scale: 1 };
+  const delay = fx.base + ASSEMBLY.order.indexOf(slot) * ASSEMBLY.stagger;
+  return (
+    <motion.div
+      className={className}
+      style={style}
+      initial={fx.played ? false : away}
+      animate={fx.armed ? home : away}
+      transition={{ type: "spring", stiffness: ASSEMBLY.stiff, damping: ASSEMBLY.damp, mass: 0.9, delay, opacity: { duration: 0.3, delay } }}
+      {...rest}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 // Tarjeta de producto — separada de las demás, con presencia propia
 function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink, index = 0 }) {
   const { brandMap } = useContext(BrandContext);
@@ -123,6 +156,14 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
   const isNew = condTags.some(t => t === "NUEVO" || t === "SELLADO" || t === "OPEN BOX");
   const hasBox = condTags.includes("CON CAJA");
   const hasDiscount = product.available && product.original_price && Number(product.original_price) > Number(product.price);
+
+  const reduceMotion = useReducedMotion();
+  const cardRef = useRef(null);
+  const inView = useInView(cardRef, { once: true, amount: 0.2 });
+  const [played] = useState(() => !!reduceMotion || ASSEMBLED.has(product.id));
+  const armed = played || inView;
+  useEffect(() => { if (inView) ASSEMBLED.add(product.id); }, [inView, product.id]);
+  const fx = { armed, played, base: (index % 4) * 0.07 };
 
   // La foto se inclina en 3D siguiendo el mouse (sin re-render: escribe el transform directo)
   const tiltMove = (e) => {
@@ -136,18 +177,18 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
 
   return (
     <div
+      ref={cardRef}
       onClick={() => onOpenDetail(product)}
-      className={`catalog-card-in group relative isolate bg-white rounded-[6px] border border-slate-200 flex flex-col min-w-0 cursor-pointer overflow-hidden shadow-[0_1px_2px_rgba(15,23,42,0.05),0_10px_26px_-14px_rgba(15,23,42,0.22)] transition-[transform,box-shadow,border-color] duration-300 ease-out hover:-translate-y-1 hover:border-[rgba(109,40,217,0.4)] hover:shadow-[0_2px_4px_rgba(15,23,42,0.05),0_22px_40px_-18px_rgba(15,23,42,0.32)] ${
+      className={`group relative isolate bg-white rounded-[6px] border border-slate-200 flex flex-col min-w-0 cursor-pointer shadow-[0_1px_2px_rgba(15,23,42,0.05),0_10px_26px_-14px_rgba(15,23,42,0.22)] transition-[transform,box-shadow,border-color] duration-300 ease-out hover:-translate-y-1 hover:border-[rgba(109,40,217,0.4)] hover:shadow-[0_2px_4px_rgba(15,23,42,0.05),0_22px_40px_-18px_rgba(15,23,42,0.32)] ${
         !product.available ? "opacity-60" : ""
       }`}
       style={{
-        animationDelay: `${Math.min(index % PAGE_SIZE, 11) * 40}ms`,
         ...(product.available && isSelected ? { boxShadow: "0 0 0 2px var(--brand), 0 18px 36px -18px rgba(109,40,217,0.5)" } : {}),
       }}
     >
       {/* Brillo muy tenue en las 4 esquinas de la tarjeta al pasar el cursor */}
       <div
-        className="pointer-events-none absolute inset-0 -z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        className="pointer-events-none absolute inset-0 -z-10 rounded-[6px] opacity-0 group-hover:opacity-100 transition-opacity duration-500"
         style={{
           background: [
             "radial-gradient(circle at 0% 0%, rgba(109,40,217,0.09), transparent 42%)",
@@ -160,7 +201,8 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
 
       <div className="p-3 sm:p-4 flex flex-col flex-1">
         {/* Foto sobre panel con degradado */}
-        <div
+        <Piece
+          slot="photo" fx={fx}
           className="relative h-36 sm:h-44 mb-4 rounded-[4px] overflow-hidden"
           style={{ background: "linear-gradient(180deg, #f8f9fc 0%, #eceff5 100%)" }}
           onMouseMove={tiltMove}
@@ -207,9 +249,10 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
               <Check className="w-3.5 h-3.5 text-white" />
             </div>
           )}
-        </div>
+        </Piece>
 
         {/* Información */}
+        <Piece slot="text" fx={fx}>
         <span className="font-mono text-[10px] font-medium uppercase tracking-[0.16em] text-slate-500">{product.category}</span>
         <p className="font-display font-semibold text-slate-900 text-base sm:text-lg leading-tight mt-1 line-clamp-2">{product.name}</p>
 
@@ -234,8 +277,10 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
           </p>
         )}
 
+        </Piece>
+
         {/* Precio + acciones */}
-        <div className="mt-auto pt-4">
+        <Piece slot="bottom" fx={fx} className="mt-auto pt-4">
           <div className="flex items-end justify-between gap-2 mb-3">
             <div className="min-w-0">
               {hasDiscount && (
@@ -273,7 +318,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
               No disponible
             </div>
           )}
-        </div>
+        </Piece>
       </div>
     </div>
   );
