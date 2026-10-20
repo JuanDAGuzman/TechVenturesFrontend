@@ -871,21 +871,22 @@ export default function AdminCatalogo() {
             </button>
             {copyMenuOpen && (
               <>
-                <div className="fixed inset-0 z-10" onClick={() => setCopyMenuOpen(false)} />
-                <div className="absolute right-0 top-full mt-1.5 w-56 rounded-xl border border-slate-200 bg-white shadow-lg z-20 overflow-hidden">
+                <div className="fixed inset-0 z-[70] bg-slate-900/40 sm:bg-transparent" onClick={() => setCopyMenuOpen(false)} />
+                <div className="fixed inset-x-0 bottom-0 z-[80] rounded-t-lg border border-slate-300 bg-white shadow-2xl overflow-hidden pb-[env(safe-area-inset-bottom)] sm:pb-0 sm:absolute sm:inset-x-auto sm:bottom-auto sm:right-0 sm:top-full sm:mt-1.5 sm:w-64 sm:rounded-[6px] sm:shadow-lg">
+                  <p className="sm:hidden px-4 pt-3 pb-1 font-mono text-[11px] uppercase tracking-wider text-slate-500">Copiar lista disponible</p>
                   <button
                     onClick={() => { copyInventory(true); setCopyMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                    className="w-full text-left px-4 py-3.5 sm:py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50 transition-colors"
                   >
                     Con espaciado
-                    <span className="block text-xs text-slate-400 font-normal">Artículos separados por línea en blanco</span>
+                    <span className="block text-xs text-slate-500 font-normal">Artículos separados por línea en blanco</span>
                   </button>
                   <button
                     onClick={() => { copyInventory(false); setCopyMenuOpen(false); }}
-                    className="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors border-t border-slate-100"
+                    className="w-full text-left px-4 py-3.5 sm:py-2.5 text-sm font-medium text-slate-800 hover:bg-slate-50 transition-colors border-t border-slate-100"
                   >
                     Sin espaciado
-                    <span className="block text-xs text-slate-400 font-normal">Artículos juntos, sin líneas en blanco</span>
+                    <span className="block text-xs text-slate-500 font-normal">Artículos juntos, sin líneas en blanco</span>
                   </button>
                 </div>
               </>
