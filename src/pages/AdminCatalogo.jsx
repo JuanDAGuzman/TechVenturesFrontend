@@ -5,6 +5,9 @@ import {
   Plus, Pencil, Trash2, Upload, Package, Save, ChevronDown, Search, X, Copy, Check, Star, FileText, Loader2, Tag, Sparkles, Undo2,
 } from "lucide-react";
 import { suggestNames } from "../lib/nameSuggestions.js";
+import {
+  isPrebuilt, COMPONENT_TYPES, INCLUDE_TYPES, emptyBuildForm, buildToForm, formToBuild,
+} from "../lib/prebuilt.js";
 import { brandFromColor, DEFAULT_BRAND } from "../lib/categoryBrand.js";
 
 const API = (
@@ -38,10 +41,99 @@ const EMPTY_FORM = {
   tier: "",
   is_flagship: false,
   whatsapp_number: "",
+  build: emptyBuildForm(),
 };
 
 const TIER_OPTIONS = ["Baja", "Media", "Alta"];
 
+
+const TYPE_LABEL = {
+  PROCESADOR: "Procesador", "TARJETA DE VIDEO": "Tarjeta de video", BOARD: "Board", "MEMORIA RAM": "Memoria RAM",
+  ALMACENAMIENTO: "Almacenamiento", FUENTE: "Fuente de poder", GABINETE: "Gabinete", REFRIGERACION: "Refrigeración",
+  MONITOR: "Monitor", TECLADO: "Teclado", MOUSE: "Mouse", AUDIFONOS: "Audífonos", OTRO: "Otro",
+};
+// Etiquetas cortas para los selectores (caben en pantallas pequeñas)
+const OPTION_LABEL = {
+  PROCESADOR: "Procesador", "TARJETA DE VIDEO": "Video", BOARD: "Board", "MEMORIA RAM": "RAM",
+  ALMACENAMIENTO: "Disco", FUENTE: "Fuente", GABINETE: "Gabinete", REFRIGERACION: "Cooler",
+  MONITOR: "Monitor", TECLADO: "Teclado", MOUSE: "Mouse", AUDIFONOS: "Audífonos", OTRO: "Otro",
+};
+const INCLUDE_PLACEHOLDER = {
+  MONITOR: "ej. LG 24 pulgadas 75Hz", TECLADO: "ej. Teclado mecánico RGB", MOUSE: "ej. Mouse gamer 6400 DPI",
+  AUDIFONOS: "ej. Diadema gamer con micrófono", OTRO: "ej. Cámara web, silla, mousepad...",
+};
+
+// Composición de un PC armado: piezas de la torre + lo que incluye (pantalla, periféricos, otros)
+function BuildEditor({ value, onChange }) {
+  const setList = (key, list) => onChange({ ...value, [key]: list });
+  const upd = (key, i, patch) => setList(key, value[key].map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  const del = (key, i) => setList(key, value[key].filter((_, j) => j !== i));
+  const add = (key, type) => setList(key, [...value[key], { type, name: "" }]);
+
+  const selectCls = "w-[38%] sm:w-44 shrink-0 px-2 sm:px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none bg-white transition text-sm";
+  const inputCls = "flex-1 min-w-0 px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none transition text-sm uppercase";
+
+  const renderRows = (key, types, placeholderOf) =>
+    value[key].map((row, i) => (
+      <div key={i} className="flex gap-2">
+        <select value={row.type} onChange={(e) => upd(key, i, { type: e.target.value })} className={selectCls}>
+          {types.map((t) => <option key={t} value={t}>{OPTION_LABEL[t] ?? t}</option>)}
+        </select>
+        <div className="flex gap-2 flex-1 min-w-0">
+          <input
+            type="text"
+            value={row.name}
+            onChange={(e) => upd(key, i, { name: e.target.value.toUpperCase() })}
+            placeholder={placeholderOf(row.type)}
+            className={inputCls}
+          />
+          <button
+            type="button"
+            onClick={() => del(key, i)}
+            title="Quitar fila"
+            className="shrink-0 w-10 flex items-center justify-center rounded-xl border border-slate-300 text-slate-500 hover:text-red-600 hover:border-red-300 transition"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    ));
+
+  return (
+    <div className="space-y-5 border border-slate-300 rounded-xl p-3 sm:p-4 bg-slate-50/60">
+      <div>
+        <p className="lbl text-sm">Componentes de la torre</p>
+        <p className="text-xs text-slate-500 mb-2">Llena solo los que apliquen: las filas vacías no se guardan.</p>
+        <div className="space-y-2">{renderRows("components", COMPONENT_TYPES, (t) => (t === "PROCESADOR" ? "ej. RYZEN 5 5600" : t === "TARJETA DE VIDEO" ? "ej. RTX 3060 12GB" : "Modelo"))}</div>
+        <button
+          type="button"
+          onClick={() => add("components", "ALMACENAMIENTO")}
+          className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-700 hover:text-brand-indigo transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" /> Agregar otro componente
+        </button>
+      </div>
+
+      <div>
+        <p className="lbl text-sm">Incluye</p>
+        <p className="text-xs text-slate-500 mb-2">Pantalla, periféricos u otros artículos que vienen con el equipo.</p>
+        <div className="space-y-2">{renderRows("includes", INCLUDE_TYPES, (t) => INCLUDE_PLACEHOLDER[t] ?? "")}</div>
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          {INCLUDE_TYPES.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => add("includes", t)}
+              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-[3px] border border-slate-400 bg-white text-[11px] font-bold uppercase tracking-wide text-slate-800 hover:border-slate-900 transition-colors"
+            >
+              <Plus className="w-3 h-3" /> {TYPE_LABEL[t]}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function formatPrice(p) {
   return new Intl.NumberFormat("es-CO", {
@@ -427,7 +519,7 @@ export default function AdminCatalogo() {
   // ── Modal helpers ──────────────────────────────────────────────────────────
 
   function openAdd() {
-    setForm({ ...EMPTY_FORM, category: CATEGORIES[0] || "" });
+    setForm({ ...EMPTY_FORM, category: CATEGORIES[0] || "", build: emptyBuildForm() });
     setPendingImage(null);
     setPendingImageUrl(null);
     setImageSearchResults([]); setSearchTitles([]); setNameBackup(null);
@@ -449,6 +541,7 @@ export default function AdminCatalogo() {
       tier:            product.tier || "",
       is_flagship:     product.is_flagship || false,
       whatsapp_number: formatWhatsappDisplay(product.whatsapp_number || ""),
+      build:           buildToForm(product.build),
     });
     setPendingImage(null);
     setPendingImageUrl(null);
@@ -512,7 +605,7 @@ export default function AdminCatalogo() {
   }
 
   const nameSuggestions = useMemo(
-    () => suggestNames(form.name, { category: form.category, titles: searchTitles }),
+    () => (isPrebuilt(form.category) ? [] : suggestNames(form.name, { category: form.category, titles: searchTitles })),
     [form.name, form.category, searchTitles]
   );
 
@@ -551,6 +644,7 @@ export default function AdminCatalogo() {
         tier:            form.tier || null,
         is_flagship:     !!form.is_flagship,
         whatsapp_number: form.whatsapp_number.trim() || null,
+        build:           isPrebuilt(form.category) ? formToBuild(form.build) : null,
         ...(imageValue !== undefined && { image_url: imageValue }),
       };
 
@@ -1452,6 +1546,11 @@ export default function AdminCatalogo() {
                       />
                     </div>
                   </div>
+
+                  {/* Composición (solo PCs armados) */}
+                  {isPrebuilt(form.category) && (
+                    <BuildEditor value={form.build} onChange={(build) => setForm((f) => ({ ...f, build }))} />
+                  )}
 
                   {/* Precio + Precio original + Estado */}
                   <div className="grid grid-cols-2 gap-3">

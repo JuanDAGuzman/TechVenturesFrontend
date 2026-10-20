@@ -5,6 +5,9 @@ import { useSearchParams } from "react-router-dom";
 import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowDown, AlertTriangle, Layers, Percent, ShoppingBag } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
 import { brandFromColor, DEFAULT_BRAND } from "../../lib/categoryBrand.js";
+import { PREBUILT_CATEGORY, parseBuild } from "../../lib/prebuilt.js";
+import useVisibleHeight from "../../lib/useVisibleHeight.js";
+import { BuildsSection, BuildModal } from "./BuildsV2.jsx";
 
 const API = (
   import.meta.env.VITE_API_BASE ??
@@ -325,20 +328,6 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
 }
 
 // Modal de detalle — se abre al hacer clic en una tarjeta
-// Altura realmente visible (iOS: vh/dvh no descuentan bien las barras del navegador)
-function useVisibleHeight() {
-  const read = () => Math.round(window.visualViewport?.height ?? window.innerHeight);
-  const [h, setH] = useState(read);
-  useEffect(() => {
-    const upd = () => setH(read());
-    const vv = window.visualViewport;
-    window.addEventListener("resize", upd);
-    vv?.addEventListener("resize", upd);
-    return () => { window.removeEventListener("resize", upd); vv?.removeEventListener("resize", upd); };
-  }, []);
-  return h;
-}
-
 function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLink }) {
   const { brandMap } = useContext(BrandContext);
   const b = brandMap[product.category] ?? DEFAULT_BRAND;
@@ -1223,6 +1212,8 @@ export default function CatalogoV2() {
   const [maxPrice, setMaxPrice] = useState("");
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [detailProduct, setDetailProduct] = useState(null);
+  const [builds, setBuilds] = useState([]);          // PCs armados (sección aparte)
+  const [detailBuild, setDetailBuild] = useState(null);
   const [bundleDeals, setBundleDeals] = useState([]);
   const [bundleModal, setBundleModal] = useState(null);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -1236,9 +1227,13 @@ export default function CatalogoV2() {
       fetch(`${API}/catalog/bundle-deals`).then((r) => r.json()),
     ])
       .then(([pData, sData, cData, bdData]) => {
-        if (pData.ok) setProducts(pData.products);
+        if (pData.ok) {
+          // Los PCs armados tienen su propia sección: no entran a pestañas, cuadrícula ni ofertas
+          setProducts(pData.products.filter((p) => p.category !== PREBUILT_CATEGORY));
+          setBuilds(pData.products.filter((p) => p.category === PREBUILT_CATEGORY && p.available));
+        }
         if (sData.ok) setSettings(sData.settings);
-        if (cData.ok) setCategories(cData.categories);
+        if (cData.ok) setCategories(cData.categories.filter((c) => c.name !== PREBUILT_CATEGORY));
         if (bdData.ok) setBundleDeals(bdData.deals);
       })
       .catch(() => {})
@@ -1371,8 +1366,8 @@ export default function CatalogoV2() {
   const remaining = ordered.length - visible.length;
 
   const selectedProducts = useMemo(
-    () => products.filter((p) => selectedIds.has(p.id)),
-    [products, selectedIds]
+    () => [...products, ...builds].filter((p) => selectedIds.has(p.id)),
+    [products, builds, selectedIds]
   );
 
   function toggleSelect(product) {
@@ -1397,6 +1392,17 @@ export default function CatalogoV2() {
     }
     const msg = `Hola, me interesa: ${parts.join(" · ")} (${formatCop(product.price)}), ¿sigue disponible?`;
     return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+  }
+
+  // Mensaje de un PC armado: incluye sus componentes y lo que trae
+  function waLinkBuild(product) {
+    const num = productWaNumber(product);
+    const b = parseBuild(product.build);
+    const lines = [`Hola, me interesa el PC armado: ${product.name} (${formatCop(product.price)}).`];
+    if (b.components.length) lines.push("", "Componentes:", ...b.components.map((c) => `• ${c.type}: ${c.name}`));
+    if (b.includes.length) lines.push("", "Incluye:", ...b.includes.map((c) => `• ${c.type === "OTRO" ? c.name : `${c.type}: ${c.name}`}`));
+    lines.push("", "¿Sigue disponible?");
+    return `https://wa.me/${num}?text=${encodeURIComponent(lines.join("\n"))}`;
   }
 
   function waLinkMulti(items) {
@@ -1494,6 +1500,9 @@ export default function CatalogoV2() {
           />
         </section>
       )}
+
+      {/* ── PCs armados: solo ocupa espacio si hay equipos disponibles ── */}
+      <BuildsSection builds={builds} selectedIds={selectedIds} onToggle={toggleSelect} onOpen={setDetailBuild} />
 
       {/* ── Catálogo ── */}
       <section className="pt-8 sm:pt-10">
@@ -1725,6 +1734,17 @@ export default function CatalogoV2() {
             setDetailProduct(products.find((x) => x.id === p.id) ?? p);
           }}
           waHref={waLinkDeal(bundleModal)}
+        />
+      )}
+
+      {/* ── Modal de un PC armado ── */}
+      {detailBuild && (
+        <BuildModal
+          product={detailBuild}
+          isSelected={selectedIds.has(detailBuild.id)}
+          onToggle={toggleSelect}
+          onClose={() => setDetailBuild(null)}
+          waLink={waLinkBuild}
         />
       )}
 

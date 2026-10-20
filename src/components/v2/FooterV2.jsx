@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ArrowUp, ArrowUpRight, Mail, MapPin, MessageCircle, Instagram } from "lucide-react";
+import { PREBUILT_CATEGORY } from "../../lib/prebuilt.js";
 
 const API = (
     import.meta.env.VITE_API_BASE ??
@@ -61,7 +62,7 @@ export default function FooterV2() {
 
     // Solo secciones de primer nivel que tengan productos disponibles (sumando sus subsecciones)
     const shortcuts = categories
-        .filter((cat) => !cat.parent_id)
+        .filter((cat) => !cat.parent_id && cat.name !== PREBUILT_CATEGORY)   // los PCs armados tienen su propia sección
         .filter((cat) => {
             const ids = new Set([cat.name, ...categories.filter((k) => k.parent_id === cat.id).map((k) => k.name)]);
             return products.some((pr) => pr.available && ids.has(pr.category));
