@@ -1947,8 +1947,8 @@ export default function AdminPage() {
                 <div className="md:col-span-2">
                   <label className="lbl">Artículos y números de serie</label>
                   <p className="muted mb-2">
-                    Lo que le llevas al cliente. Los seriales quedan registrados para validar la garantía y, si
-                    marcas "notificar", se envían en el correo junto con el enlace a la política de garantía.
+                    Lo que le llevas al cliente. Los seriales quedan registrados para validar la garantía; es un
+                    registro interno y no se envía por correo. Agrégalos una vez la cita o el envío ya esté hecho.
                   </p>
                   <div className="space-y-2">
                     {(form.items || []).map((it, i) => (
