@@ -8,6 +8,7 @@ import { suggestNames } from "../lib/nameSuggestions.js";
 import {
   isPrebuilt, COMPONENT_TYPES, INCLUDE_TYPES, emptyBuildForm, buildToForm, formToBuild,
 } from "../lib/prebuilt.js";
+import { WARRANTY_OPTIONS, DEFAULT_WARRANTY, WARRANTY_URL, warrantyMonths, warrantyLabel } from "../lib/warranty.js";
 import { brandFromColor, DEFAULT_BRAND } from "../lib/categoryBrand.js";
 
 const API = (
@@ -42,6 +43,7 @@ const EMPTY_FORM = {
   is_flagship: false,
   whatsapp_number: "",
   build: emptyBuildForm(),
+  warranty_months: DEFAULT_WARRANTY,
 };
 
 const TIER_OPTIONS = ["Baja", "Media", "Alta"];
@@ -203,6 +205,11 @@ function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }
               );
             })}
           </div>
+        )}
+        {warrantyMonths(p) > DEFAULT_WARRANTY && (
+          <span className="inline-block w-fit mt-0.5 text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-[3px] bg-slate-100 text-slate-700">
+            Garantía {warrantyLabel(warrantyMonths(p))}
+          </span>
         )}
         <div className="mt-auto pt-1.5">
           {p.original_price && Number(p.original_price) > Number(p.price) && (
@@ -542,6 +549,7 @@ export default function AdminCatalogo() {
       is_flagship:     product.is_flagship || false,
       whatsapp_number: formatWhatsappDisplay(product.whatsapp_number || ""),
       build:           buildToForm(product.build),
+      warranty_months: warrantyMonths(product),
     });
     setPendingImage(null);
     setPendingImageUrl(null);
@@ -645,6 +653,7 @@ export default function AdminCatalogo() {
         is_flagship:     !!form.is_flagship,
         whatsapp_number: form.whatsapp_number.trim() || null,
         build:           isPrebuilt(form.category) ? formToBuild(form.build) : null,
+        warranty_months: Number(form.warranty_months) || DEFAULT_WARRANTY,
         ...(imageValue !== undefined && { image_url: imageValue }),
       };
 
@@ -748,6 +757,9 @@ export default function AdminCatalogo() {
       "",
       "🎉 ¡BIENVENIDO/A TechVenturesCO! 🎉",
       "",
+      "🛡️ Todos los artículos incluyen garantía de funcionamiento (mínimo 1 mes).",
+      `📄 Qué cubre y cómo se tramita: ${WARRANTY_URL}`,
+      "",
       "🖥️ COMPONENTES DISPONIBLES:",
       "",
     ];
@@ -759,7 +771,8 @@ export default function AdminCatalogo() {
       if (!items.length) return;
       const emoji = CATEGORY_EMOJI[cat] ?? "▪️";
       items.forEach((p) => {
-        lines.push(`${emoji} ${productDisplayName(p)}: ${fmt(Number(p.price))}`);
+        const wm = warrantyMonths(p);
+        lines.push(`${emoji} ${productDisplayName(p)}: ${fmt(Number(p.price))}${wm > DEFAULT_WARRANTY ? ` (🛡️ ${warrantyLabel(wm)} de garantía)` : ""}`);
         if (spaced) lines.push("");
       });
     });
@@ -849,6 +862,8 @@ export default function AdminCatalogo() {
       `💵 ${price} COP`,
       "",
       "🇨🇴 Envíos a nivel nacional",
+      "",
+      `🛡️ Garantía: ${warrantyLabel(warrantyMonths(p))} — qué cubre: ${WARRANTY_URL}`,
     ];
 
     if (tradeIn) lines.push("", `🔁 ${tradeIn}`);
@@ -1600,6 +1615,23 @@ export default function AdminCatalogo() {
                         className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none transition text-sm uppercase"
                       />
                     </div>
+                  </div>
+
+                  {/* Garantía */}
+                  <div>
+                    <label className="lbl text-sm">
+                      Garantía{" "}
+                      <span className="text-slate-400 text-xs font-normal">(todos los artículos incluyen garantía)</span>
+                    </label>
+                    <select
+                      value={form.warranty_months}
+                      onChange={(e) => setForm((f) => ({ ...f, warranty_months: Number(e.target.value) }))}
+                      className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none bg-white transition text-sm"
+                    >
+                      {WARRANTY_OPTIONS.map((m) => (
+                        <option key={m} value={m}>{warrantyLabel(m)}{m === DEFAULT_WARRANTY ? " (por defecto)" : ""}</option>
+                      ))}
+                    </select>
                   </div>
 
                   {/* Gama */}

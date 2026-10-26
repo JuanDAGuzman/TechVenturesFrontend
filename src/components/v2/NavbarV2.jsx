@@ -11,6 +11,7 @@ export default function NavbarV2() {
     const tagline = isCatalogo ? "Tu aliado en tecnología"
         : isAdmin ? "Panel de administración"
         : isContact ? "Contacto"
+        : location.pathname === "/garantia" ? "Garantía"
         : "Agenda tu cita";
 
     const linkCls = (active) =>

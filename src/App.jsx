@@ -5,6 +5,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import BookingV2 from "./pages/v2/BookingV2.jsx";
+import WarrantyV2 from "./pages/v2/WarrantyV2.jsx";
 import CatalogoV2 from "./pages/v2/CatalogoV2.jsx";
 import AdminGate from "./pages/AdminGate.jsx";
 import AdminCatalogoGate from "./pages/AdminCatalogoGate.jsx";
@@ -20,6 +21,7 @@ export default function App() {
         <Route element={<LayoutV2 />}>
           <Route path="/" element={<CatalogoV2 />} />
           <Route path="/agendar" element={<BookingV2 />} />
+          <Route path="/garantia" element={<WarrantyV2 />} />
           <Route path="/admin" element={<AdminGate />} />
           <Route path="/admin/catalogo" element={<AdminCatalogoGate />} />
           <Route path="/admin/metricas" element={<AdminMetricsGate />} />

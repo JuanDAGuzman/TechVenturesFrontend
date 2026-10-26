@@ -119,6 +119,11 @@ export default function FooterV2() {
                                     </Link>
                                 </li>
                             ))}
+                            <li>
+                                <Link to="/garantia" className={linkCls}>
+                                    <span className="uppercase tracking-wide text-[13px]">Garantía</span>
+                                </Link>
+                            </li>
                         </ul>
                     </div>
 

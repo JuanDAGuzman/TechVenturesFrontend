@@ -1,12 +1,13 @@
 import { useEffect, useState, useMemo, useRef, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useInView, useReducedMotion } from "framer-motion";
-import { useSearchParams } from "react-router-dom";
-import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowDown, AlertTriangle, Layers, Percent, ShoppingBag } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
+import { Search, MessageCircle, Package, CreditCard, Tag, Repeat2, Plus, Check, X, ChevronDown, ChevronLeft, ChevronRight, ArrowRight, ArrowDown, AlertTriangle, Layers, Percent, ShoppingBag, ShieldCheck } from "lucide-react";
 import Silhouette, { CATEGORY_FORM } from "../../components/v2/Silhouette.jsx";
 import { brandFromColor, DEFAULT_BRAND } from "../../lib/categoryBrand.js";
 import { PREBUILT_CATEGORY, parseBuild } from "../../lib/prebuilt.js";
 import useVisibleHeight from "../../lib/useVisibleHeight.js";
+import { WARRANTY_PATH, warrantyMonths, warrantyLabel } from "../../lib/warranty.js";
 import { BuildsSection, BuildModal } from "./BuildsV2.jsx";
 
 const API = (
@@ -252,6 +253,9 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
               <Check className="w-3.5 h-3.5 text-white" />
             </div>
           )}
+          <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-1 rounded-[3px] text-slate-700 border border-slate-300 bg-white/90 leading-none">
+            <ShieldCheck className="w-3 h-3 shrink-0" /> Garantía {warrantyLabel(warrantyMonths(product))}
+          </span>
         </Piece>
 
         {/* Información */}
@@ -383,6 +387,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
     ["Estado", conditionDisplay],
     tier && ["Gama", tier],
     product.is_flagship && ["Insignia", "Sí, tope de línea de su marca"],
+    ["Garantía", warrantyLabel(warrantyMonths(product))],
     ["Disponibilidad", product.available ? "Disponible" : "Agotado"],
   ].filter(Boolean);
 
@@ -465,6 +470,10 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
               </div>
             ))}
           </div>
+
+          <Link to={WARRANTY_PATH} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-brand-indigo transition-colors w-fit">
+            <ShieldCheck className="w-4 h-4" /> Qué cubre la garantía
+          </Link>
 
           <div className="mt-auto pt-3 md:pt-5 flex flex-col gap-2.5 sticky bottom-0 bg-white -mx-5 px-5 pb-1 border-t border-slate-200 md:static md:mx-0 md:px-0 md:pb-0 md:border-t-0">
             {showScrollHint && (
@@ -1469,19 +1478,25 @@ export default function CatalogoV2() {
       <div className={`${WRAP} pb-24`}>
 
       {/* ── Antes de comprar ── */}
-      {(trade || payment || price) && (
+      {(
         <section className="py-7 sm:py-8 border-b border-slate-300">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-x-8">
             {[
+              { Icon: ShieldCheck, title: "Garantía incluida", text: "Todos los artículos tienen garantía, de 1 a 6 meses según el artículo.", to: WARRANTY_PATH },
               trade && { Icon: Repeat2, title: "¿Tienes una gráfica usada?", text: trade },
               payment && { Icon: CreditCard, title: "Formas de pago", text: payment },
               price && { Icon: Tag, title: "Precios fijos", text: price },
-            ].filter(Boolean).map(({ Icon, title, text }) => (
+            ].filter(Boolean).map(({ Icon, title, text, to }) => (
               <div key={title} className="flex items-start gap-3 min-w-0">
                 <Icon className="w-5 h-5 brand-text shrink-0 mt-0.5" />
                 <div className="min-w-0">
                   <p className="font-display font-semibold text-slate-900">{title}</p>
                   <p className="text-sm text-slate-600 mt-1 leading-relaxed break-words">{text}</p>
+                  {to && (
+                    <Link to={to} className="group inline-flex items-center gap-1 mt-1.5 text-sm font-semibold text-slate-800 hover:text-brand-indigo transition-colors">
+                      Qué cubre y cómo se tramita <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}
