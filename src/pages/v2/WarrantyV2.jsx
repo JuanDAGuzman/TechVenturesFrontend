@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ShieldCheck, CheckCircle2, XCircle, MessageCircle, ClipboardCheck, Search, Stethoscope, Wrench,
-  AlertTriangle, ArrowLeft, Clock, PackageCheck,
+  AlertTriangle, ArrowLeft, Clock, PackageCheck, Truck,
 } from "lucide-react";
 
 const API = (
@@ -18,8 +18,8 @@ const DEFAULT_WHATSAPP = "573108216274";
 const COVERS = [
   "Fallas de funcionamiento causadas por un defecto de fábrica o de los componentes internos del artículo, que aparezcan dentro del plazo de garantía.",
   "Que el artículo sea el mismo que te vendimos y funcione con las características y condiciones con las que lo publicamos.",
-  "Cuando se confirma un defecto de fábrica: reparación o reposición del artículo, y nosotros asumimos el costo total de esa reparación.",
-  "Si no es posible repararlo ni reponerlo, buscamos contigo una solución equivalente, como un cambio por otro artículo de igual valor o la devolución del dinero.",
+  "Cuando se confirma un defecto de fábrica, nosotros asumimos el costo total de la reparación.",
+  "Si el defecto no tiene reparación, te entregamos otro artículo del mismo valor. Si en ese momento no tenemos uno equivalente, acordamos contigo otra solución.",
 ];
 
 const NOT_COVERS = [
@@ -57,7 +57,7 @@ const STEPS = [
   {
     Icon: Wrench,
     title: "Solución",
-    text: "Si es un defecto de fábrica, nosotros asumimos el costo total de la reparación o la reposición. Si la causa es otra (mala fuente, manipulación, golpe, humedad…), te mostramos el diagnóstico y acordamos contigo cómo proceder.",
+    text: "Si es un defecto de fábrica, nosotros asumimos el costo total de la reparación; y si no tiene reparación, te entregamos otro artículo del mismo valor. Si la causa es otra (mala fuente, manipulación, golpe, humedad…), te mostramos el diagnóstico y acordamos contigo cómo proceder.",
   },
 ];
 
@@ -110,16 +110,16 @@ export default function WarrantyV2() {
             <ShieldCheck className="w-4 h-4 brand-text" /> Garantía TechVenturesCO
           </p>
           <h1 className="font-display font-bold text-4xl sm:text-5xl tracking-tight text-slate-900 leading-[1.05]">
-            Garantía en todos nuestros artículos<span className="brand-text">.</span>
+            Garantía en nuestras tarjetas gráficas<span className="brand-text">.</span>
           </h1>
           <p className="text-base sm:text-lg text-slate-600 mt-4 leading-relaxed max-w-2xl">
-            Cada artículo incluye garantía de funcionamiento. El tiempo (de 1 a 6 meses) aparece en cada producto y empieza a contar desde la fecha de entrega. Aquí te explicamos con claridad qué cubre, qué no y cómo se tramita, para que ambos sepamos a qué atenernos.
+            Todas nuestras tarjetas gráficas incluyen garantía de funcionamiento. El tiempo (de 1 a 6 meses) aparece en cada producto y empieza a contar desde la fecha de entrega. Los demás artículos tienen garantía solo cuando así se indica en su ficha. Aquí te explicamos con claridad qué cubre, qué no y cómo se tramita, para que ambos sepamos a qué atenernos.
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-7">
-            <Fact value="1 a 6 meses" label="de garantía, según el artículo. Lo ves en cada producto." />
+            <Fact value="1 a 6 meses" label="de garantía en tarjetas gráficas, según el artículo. Lo ves en cada producto." />
             <Fact value="7 a 15 días" label="hábiles para el diagnóstico técnico, según el caso." />
-            <Fact value="Costo total" label="de la reparación a nuestro cargo si es defecto de fábrica." />
+            <Fact value="Sin costo" label="la revisión técnica la asumimos nosotros." />
           </div>
         </header>
 
@@ -176,6 +176,21 @@ export default function WarrantyV2() {
               </li>
             ))}
           </ol>
+        </section>
+
+        {/* Costos */}
+        <section className="py-8 sm:py-10 border-b border-slate-300">
+          <SectionTitle eyebrow="Transparencia">Quién asume cada costo</SectionTitle>
+          <ul className="space-y-3">
+            <li className="flex items-start gap-3">
+              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5 brand-text" />
+              <span className="text-slate-700 leading-relaxed">La revisión técnica del artículo no tiene costo: la asumimos nosotros.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <Truck className="w-5 h-5 shrink-0 mt-0.5 text-slate-700" />
+              <span className="text-slate-700 leading-relaxed">Los gastos de envío del artículo corren por cuenta del cliente.</span>
+            </li>
+          </ul>
         </section>
 
         {/* Qué necesitas */}

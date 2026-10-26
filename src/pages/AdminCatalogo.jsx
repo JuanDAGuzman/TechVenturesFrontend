@@ -8,7 +8,9 @@ import { suggestNames } from "../lib/nameSuggestions.js";
 import {
   isPrebuilt, COMPONENT_TYPES, INCLUDE_TYPES, emptyBuildForm, buildToForm, formToBuild,
 } from "../lib/prebuilt.js";
-import { WARRANTY_OPTIONS, DEFAULT_WARRANTY, WARRANTY_URL, warrantyMonths, warrantyLabel } from "../lib/warranty.js";
+import {
+  WARRANTY_OPTIONS, DEFAULT_WARRANTY, WARRANTY_URL, warrantyMonths, warrantyLabel, defaultWarrantyFor, isGpuCategory,
+} from "../lib/warranty.js";
 import { brandFromColor, DEFAULT_BRAND } from "../lib/categoryBrand.js";
 
 const API = (
@@ -206,7 +208,7 @@ function AdminProductCard({ p, dot, onToggle, onEdit, onDelete, onCopy, copied }
             })}
           </div>
         )}
-        {warrantyMonths(p) > DEFAULT_WARRANTY && (
+        {warrantyMonths(p) && !(isGpuCategory(p.category) && warrantyMonths(p) === DEFAULT_WARRANTY) && (
           <span className="inline-block w-fit mt-0.5 text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-[3px] bg-slate-100 text-slate-700">
             Garantía {warrantyLabel(warrantyMonths(p))}
           </span>
@@ -526,7 +528,13 @@ export default function AdminCatalogo() {
   // ── Modal helpers ──────────────────────────────────────────────────────────
 
   function openAdd() {
-    setForm({ ...EMPTY_FORM, category: CATEGORIES[0] || "", build: emptyBuildForm() });
+    setForm({
+      ...EMPTY_FORM,
+      category: CATEGORIES[0] || "",
+      build: emptyBuildForm(),
+      warranty_months: defaultWarrantyFor(CATEGORIES[0] || "") ?? "",
+      _wTouched: false,
+    });
     setPendingImage(null);
     setPendingImageUrl(null);
     setImageSearchResults([]); setSearchTitles([]); setNameBackup(null);
@@ -549,7 +557,8 @@ export default function AdminCatalogo() {
       is_flagship:     product.is_flagship || false,
       whatsapp_number: formatWhatsappDisplay(product.whatsapp_number || ""),
       build:           buildToForm(product.build),
-      warranty_months: warrantyMonths(product),
+      warranty_months: warrantyMonths(product) ?? "",
+      _wTouched:       true,
     });
     setPendingImage(null);
     setPendingImageUrl(null);
@@ -653,7 +662,7 @@ export default function AdminCatalogo() {
         is_flagship:     !!form.is_flagship,
         whatsapp_number: form.whatsapp_number.trim() || null,
         build:           isPrebuilt(form.category) ? formToBuild(form.build) : null,
-        warranty_months: Number(form.warranty_months) || DEFAULT_WARRANTY,
+        warranty_months: form.warranty_months === "" || form.warranty_months == null ? null : Number(form.warranty_months),
         ...(imageValue !== undefined && { image_url: imageValue }),
       };
 
@@ -757,7 +766,7 @@ export default function AdminCatalogo() {
       "",
       "🎉 ¡BIENVENIDO/A TechVenturesCO! 🎉",
       "",
-      "🛡️ Todos los artículos incluyen garantía de funcionamiento (mínimo 1 mes).",
+      "🛡️ Tarjetas gráficas con garantía de funcionamiento (mínimo 1 mes).",
       `📄 Qué cubre y cómo se tramita: ${WARRANTY_URL}`,
       "",
       "🖥️ COMPONENTES DISPONIBLES:",
@@ -772,7 +781,7 @@ export default function AdminCatalogo() {
       const emoji = CATEGORY_EMOJI[cat] ?? "▪️";
       items.forEach((p) => {
         const wm = warrantyMonths(p);
-        lines.push(`${emoji} ${productDisplayName(p)}: ${fmt(Number(p.price))}${wm > DEFAULT_WARRANTY ? ` (🛡️ ${warrantyLabel(wm)} de garantía)` : ""}`);
+        lines.push(`${emoji} ${productDisplayName(p)}: ${fmt(Number(p.price))}${wm && !(isGpuCategory(p.category) && wm === DEFAULT_WARRANTY) ? ` (🛡️ ${warrantyLabel(wm)} de garantía)` : ""}`);
         if (spaced) lines.push("");
       });
     });
@@ -862,9 +871,9 @@ export default function AdminCatalogo() {
       `💵 ${price} COP`,
       "",
       "🇨🇴 Envíos a nivel nacional",
-      "",
-      `🛡️ Garantía: ${warrantyLabel(warrantyMonths(p))} — qué cubre: ${WARRANTY_URL}`,
     ];
+
+    if (warrantyMonths(p)) lines.push("", `🛡️ Garantía: ${warrantyLabel(warrantyMonths(p))} — qué cubre: ${WARRANTY_URL}`);
 
     if (tradeIn) lines.push("", `🔁 ${tradeIn}`);
 
@@ -1542,7 +1551,12 @@ export default function AdminCatalogo() {
                       </label>
                       <select
                         value={form.category}
-                        onChange={(e) => setForm((f) => ({ ...f, category: e.target.value }))}
+                        onChange={(e) => setForm((f) => ({
+                          ...f,
+                          category: e.target.value,
+                          // la garantía sugerida sigue a la categoría mientras no la hayas tocado
+                          ...(f._wTouched ? {} : { warranty_months: defaultWarrantyFor(e.target.value) ?? "" }),
+                        }))}
                         className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none bg-white transition text-sm"
                       >
                         {CATEGORIES.map((c) => (
@@ -1621,15 +1635,16 @@ export default function AdminCatalogo() {
                   <div>
                     <label className="lbl text-sm">
                       Garantía{" "}
-                      <span className="text-slate-400 text-xs font-normal">(todos los artículos incluyen garantía)</span>
+                      <span className="text-slate-400 text-xs font-normal">(opcional · gráficas: 1 mes por defecto)</span>
                     </label>
                     <select
-                      value={form.warranty_months}
-                      onChange={(e) => setForm((f) => ({ ...f, warranty_months: Number(e.target.value) }))}
+                      value={form.warranty_months ?? ""}
+                      onChange={(e) => setForm((f) => ({ ...f, warranty_months: e.target.value === "" ? "" : Number(e.target.value), _wTouched: true }))}
                       className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none bg-white transition text-sm"
                     >
+                      <option value="">Sin garantía</option>
                       {WARRANTY_OPTIONS.map((m) => (
-                        <option key={m} value={m}>{warrantyLabel(m)}{m === DEFAULT_WARRANTY ? " (por defecto)" : ""}</option>
+                        <option key={m} value={m}>{warrantyLabel(m)}{m === DEFAULT_WARRANTY && isGpuCategory(form.category) ? " (por defecto)" : ""}</option>
                       ))}
                     </select>
                   </div>

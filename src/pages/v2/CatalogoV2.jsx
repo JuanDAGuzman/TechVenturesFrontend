@@ -253,9 +253,11 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
               <Check className="w-3.5 h-3.5 text-white" />
             </div>
           )}
-          <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-1 rounded-[3px] text-slate-700 border border-slate-300 bg-white/90 leading-none">
-            <ShieldCheck className="w-3 h-3 shrink-0" /> Garantía {warrantyLabel(warrantyMonths(product))}
-          </span>
+          {warrantyMonths(product) && (
+            <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-1 rounded-[3px] text-slate-700 border border-slate-300 bg-white/90 leading-none">
+              <ShieldCheck className="w-3 h-3 shrink-0" /> Garantía {warrantyLabel(warrantyMonths(product))}
+            </span>
+          )}
         </Piece>
 
         {/* Información */}
@@ -387,7 +389,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
     ["Estado", conditionDisplay],
     tier && ["Gama", tier],
     product.is_flagship && ["Insignia", "Sí, tope de línea de su marca"],
-    ["Garantía", warrantyLabel(warrantyMonths(product))],
+    warrantyMonths(product) && ["Garantía", warrantyLabel(warrantyMonths(product))],
     ["Disponibilidad", product.available ? "Disponible" : "Agotado"],
   ].filter(Boolean);
 
@@ -471,9 +473,11 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
             ))}
           </div>
 
-          <Link to={WARRANTY_PATH} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-brand-indigo transition-colors w-fit">
-            <ShieldCheck className="w-4 h-4" /> Qué cubre la garantía
-          </Link>
+          {warrantyMonths(product) && (
+            <Link to={WARRANTY_PATH} className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-700 hover:text-brand-indigo transition-colors w-fit">
+              <ShieldCheck className="w-4 h-4" /> Qué cubre la garantía
+            </Link>
+          )}
 
           <div className="mt-auto pt-3 md:pt-5 flex flex-col gap-2.5 sticky bottom-0 bg-white -mx-5 px-5 pb-1 border-t border-slate-200 md:static md:mx-0 md:px-0 md:pb-0 md:border-t-0">
             {showScrollHint && (
@@ -1482,7 +1486,7 @@ export default function CatalogoV2() {
         <section className="py-7 sm:py-8 border-b border-slate-300">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-x-8">
             {[
-              { Icon: ShieldCheck, title: "Garantía incluida", text: "Todos los artículos tienen garantía, de 1 a 6 meses según el artículo.", to: WARRANTY_PATH },
+              { Icon: ShieldCheck, title: "Garantía en gráficas", text: "Las tarjetas gráficas incluyen garantía de 1 a 6 meses, según el artículo.", to: WARRANTY_PATH },
               trade && { Icon: Repeat2, title: "¿Tienes una gráfica usada?", text: trade },
               payment && { Icon: CreditCard, title: "Formas de pago", text: payment },
               price && { Icon: Tag, title: "Precios fijos", text: price },

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import dayjs from "dayjs";
-import { Ban, ShieldCheck, Camera } from "lucide-react";
+import { Ban, ShieldCheck, Camera, X } from "lucide-react";
 import "dayjs/locale/es";
 import { getAdminToken } from "../lib/adminSession.js";
 import {
@@ -569,6 +569,9 @@ export default function AdminPage() {
         customer_phone: item.customer_phone || "",
         product: item.product || "",
         notes: item.notes || "",
+        items: Array.isArray(item.items)
+          ? item.items.map((i) => ({ name: i.name || "", serial: i.serial || "" }))
+          : [],
 
         shipping_address: item.shipping_address || "",
         shipping_neighborhood: item.shipping_neighborhood || "",
@@ -607,6 +610,9 @@ export default function AdminPage() {
         customer_phone: form.customer_phone,
         product: form.product,
         notes: form.notes,
+        items: (form.items || [])
+          .map((i) => ({ name: (i.name || "").trim(), serial: (i.serial || "").trim() }))
+          .filter((i) => i.name),
         status: form.status,
         delivery_method: form.delivery_method,
       };
@@ -1936,6 +1942,57 @@ export default function AdminPage() {
                       setForm({ ...form, product: e.target.value })
                     }
                   />
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="lbl">Artículos y números de serie</label>
+                  <p className="muted mb-2">
+                    Lo que le llevas al cliente. Los seriales quedan registrados para validar la garantía y, si
+                    marcas "notificar", se envían en el correo junto con el enlace a la política de garantía.
+                  </p>
+                  <div className="space-y-2">
+                    {(form.items || []).map((it, i) => (
+                      <div key={i} className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          className="flex-1 min-w-0 px-3 py-3 rounded-xl border border-slate-300"
+                          placeholder="Artículo (ej. RTX 3060 12GB ZOTAC)"
+                          value={it.name}
+                          onChange={(e) => {
+                            const items = [...form.items];
+                            items[i] = { ...items[i], name: e.target.value };
+                            setForm({ ...form, items });
+                          }}
+                        />
+                        <div className="flex gap-2 sm:w-64">
+                          <input
+                            className="flex-1 min-w-0 px-3 py-3 rounded-xl border border-slate-300 font-mono uppercase"
+                            placeholder="Número de serie"
+                            value={it.serial}
+                            onChange={(e) => {
+                              const items = [...form.items];
+                              items[i] = { ...items[i], serial: e.target.value.toUpperCase() };
+                              setForm({ ...form, items });
+                            }}
+                          />
+                          <button
+                            type="button"
+                            title="Quitar artículo"
+                            onClick={() => setForm({ ...form, items: form.items.filter((_, j) => j !== i) })}
+                            className="shrink-0 w-12 flex items-center justify-center rounded-xl border border-slate-300 text-slate-500 hover:text-red-600 hover:border-red-300 transition"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, items: [...(form.items || []), { name: "", serial: "" }] })}
+                    className="mt-2 text-sm font-bold uppercase tracking-wide text-slate-700 hover:text-brand-indigo transition-colors"
+                  >
+                    + Agregar artículo
+                  </button>
                 </div>
 
                 <div className="md:col-span-2">

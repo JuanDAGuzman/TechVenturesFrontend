@@ -86,9 +86,11 @@ function BuildCard({ product, selected, onToggle, onOpen }) {
               <Check className="w-3.5 h-3.5 text-white" />
             </div>
           )}
-          <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-1 rounded-[3px] text-slate-700 border border-slate-300 bg-white/90 leading-none">
-            <ShieldCheck className="w-3 h-3 shrink-0" /> Garantía {warrantyLabel(warrantyMonths(product))}
-          </span>
+          {warrantyMonths(product) && (
+            <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 text-[9px] font-mono font-bold uppercase tracking-wider px-1.5 py-1 rounded-[3px] text-slate-700 border border-slate-300 bg-white/90 leading-none">
+              <ShieldCheck className="w-3 h-3 shrink-0" /> Garantía {warrantyLabel(warrantyMonths(product))}
+            </span>
+          )}
         </div>
 
         <p className="font-display font-semibold text-slate-900 text-lg sm:text-xl leading-tight line-clamp-2">{product.name}</p>
@@ -282,12 +284,14 @@ export function BuildModal({ product, isSelected, onToggle, onClose, waLink }) {
             )}
             <p className={`font-mono text-2xl sm:text-3xl font-bold ${discount ? "mt-1 text-[var(--brand)]" : "mt-4 text-slate-900"}`}>{cop(product.price)}</p>
 
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3">
-              <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-[3px] leading-none bg-white text-slate-900 border border-slate-400">
-                <ShieldCheck className="w-3 h-3" /> Garantía {warrantyLabel(warrantyMonths(product))}
-              </span>
-              <Link to={WARRANTY_PATH} className="text-xs font-semibold text-slate-700 underline underline-offset-2 hover:text-brand-indigo">Qué cubre</Link>
-            </div>
+            {warrantyMonths(product) && (
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3">
+                <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-wide px-2 py-1 rounded-[3px] leading-none bg-white text-slate-900 border border-slate-400">
+                  <ShieldCheck className="w-3 h-3" /> Garantía {warrantyLabel(warrantyMonths(product))}
+                </span>
+                <Link to={WARRANTY_PATH} className="text-xs font-semibold text-slate-700 underline underline-offset-2 hover:text-brand-indigo">Qué cubre</Link>
+              </div>
+            )}
 
             {tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-3">
