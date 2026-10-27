@@ -570,7 +570,11 @@ export default function AdminPage() {
         product: item.product || "",
         notes: item.notes || "",
         items: Array.isArray(item.items)
-          ? item.items.map((i) => ({ name: i.name || "", serial: i.serial || "" }))
+          ? item.items.map((i) => ({
+              name: i.name || "",
+              serial: i.serial || "",
+              warranty_months: i.warranty_months === undefined ? 1 : (i.warranty_months ?? ""),
+            }))
           : [],
 
         shipping_address: item.shipping_address || "",
@@ -611,7 +615,11 @@ export default function AdminPage() {
         product: form.product,
         notes: form.notes,
         items: (form.items || [])
-          .map((i) => ({ name: (i.name || "").trim(), serial: (i.serial || "").trim() }))
+          .map((i) => ({
+            name: (i.name || "").trim(),
+            serial: (i.serial || "").trim(),
+            warranty_months: i.warranty_months === "" || i.warranty_months == null ? null : Number(i.warranty_months),
+          }))
           .filter((i) => i.name),
         status: form.status,
         delivery_method: form.delivery_method,
@@ -1479,7 +1487,7 @@ export default function AdminPage() {
           <div>
             <h2 className="font-bold text-2xl mb-1">Buscador de Clientes</h2>
             <p className="text-sm text-slate-500">
-              Busca un cliente por cédula para ver su historial y estado de bloqueo
+              Busca por cédula, celular, nombre o número de serie para ver el historial, las garantías y el estado de bloqueo
             </p>
           </div>
         </div>
@@ -1488,7 +1496,7 @@ export default function AdminPage() {
           <div className="flex gap-3 mb-6">
             <input
               type="text"
-              placeholder="Buscar por cédula, nombre o celular..."
+              placeholder="Cédula, nombre, celular o número de serie..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && searchCustomer()}
@@ -1667,6 +1675,56 @@ export default function AdminPage() {
                         </div>
                       )}
                     </div>
+
+                    {/* Artículos vendidos y estado de su garantía */}
+                    {searchResult.customer.warranty_items?.length > 0 && (() => {
+                      const q = searchQuery.trim().toUpperCase();
+                      const isMatch = (w) => q && ((w.serial || "").toUpperCase().includes(q) || (w.name || "").toUpperCase().includes(q));
+                      const list = [...searchResult.customer.warranty_items].sort((a, b) => Number(!!isMatch(b)) - Number(!!isMatch(a)));
+                      const chip = {
+                        active:  { cls: "bg-emerald-100 text-emerald-700", label: "Vigente" },
+                        expired: { cls: "bg-red-100 text-red-700", label: "Vencida" },
+                        pending: { cls: "bg-amber-100 text-amber-700", label: "Sin entregar" },
+                        none:    { cls: "bg-slate-200 text-slate-600", label: "Sin garantía" },
+                      };
+                      return (
+                        <div>
+                          <h4 className="font-semibold text-sm text-slate-600 mb-3">Artículos y garantías</h4>
+                          <div className="border border-slate-200 rounded-xl overflow-hidden">
+                            <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                              {list.map((w, i) => (
+                                <div key={i} className={`px-4 py-3 text-sm flex items-start justify-between gap-3 ${isMatch(w) ? "bg-violet-50" : ""}`}>
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-slate-800">{w.name}</p>
+                                    <p className="font-mono text-xs text-slate-600 mt-0.5">
+                                      {w.serial ? `S/N ${w.serial}` : "Sin serial registrado"}
+                                    </p>
+                                    <p className="text-xs text-slate-500 mt-1">
+                                      {w.type_code === "SHIPPING" ? "Envío" : "Entrega"} {dayjs(w.start).format("DD/MM/YYYY")}
+                                      {w.months ? ` · ${w.months} ${w.months === 1 ? "mes" : "meses"} de garantía` : ""}
+                                      {w.until ? ` · hasta ${dayjs(w.until).format("DD/MM/YYYY")}` : ""}
+                                    </p>
+                                  </div>
+                                  <div className="shrink-0 text-right">
+                                    <span className={`inline-block text-[10px] font-bold uppercase px-2 py-1 rounded-[3px] ${chip[w.status].cls}`}>
+                                      {chip[w.status].label}
+                                    </span>
+                                    {w.status === "active" && (
+                                      <p className="text-[11px] text-slate-500 mt-1">
+                                        {w.days_left === 0 ? "vence hoy" : `faltan ${w.days_left} día${w.days_left === 1 ? "" : "s"}`}
+                                      </p>
+                                    )}
+                                    {w.status === "expired" && (
+                                      <p className="text-[11px] text-slate-500 mt-1">hace {Math.abs(w.days_left)} día{Math.abs(w.days_left) === 1 ? "" : "s"}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     {/* Historial reciente de citas */}
                     {searchResult.customer.history?.length > 0 && (
@@ -1963,7 +2021,7 @@ export default function AdminPage() {
                             setForm({ ...form, items });
                           }}
                         />
-                        <div className="flex gap-2 sm:w-64">
+                        <div className="flex gap-2 sm:w-[30rem]">
                           <input
                             className="flex-1 min-w-0 px-3 py-3 rounded-xl border border-slate-300 font-mono uppercase"
                             placeholder="Número de serie"
@@ -1974,6 +2032,21 @@ export default function AdminPage() {
                               setForm({ ...form, items });
                             }}
                           />
+                          <select
+                            className="w-32 shrink-0 px-2 py-3 rounded-xl border border-slate-300 bg-white text-sm"
+                            title="Garantía de este artículo"
+                            value={it.warranty_months ?? ""}
+                            onChange={(e) => {
+                              const items = [...form.items];
+                              items[i] = { ...items[i], warranty_months: e.target.value === "" ? "" : Number(e.target.value) };
+                              setForm({ ...form, items });
+                            }}
+                          >
+                            <option value="">Sin garantía</option>
+                            {[1, 2, 3, 4, 5, 6].map((m) => (
+                              <option key={m} value={m}>{m} {m === 1 ? "mes" : "meses"}</option>
+                            ))}
+                          </select>
                           <button
                             type="button"
                             title="Quitar artículo"
@@ -1988,7 +2061,7 @@ export default function AdminPage() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setForm({ ...form, items: [...(form.items || []), { name: "", serial: "" }] })}
+                    onClick={() => setForm({ ...form, items: [...(form.items || []), { name: "", serial: "", warranty_months: 1 }] })}
                     className="mt-2 text-sm font-bold uppercase tracking-wide text-slate-700 hover:text-brand-indigo transition-colors"
                   >
                     + Agregar artículo
