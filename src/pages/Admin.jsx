@@ -652,8 +652,8 @@ export default function AdminPage() {
       open: true,
       id: row.id,
       date: row.date,
-      start: fmt(row.start_time),
-      end: fmt(row.end_time),
+      start: (row.start_time || "").slice(0, 5),
+      end: (row.end_time || "").slice(0, 5),
       apptRow: row,
     });
     setNotifyReschedule(true);
@@ -661,15 +661,16 @@ export default function AdminPage() {
 
   async function submitReschedule() {
     const { id, date, start, end } = rescheduleModal;
-    if (!date || !start || !end) {
-      setToast("Completa todos los campos del nuevo horario.");
+    const dateOnly = rescheduleModal.apptRow?.type_code === "SHIPPING";
+    if (!date || (!dateOnly && (!start || !end))) {
+      setToast(dateOnly ? "Selecciona la nueva fecha." : "Completa todos los campos del nuevo horario.");
       return;
     }
     try {
       const r = await fetch(`${API}/admin/appointments/${id}/reschedule`, {
         method: "PATCH",
         headers,
-        body: JSON.stringify({ date, start_time: start, end_time: end, notify: notifyReschedule }),
+        body: JSON.stringify(dateOnly ? { date, notify: notifyReschedule } : { date, start_time: start, end_time: end, notify: notifyReschedule }),
       });
       const j = await safeJson(r);
       if (!r.ok || j?.ok === false) throw new Error(j?.error || "ERROR");
@@ -1023,14 +1024,12 @@ export default function AdminPage() {
                     >
                       Editar
                     </button>
-                    {(r.type_code === "TRYOUT" || r.type_code === "PICKUP") && (
-                      <button
-                        onClick={() => openRescheduleModal(r)}
-                        className="px-3 py-2 rounded-[3px] border border-brand-indigo bg-white text-brand-indigo hover:bg-brand-indigo hover:text-white text-xs font-bold uppercase tracking-wide transition-colors"
-                      >
-                        Reagendar
-                      </button>
-                    )}
+                    <button
+                      onClick={() => openRescheduleModal(r)}
+                      className="px-3 py-2 rounded-[3px] border border-brand-indigo bg-white text-brand-indigo hover:bg-brand-indigo hover:text-white text-xs font-bold uppercase tracking-wide transition-colors"
+                    >
+                      Reagendar
+                    </button>
                   </div>
                 </div>
                 <div className="font-semibold text-slate-800">{r.customer_name}</div>
@@ -1165,14 +1164,12 @@ export default function AdminPage() {
                         >
                           Editar
                         </button>
-                        {(r.type_code === "TRYOUT" || r.type_code === "PICKUP") && (
-                          <button
-                            onClick={() => openRescheduleModal(r)}
-                            className="px-3 py-2 rounded-[3px] border border-brand-indigo bg-white text-brand-indigo hover:bg-brand-indigo hover:text-white text-xs font-bold uppercase tracking-wide transition-colors"
-                          >
-                            Reagendar
-                          </button>
-                        )}
+                        <button
+                          onClick={() => openRescheduleModal(r)}
+                          className="px-3 py-2 rounded-[3px] border border-brand-indigo bg-white text-brand-indigo hover:bg-brand-indigo hover:text-white text-xs font-bold uppercase tracking-wide transition-colors"
+                        >
+                          Reagendar
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -2688,7 +2685,7 @@ export default function AdminPage() {
                 <h3 className="font-bold text-lg">Reagendar cita</h3>
                 {rescheduleModal.apptRow && (
                   <p className="text-sm text-slate-500 mt-0.5">
-                    {rescheduleModal.apptRow.customer_name} · Actual: {fmt(rescheduleModal.apptRow.start_time)}–{fmt(rescheduleModal.apptRow.end_time)}
+                    {rescheduleModal.apptRow.customer_name} · Actual: {String(rescheduleModal.apptRow.date).slice(0, 10).split("-").reverse().join("/")}{rescheduleModal.apptRow.start_time ? ` ${fmt(rescheduleModal.apptRow.start_time)}–${fmt(rescheduleModal.apptRow.end_time)}` : ""}
                   </p>
                 )}
               </div>
@@ -2710,6 +2707,7 @@ export default function AdminPage() {
                   className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
                 />
               </div>
+              {rescheduleModal.apptRow?.type_code !== "SHIPPING" && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Hora inicio</label>
@@ -2732,6 +2730,7 @@ export default function AdminPage() {
                   />
                 </div>
               </div>
+              )}
 
               <label className="flex items-center gap-2 text-sm text-slate-600 cursor-pointer select-none pt-1">
                 <input
@@ -2740,7 +2739,7 @@ export default function AdminPage() {
                   checked={notifyReschedule}
                   onChange={(e) => setNotifyReschedule(e.target.checked)}
                 />
-                Notificar al cliente por correo con el nuevo horario
+                Notificar al cliente por correo con la nueva fecha/horario
               </label>
             </div>
 
