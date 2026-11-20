@@ -9,7 +9,7 @@ import {
   isPrebuilt, COMPONENT_TYPES, INCLUDE_TYPES, emptyBuildForm, buildToForm, formToBuild,
 } from "../lib/prebuilt.js";
 import {
-  WARRANTY_OPTIONS, DEFAULT_WARRANTY, WARRANTY_URL, warrantyMonths, warrantyLabel, defaultWarrantyFor, isGpuCategory,
+  WARRANTY_OPTIONS, DEFAULT_WARRANTY, warrantyMonths, warrantyLabel, defaultWarrantyFor, isGpuCategory,
 } from "../lib/warranty.js";
 import { brandFromColor, DEFAULT_BRAND } from "../lib/categoryBrand.js";
 
@@ -813,8 +813,8 @@ export default function AdminCatalogo() {
     }
 
     lines.push(
-      "💡 ¿TIENES UNA GRÁFICA USADA?",
-      "¡Aceptamos gráficas como parte de pago! 🤑",
+      "💡 ¿TIENES UN COMPONENTE USADO?",
+      "¡Aceptamos componentes como parte de pago! 🤑",
       "",
       "💎 PRECIOS FIJOS:",
       "Precios claros y sin negociación. 😊",
@@ -829,7 +829,7 @@ export default function AdminCatalogo() {
       "Lamentablemente, ya se ha vendido. ¡No te quedes sin la tuya! 🚀",
       "",
       "💬 ¿Dudas o quieres más fotos/info?",
-      "Escríbenos por este chat — también puedes ver más en nuestro perfil. 😊",
+      "Escríbenos por este chat — también puedes ver más en nuestra web. 😊",
     );
 
     const contact = contactFooterLines(settingsForm);
@@ -886,14 +886,14 @@ export default function AdminCatalogo() {
       "🇨🇴 Envíos a nivel nacional",
     ];
 
-    if (warrantyMonths(p)) lines.push("", `🛡️ Garantía: ${warrantyLabel(warrantyMonths(p))} — qué cubre: ${WARRANTY_URL}`);
+    if (warrantyMonths(p)) lines.push("", `🛡️ Garantía: ${warrantyLabel(warrantyMonths(p))}`);
 
     if (tradeIn) lines.push("", `🔁 ${tradeIn}`);
 
     lines.push(
       "",
       "💬 Tenemos más artículos disponibles, pregúntanos sin compromiso",
-      "¿Dudas o quieres más fotos/info? Escríbenos por este chat — también puedes ver más en nuestro perfil. 😊"
+      "¿Dudas o quieres más fotos/info? Escríbenos por este chat — también puedes ver más en nuestra web. 😊"
     );
 
     const contact = contactFooterLines(settingsForm);
@@ -1351,7 +1351,7 @@ export default function AdminCatalogo() {
               {
                 key: "trade_in_note",
                 label: "Nota de permuta",
-                placeholder: "Acepto GPUs como parte de pago (permuta)",
+                placeholder: "Aceptamos componentes como parte de pago (permuta)",
               },
               {
                 key: "payment_methods",
