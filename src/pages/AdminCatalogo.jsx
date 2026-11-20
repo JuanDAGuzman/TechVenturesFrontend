@@ -761,17 +761,20 @@ export default function AdminCatalogo() {
     const fmt = (price) =>
       new Intl.NumberFormat("es-CO", { maximumFractionDigits: 0 }).format(price) + ".";
 
-    const lines = [
-      "⬇️ LEER ATENTAMENTE ⬇️",
-      "",
-      "🎉 ¡BIENVENIDO/A TechVenturesCO! 🎉",
-      "",
-      "🛡️ Tarjetas gráficas con garantía de funcionamiento (mínimo 1 mes).",
-      `📄 Qué cubre y cómo se tramita: ${WARRANTY_URL}`,
-      "",
-      "🖥️ COMPONENTES DISPONIBLES:",
-      "",
-    ];
+    // "Sin espaciado" = versión compacta: solo el listado, una línea de presentación y el contacto.
+    // "Con espaciado" = mensaje completo (bienvenida, ofertas, formas de pago, etc.).
+    const lines = spaced
+      ? [
+          "⬇️ LEER ATENTAMENTE ⬇️",
+          "",
+          "🎉 ¡BIENVENIDO/A TechVenturesCO! 🎉",
+          "",
+          "🛡️ Todas nuestras tarjetas gráficas cuentan con garantía.",
+          "",
+          "🖥️ COMPONENTES DISPONIBLES:",
+          "",
+        ]
+      : [];
 
     CATEGORIES.forEach((cat) => {
       const items = available
@@ -780,11 +783,21 @@ export default function AdminCatalogo() {
       if (!items.length) return;
       const emoji = CATEGORY_EMOJI[cat] ?? "▪️";
       items.forEach((p) => {
-        const wm = warrantyMonths(p);
-        lines.push(`${emoji} ${productDisplayName(p)}: ${fmt(Number(p.price))}${wm && !(isGpuCategory(p.category) && wm === DEFAULT_WARRANTY) ? ` (🛡️ ${warrantyLabel(wm)} de garantía)` : ""}`);
+        lines.push(`${emoji} ${productDisplayName(p)}: ${fmt(Number(p.price))}`);
         if (spaced) lines.push("");
       });
     });
+
+    if (!spaced) {
+      lines.push("", "Bogotá y tengo muchas referencias.");
+      const contactCompact = contactFooterLines(settingsForm);
+      if (contactCompact.length) lines.push("", ...contactCompact);
+      navigator.clipboard.writeText(lines.join("\n")).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      });
+      return;
+    }
 
     // Ofertas por cantidad (bundle deals)
     const activeDeals = bundleDeals.filter((d) => d.active !== false);
