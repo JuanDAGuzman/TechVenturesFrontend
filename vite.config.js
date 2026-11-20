@@ -10,6 +10,13 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
       },
+      output: {
+        // Librerías pesadas en paquetes propios: se cachean aparte y el panel de admin no las arrastra al catálogo
+        manualChunks: {
+          react: ['react', 'react-dom', 'react-router-dom'],
+          motion: ['framer-motion'],
+        },
+      },
     },
   },
 });

@@ -23,8 +23,8 @@ export default function NavbarV2() {
 
     return (
         <header
-            className="sticky top-0 z-50 w-full border-b border-slate-300 backdrop-blur"
-            style={{ background: "rgba(246,247,249,0.92)" }}
+            className="sticky top-0 z-50 w-full border-b border-slate-300 lg:backdrop-blur"
+            style={{ background: "rgba(246,247,249,0.97)" }}
         >
             <div className="max-w-[1180px] mx-auto px-4 sm:px-6">
                 <div className="flex items-center justify-between h-16 sm:h-[72px]">

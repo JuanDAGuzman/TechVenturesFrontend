@@ -9,9 +9,18 @@
   <meta name="theme-color" content="#6d28d9" />
 
   <!-- Tipografías -->
+  <link rel="preconnect" href="https://techventuresbackend-production.up.railway.app" crossorigin />
+  <!-- Los datos del catálogo se piden en paralelo con el JavaScript (el navegador los reutiliza al hacer fetch) -->
+  <link rel="preload" as="fetch" href="%VITE_API_BASE%/catalog/products" crossorigin />
+  <link rel="preload" as="fetch" href="%VITE_API_BASE%/catalog/categories" crossorigin />
+  <link rel="preload" as="fetch" href="%VITE_API_BASE%/catalog/settings" crossorigin />
+  <link rel="preload" as="fetch" href="%VITE_API_BASE%/catalog/bundle-deals" crossorigin />
+  <link rel="preconnect" href="https://encrypted-tbn0.gstatic.com" crossorigin />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Las fuentes cargan sin bloquear el dibujo de la página (display=swap muestra texto de inmediato) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" media="print" onload="this.media='all'" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" /></noscript>
 
   <!-- SEO Standard -->
   <link rel="canonical" href="https://techventuresco.com/" />

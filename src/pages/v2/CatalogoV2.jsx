@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef, createContext, useContext } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback, useDeferredValue, memo, createContext, useContext } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence, useInView, useReducedMotion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
@@ -74,7 +74,7 @@ function dealStats(deal) {
 }
 
 // Foto del producto (se funde con el fondo) o ilustración técnica si no hay foto
-function ProductThumb({ imageUrl, category, name }) {
+function ProductThumb({ imageUrl, category, name, priority = false }) {
   const [imgErr, setImgErr] = useState(false);
   const { brandMap } = useContext(BrandContext);
   const dot = brandMap[category]?.dot ?? DEFAULT_BRAND.dot;
@@ -86,6 +86,9 @@ function ProductThumb({ imageUrl, category, name }) {
         <img
           src={imageUrl}
           alt={name}
+          loading={priority ? "eager" : "lazy"}
+          decoding="async"
+          fetchpriority={priority ? "high" : undefined}
           className="max-w-full max-h-full object-contain transition-transform duration-500 ease-out group-hover:scale-105"
           style={{ mixBlendMode: "multiply" }}
           onError={() => setImgErr(true)}
@@ -153,7 +156,7 @@ function Piece({ slot, fx, className, style, children, ...rest }) {
 }
 
 // Tarjeta de producto — separada de las demás, con presencia propia
-function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink, index = 0 }) {
+const ProductCard = memo(function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink, index = 0 }) {
   const { brandMap } = useContext(BrandContext);
   const b = brandMap[product.category] ?? DEFAULT_BRAND;
   const condTags = product.condition ? product.condition.split(",").map(t => t.trim().toUpperCase()).filter(Boolean) : [];
@@ -214,10 +217,10 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
         >
           {/* El degradado vive en la misma capa que la foto: así el fondo blanco se funde (multiply) con él */}
           <div
-            className="w-full h-full p-3 transition-transform duration-200 ease-out will-change-transform"
+            className="w-full h-full p-3 transition-transform duration-200 ease-out group-hover:will-change-transform"
             style={{ background: "linear-gradient(180deg, #f8f9fc 0%, #eceff5 100%)" }}
           >
-            <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} />
+            <ProductThumb imageUrl={product.image_url} category={product.category} name={product.name} priority={index < 4} />
           </div>
 
           {(tier || product.is_flagship) && (
@@ -331,7 +334,7 @@ function ProductCard({ product, tier, isSelected, onToggle, onOpenDetail, waLink
       </div>
     </div>
   );
-}
+});
 
 // Modal de detalle — se abre al hacer clic en una tarjeta
 function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLink }) {
@@ -397,7 +400,7 @@ function ProductDetailModal({ product, tier, isSelected, onToggle, onClose, waLi
 
   return createPortal(
     <div
-      className="fixed inset-x-0 top-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-x-0 top-0 z-[100] bg-slate-900/50 sm:backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
       style={{ height: vh, "--vvh": `${vh}px` }}
       onClick={onClose}
     >
@@ -540,7 +543,7 @@ function BundleModal({ deal, onClose, onOpenProduct, waHref }) {
   }, [onClose]);
 
   return createPortal(
-    <div className="fixed inset-x-0 top-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4" style={{ height: vh }} onClick={onClose}>
+    <div className="fixed inset-x-0 top-0 z-[100] bg-slate-900/50 sm:backdrop-blur-sm flex items-center justify-center p-4" style={{ height: vh }} onClick={onClose}>
       <div
         className="modal-pop bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-y-auto relative"
         style={{ maxHeight: vh * 0.9 }}
@@ -605,7 +608,7 @@ function BundleModal({ deal, onClose, onOpenProduct, waHref }) {
                   >
                     <div className="w-11 h-11 shrink-0 flex items-center justify-center" style={{ background: PHOTO_BG }}>
                       {p.image_url
-                        ? <img src={p.image_url} alt={p.name} className="w-full h-full object-contain p-1" style={{ mixBlendMode: "multiply" }} />
+                        ? <img src={p.image_url} alt={p.name} loading="lazy" decoding="async" className="w-full h-full object-contain p-1" style={{ mixBlendMode: "multiply" }} />
                         : <Package className="w-4 h-4 text-slate-400" />}
                     </div>
                     <span className="flex-1 min-w-0 text-sm font-semibold text-slate-900 leading-tight">
@@ -842,7 +845,7 @@ function DiscountStrip({ items, onOpenProduct }) {
             >
               <div className="relative h-[88px] flex items-center justify-center p-2" style={{ background: "linear-gradient(180deg, #f8f9fc 0%, #eceff5 100%)" }}>
                 {p.image_url
-                  ? <img src={p.image_url} alt={p.name} className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105" style={{ mixBlendMode: "multiply" }} />
+                  ? <img src={p.image_url} alt={p.name} loading="lazy" decoding="async" className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-105" style={{ mixBlendMode: "multiply" }} />
                   : <Package className="w-7 h-7 text-slate-400" />}
                 <span className="absolute top-1.5 right-1.5 font-mono text-[13px] font-bold px-2 py-1 rounded-[3px] text-white leading-none" style={{ background: ACCENT }}>
                   -{pct(p)}%
@@ -1352,17 +1355,21 @@ export default function CatalogoV2() {
     [CATEGORY_ORDER, parentOf, treeCounts, category]
   );
 
+  const deferredSearch = useDeferredValue(search);
+  const deferredMin = useDeferredValue(minPrice);
+  const deferredMax = useDeferredValue(maxPrice);
+
   const filtered = useMemo(() => {
     return products.filter((p) => {
       if (!p.available) return false;                                                    // ocultar agotados
       if (category !== "Todos" && p.category !== category && !(childrenOf.get(category) ?? []).includes(p.category)) return false;
-      if (search.trim() && !p.name.toLowerCase().includes(search.trim().toLowerCase())) return false;
-      if (minPrice !== "" && p.price < Number(minPrice)) return false;
-      if (maxPrice !== "" && p.price > Number(maxPrice)) return false;
+      if (deferredSearch.trim() && !p.name.toLowerCase().includes(deferredSearch.trim().toLowerCase())) return false;
+      if (deferredMin !== "" && p.price < Number(deferredMin)) return false;
+      if (deferredMax !== "" && p.price > Number(deferredMax)) return false;
       if (onlyDiscount && !(p.original_price && Number(p.original_price) > Number(p.price))) return false;
       return true;
     });
-  }, [products, category, search, minPrice, maxPrice, childrenOf, onlyDiscount]);
+  }, [products, category, deferredSearch, deferredMin, deferredMax, childrenOf, onlyDiscount]);
 
   // Orden de la cuadrícula: por sección del catálogo y luego por precio
   const ordered = useMemo(() => {
@@ -1417,6 +1424,13 @@ export default function CatalogoV2() {
     lines.push("", "¿Sigue disponible?");
     return `https://wa.me/${num}?text=${encodeURIComponent(lines.join("\n"))}`;
   }
+
+  const waLinkRef = useRef(waLink);
+  waLinkRef.current = waLink;
+  const stableWaLink = useCallback((p) => waLinkRef.current(p), []);
+  const toggleRef = useRef(toggleSelect);
+  toggleRef.current = toggleSelect;
+  const stableToggle = useCallback((p) => toggleRef.current(p), []);
 
   function waLinkMulti(items) {
     if (items.length === 1) return waLink(items[0]);
@@ -1534,8 +1548,8 @@ export default function CatalogoV2() {
 
         {/* Pestañas de categoría — quedan fijas bajo el navbar al hacer scroll */}
         <div
-          className="sticky top-16 sm:top-[72px] z-40 -mx-4 sm:-mx-6 px-4 sm:px-6 backdrop-blur border-b border-slate-300"
-          style={{ background: "rgba(246,247,249,0.94)" }}
+          className="sticky top-16 sm:top-[72px] z-40 -mx-4 sm:-mx-6 px-4 sm:px-6 lg:backdrop-blur border-b border-slate-300"
+          style={{ background: "rgba(246,247,249,0.97)" }}
         >
           <CategoryNav
             tabs={tabs}
@@ -1646,7 +1660,7 @@ export default function CatalogoV2() {
           <>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-5 w-full min-w-0">
               {visible.map((p, i) => (
-                <ProductCard key={p.id} product={p} tier={tierByProductId.get(p.id)} isSelected={selectedIds.has(p.id)} onToggle={toggleSelect} onOpenDetail={setDetailProduct} waLink={waLink} index={i} />
+                <ProductCard key={p.id} product={p} tier={tierByProductId.get(p.id)} isSelected={selectedIds.has(p.id)} onToggle={stableToggle} onOpenDetail={setDetailProduct} waLink={stableWaLink} index={i} />
               ))}
             </div>
             <div className="flex flex-col items-center gap-3 mt-8">

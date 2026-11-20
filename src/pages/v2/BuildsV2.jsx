@@ -44,6 +44,8 @@ function BuildPhoto({ product, className = "" }) {
       <img
         src={product.image_url}
         alt={product.name}
+        loading="lazy"
+        decoding="async"
         className={`w-full h-full object-contain ${className}`}
         style={{ mixBlendMode: "multiply" }}
         onError={() => setErr(true)}
@@ -241,7 +243,7 @@ export function BuildModal({ product, isSelected, onToggle, onClose, waLink }) {
 
   return createPortal(
     <div
-      className="fixed inset-x-0 top-0 z-[100] bg-slate-900/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-x-0 top-0 z-[100] bg-slate-900/50 sm:backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
       style={{ height: vh, "--vvh": `${vh}px` }}
       onClick={onClose}
     >

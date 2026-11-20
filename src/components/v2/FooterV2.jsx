@@ -41,20 +41,20 @@ export default function FooterV2() {
     const { pathname } = useLocation();
     const [categories, setCategories] = useState([]);
     const [settings, setSettings] = useState({});
-    const [products, setProducts] = useState([]);
+    const [counts, setCounts] = useState({});
 
     useEffect(() => {
         let cancelled = false;
         Promise.all([
             fetch(`${API}/catalog/categories`).then((r) => r.json()),
             fetch(`${API}/catalog/settings`).then((r) => r.json()),
-            fetch(`${API}/catalog/products`).then((r) => r.json()),
+            fetch(`${API}/catalog/category-counts`).then((r) => r.json()),
         ])
             .then(([c, s, p]) => {
                 if (cancelled) return;
                 if (c.ok) setCategories(c.categories);
                 if (s.ok) setSettings(s.settings);
-                if (p.ok) setProducts(p.products);
+                if (p.ok) setCounts(p.counts || {});
             })
             .catch(() => {});
         return () => { cancelled = true; };
@@ -65,7 +65,7 @@ export default function FooterV2() {
         .filter((cat) => !cat.parent_id && cat.name !== PREBUILT_CATEGORY)   // los PCs armados tienen su propia sección
         .filter((cat) => {
             const ids = new Set([cat.name, ...categories.filter((k) => k.parent_id === cat.id).map((k) => k.name)]);
-            return products.some((pr) => pr.available && ids.has(pr.category));
+            return [...ids].some((name) => (counts[name] ?? 0) > 0);
         });
 
     const wa = (settings.whatsapp_number || DEFAULT_WHATSAPP).replace(/\D/g, "");
