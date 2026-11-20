@@ -12,6 +12,7 @@ import {
   WARRANTY_OPTIONS, DEFAULT_WARRANTY, warrantyMonths, warrantyLabel, defaultWarrantyFor, isGpuCategory,
 } from "../lib/warranty.js";
 import { OPCIONES_TEMPORADA } from "../temporadas/registro.js";
+import { copyText } from "../lib/copyText.js";
 import { useSeason } from "../temporadas/SeasonContext.jsx";
 import { brandFromColor, DEFAULT_BRAND } from "../lib/categoryBrand.js";
 
@@ -755,6 +756,14 @@ export default function AdminCatalogo() {
   // ── Copiar inventario ─────────────────────────────────────────────────────
 
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
+
+  // Muestra "¡Copiado!" solo si de verdad se copió; si no, un aviso para reintentar
+  function reportCopy(ok) {
+    setCopied(ok);
+    setCopyFailed(!ok);
+    setTimeout(() => { setCopied(false); setCopyFailed(false); }, ok ? 2500 : 4000);
+  }
   const [copyMenuOpen, setCopyMenuOpen] = useState(false);
 
   function copyInventory(spaced = true) {
@@ -796,10 +805,7 @@ export default function AdminCatalogo() {
       lines.push("", "Bogotá y tengo muchas referencias.");
       const contactCompact = contactFooterLines(settingsForm);
       if (contactCompact.length) lines.push("", ...contactCompact);
-      navigator.clipboard.writeText(lines.join("\n")).then(() => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2500);
-      });
+      copyText(lines.join("\n")).then(reportCopy);
       return;
     }
 
@@ -839,10 +845,7 @@ export default function AdminCatalogo() {
     const contact = contactFooterLines(settingsForm);
     if (contact.length) lines.push("", ...contact);
 
-    navigator.clipboard.writeText(lines.join("\n")).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    });
+    copyText(lines.join("\n")).then(reportCopy);
   }
 
   // ── Generar catálogo en PDF ──────────────────────────────────────────────
@@ -903,7 +906,11 @@ export default function AdminCatalogo() {
     const contact = contactFooterLines(settingsForm);
     if (contact.length) lines.push("", ...contact);
 
-    navigator.clipboard.writeText(lines.join("\n")).then(() => {
+    copyText(lines.join("\n")).then((ok) => {
+      if (!ok) {
+        alert("No se pudo copiar el mensaje. Vuelve a pulsar el botón; si sigue igual, recarga la página.");
+        return;
+      }
       setCopiedProductId(p.id);
       setTimeout(() => setCopiedProductId(null), 2500);
     });
@@ -1000,8 +1007,8 @@ export default function AdminCatalogo() {
               className="flex items-center gap-2 px-4 py-2.5 rounded-[3px] border border-slate-400 bg-white text-slate-800 text-xs font-bold uppercase tracking-wide hover:border-slate-900 transition-colors disabled:opacity-40"
               title="Copiar listado de inventario disponible"
             >
-              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
-              <span className="hidden sm:inline">{copied ? "¡Copiado!" : "Copiar lista"}</span>
+              {copied ? <Check className="w-4 h-4 text-emerald-500" /> : copyFailed ? <X className="w-4 h-4 text-red-500" /> : <Copy className="w-4 h-4" />}
+              <span className="hidden sm:inline">{copied ? "¡Copiado!" : copyFailed ? "No se copió, reintenta" : "Copiar lista"}</span>
               <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
             </button>
             {copyMenuOpen && (
