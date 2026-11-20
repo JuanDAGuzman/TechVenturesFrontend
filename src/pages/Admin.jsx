@@ -190,21 +190,44 @@ export default function AdminPage() {
     }
   }
 
-  async function scanGuide() {
-    if (!form?._guide_file) return;
+  // Reduce la foto (máx. 1600 px) antes de subirla: una foto de celular pesa varios MB y tarda mucho con datos móviles.
+  // El código de barras de la guía se lee bien a ese tamaño. Si el navegador no puede, se envía la original.
+  async function shrinkForScan(file, maxSide = 1600) {
+    if (!file.type?.startsWith("image/")) return file;
+    try {
+      const bmp = await createImageBitmap(file); // respeta la orientación EXIF
+      const scale = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+      if (scale === 1 && file.size < 600_000) { bmp.close?.(); return file; }
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bmp.width * scale);
+      canvas.height = Math.round(bmp.height * scale);
+      canvas.getContext("2d").drawImage(bmp, 0, 0, canvas.width, canvas.height);
+      bmp.close?.();
+      const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+      return blob || file;
+    } catch {
+      return file;
+    }
+  }
+
+  // Sin argumento escanea la guía adjunta (botón "Escanear guía"); al elegir una foto se escanea sola
+  async function scanGuide(fileArg) {
+    const guideFile = fileArg instanceof File ? fileArg : form?._guide_file;
+    if (!guideFile) return;
     setScanning(true);
     try {
+      const toSend = await shrinkForScan(guideFile);
       const fileData = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => resolve(reader.result.split(",")[1]);
         reader.onerror = () => reject(new Error("Error al leer archivo"));
-        reader.readAsDataURL(form._guide_file);
+        reader.readAsDataURL(toSend);
       });
 
       const res = await fetch(`${API}/admin/extract-guide`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-admin-token": token },
-        body: JSON.stringify({ imageBase64: fileData, filename: form._guide_file.name }),
+        body: JSON.stringify({ imageBase64: fileData, filename: toSend === guideFile ? guideFile.name : "guia.jpg" }),
       });
 
       const data = await safeJson(res);
@@ -222,7 +245,11 @@ export default function AdminPage() {
         const partes = [];
         if (data.tracking_number) partes.push(`Guía: ${data.tracking_number}`);
         if (data.shipping_cost) partes.push(`Valor: $${data.shipping_cost}`);
-        setToast(`Datos detectados — ${partes.join(" | ")}`);
+        setToast(
+          data.shipping_cost
+            ? `Datos detectados — ${partes.join(" | ")}`
+            : `${partes.join(" | ")} — No se pudo leer el valor a cobrar: escríbelo a mano o prueba con una foto más cercana y derecha.`
+        );
       } else {
         setToast("Error al procesar la imagen. Verifica que sea una foto clara de la guía.");
       }
@@ -2331,6 +2358,7 @@ export default function AdminPage() {
                                 ...form,
                                 _guide_file: file || null,
                               });
+                              if (file && file.type.startsWith("image/")) scanGuide(file);
                             }}
                             className="w-full px-3 py-3 rounded-xl border border-slate-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200"
                           />
