@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowUp, ArrowUpRight, Mail, MapPin, MessageCircle, Instagram } from "lucide-react";
+import { ArrowUp, ArrowUpRight, Mail, MapPin, MessageCircle, Instagram, Snowflake } from "lucide-react";
 import { PREBUILT_CATEGORY } from "../../lib/prebuilt.js";
+import { useSeason } from "../../temporadas/SeasonContext.jsx";
 
 const API = (
     import.meta.env.VITE_API_BASE ??
@@ -39,6 +40,7 @@ const linkCls = "group inline-flex items-center gap-1.5 text-sm font-semibold te
 export default function FooterV2() {
     const year = new Date().getFullYear();
     const { pathname } = useLocation();
+    const { def: temporadaDef } = useSeason();
     const [categories, setCategories] = useState([]);
     const [settings, setSettings] = useState({});
     const [counts, setCounts] = useState({});
@@ -82,13 +84,15 @@ export default function FooterV2() {
                     {/* Marca */}
                     <div>
                         <div className="flex items-center gap-3">
-                            <img
-                                src="/logo-mark.png"
-                                alt=""
-                                aria-hidden="true"
-                                className="h-14 w-14 object-contain"
-                                style={{ mixBlendMode: "multiply" }}
-                            />
+                            <span className="season-logo relative inline-block h-14 w-14 shrink-0">
+                                <img
+                                    src="/logo-mark.png"
+                                    alt=""
+                                    aria-hidden="true"
+                                    className="h-full w-full object-contain"
+                                    style={{ mixBlendMode: "multiply" }}
+                                />
+                            </span>
                             <div className="leading-none">
                                 <p className="font-display font-bold text-2xl sm:text-3xl tracking-tight text-slate-900">
                                     TechVentures<span className="text-brand-indigo">CO</span>
@@ -101,6 +105,11 @@ export default function FooterV2() {
                         <p className="mt-5 text-sm text-slate-600 leading-relaxed max-w-[42ch]">
                             Tú ya sabes lo que quieres. Nosotros solo nos aseguramos de que lo consigas, rápido, sin rodeos y sin sorpresas.
                         </p>
+                        {temporadaDef?.pie && (
+                            <p className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-slate-700">
+                                <Snowflake className="w-4 h-4 text-rose-500" aria-hidden="true" /> {temporadaDef.pie}
+                            </p>
+                        )}
                     </div>
 
                     {/* Explorar */}

@@ -1,0 +1,55 @@
+/* Navidad. Todo cuelga de la clase .season-navidad que el layout agrega mientras la temporada está activa:
+   fuera de temporada este archivo ni siquiera se descarga. Rojo y verde solo en detalles pequeños. */
+
+/* ── Gorro sobre el logo en espiral (navbar y pie de página) ───────────────── */
+.season-navidad .season-logo::after {
+  content: "";
+  position: absolute;
+  left: 29.6%;
+  top: -6.5%;
+  width: 36.8%;
+  aspect-ratio: 6 / 5;
+  background: url("/temporadas/navidad/gorro.svg") center / contain no-repeat;
+  transform: rotate(10deg);
+  transform-origin: 50% 90%;
+  pointer-events: none;
+}
+
+/* ── Guirnalda de luces en el borde del navbar ─────────────────────────────── */
+/* El cable y las luces doradas son fijos; las rojas y las verdes se encienden por turnos. */
+.season-navidad .season-garland {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 12px;
+  pointer-events: none;
+  background: url("/temporadas/navidad/guirnalda-oro.svg") repeat-x 0 0 / 80px 12px;
+}
+.season-navidad .season-garland::before,
+.season-navidad .season-garland::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  animation: navidad-luces 2.6s ease-in-out infinite;
+}
+.season-navidad .season-garland::before {
+  background: url("/temporadas/navidad/guirnalda-rojas.svg") repeat-x 0 0 / 80px 12px;
+}
+.season-navidad .season-garland::after {
+  background: url("/temporadas/navidad/guirnalda-verdes.svg") repeat-x 0 0 / 80px 12px;
+  animation-delay: 1.3s;
+}
+@keyframes navidad-luces {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+@media (max-width: 640px) {
+  .season-navidad .season-garland { height: 9px; background-size: 60px 9px; }
+  .season-navidad .season-garland::before,
+  .season-navidad .season-garland::after { background-size: 60px 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .season-navidad .season-garland::before,
+  .season-navidad .season-garland::after { animation: none; opacity: 1; }
+}

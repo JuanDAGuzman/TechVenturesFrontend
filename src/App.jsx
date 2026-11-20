@@ -8,6 +8,7 @@ import {
 import CatalogoV2 from "./pages/v2/CatalogoV2.jsx";
 import LayoutV2 from "./components/v2/LayoutV2.jsx";
 import { SiteThemeProvider } from "./lib/SiteThemeContext.jsx";
+import { SeasonProvider } from "./temporadas/SeasonContext.jsx";
 
 // Solo el catálogo (la página de entrada) va en el paquete inicial. El resto se descarga al visitarlo.
 const BookingV2 = lazy(() => import("./pages/v2/BookingV2.jsx"));
@@ -21,6 +22,7 @@ export default function App() {
   return (
     <SiteThemeProvider>
     <BrowserRouter>
+      <SeasonProvider>
       <Suspense fallback={<div className="min-h-[60vh]" aria-hidden="true" />}>
         <Routes>
           <Route element={<LayoutV2 />}>
@@ -35,6 +37,7 @@ export default function App() {
           </Route>
         </Routes>
       </Suspense>
+      </SeasonProvider>
     </BrowserRouter>
     </SiteThemeProvider>
   );

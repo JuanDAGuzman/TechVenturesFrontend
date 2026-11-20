@@ -11,6 +11,8 @@ import {
 import {
   WARRANTY_OPTIONS, DEFAULT_WARRANTY, warrantyMonths, warrantyLabel, defaultWarrantyFor, isGpuCategory,
 } from "../lib/warranty.js";
+import { OPCIONES_TEMPORADA } from "../temporadas/registro.js";
+import { useSeason } from "../temporadas/SeasonContext.jsx";
 import { brandFromColor, DEFAULT_BRAND } from "../lib/categoryBrand.js";
 
 const API = (
@@ -411,6 +413,7 @@ export default function AdminCatalogo() {
   // Configuración de tienda
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsForm, setSettingsForm] = useState({});
+  const { activa: temporadaDef } = useSeason();   // saludo de temporada en la lista copiada
   const [savingSettings, setSavingSettings] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
 
@@ -769,6 +772,7 @@ export default function AdminCatalogo() {
           "",
           "🎉 ¡BIENVENIDO/A TechVenturesCO! 🎉",
           "",
+          ...(temporadaDef?.saludoCopia ? [temporadaDef.saludoCopia, ""] : []),
           "🛡️ Todas nuestras tarjetas gráficas cuentan con garantía.",
           "",
           "🖥️ COMPONENTES DISPONIBLES:",
@@ -1376,6 +1380,23 @@ export default function AdminCatalogo() {
                 />
               </div>
             ))}
+
+            {/* Temporada del sitio (Navidad...) */}
+            <div>
+              <label className="lbl text-sm">Temporada del sitio</label>
+              <p className="text-xs text-slate-400 -mt-1.5 mb-1.5">
+                Decoración y efectos de temporada en la página pública. "Automática" enciende la Navidad del 1 de diciembre al 6 de enero. Para verla antes, abre la página con ?temporada=navidad al final de la dirección.
+              </p>
+              <select
+                value={settingsForm.site_season || "auto"}
+                onChange={(e) => setSettingsForm((f) => ({ ...f, site_season: e.target.value }))}
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-400 outline-none bg-white transition text-sm"
+              >
+                {OPCIONES_TEMPORADA.map((o) => (
+                  <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
+                ))}
+              </select>
+            </div>
 
             <div className="flex items-center gap-3 pt-1">
               <button

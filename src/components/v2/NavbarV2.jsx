@@ -32,12 +32,14 @@ export default function NavbarV2() {
                         to="/"
                         className={`flex items-center gap-3 ${isCatalogo ? "cursor-default pointer-events-none" : ""}`}
                     >
-                        <img
-                            src="/logo-mark.png"
-                            alt="TechVenturesCO"
-                            className="h-10 w-10 sm:h-11 sm:w-11 object-contain"
-                            style={{ mixBlendMode: "multiply" }}
-                        />
+                        <span className="season-logo relative inline-block h-10 w-10 sm:h-11 sm:w-11 shrink-0">
+                            <img
+                                src="/logo-mark.png"
+                                alt="TechVenturesCO"
+                                className="h-full w-full object-contain"
+                                style={{ mixBlendMode: "multiply" }}
+                            />
+                        </span>
                         <div className="flex flex-col leading-none">
                             <span className="font-display font-bold text-lg sm:text-xl tracking-tight text-slate-900">
                                 TechVentures<span className="text-brand-indigo">CO</span>
@@ -56,6 +58,7 @@ export default function NavbarV2() {
                     </nav>
                 </div>
             </div>
+            <div className="season-garland" aria-hidden="true" />
         </header>
     );
 }

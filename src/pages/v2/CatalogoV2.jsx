@@ -9,6 +9,7 @@ import { PREBUILT_CATEGORY, parseBuild } from "../../lib/prebuilt.js";
 import useVisibleHeight from "../../lib/useVisibleHeight.js";
 import { WARRANTY_PATH, warrantyMonths, warrantyLabel } from "../../lib/warranty.js";
 import { BuildsSection, BuildModal } from "./BuildsV2.jsx";
+import { useSeason } from "../../temporadas/SeasonContext.jsx";
 
 const API = (
   import.meta.env.VITE_API_BASE ??
@@ -644,6 +645,10 @@ function BundleModal({ deal, onClose, onOpenProduct, waHref }) {
 const HERO_WORDS = ["Hardware", "con", "historia", "propia."];
 
 function Hero() {
+  // En temporada: otro titular y el dragón con gorro (ver src/temporadas/registro.js)
+  const { def: seasonDef } = useSeason();
+  const words = seasonDef?.heroPalabras ?? HERO_WORDS;
+  const logo = seasonDef?.heroImagen ?? { src: "/logo-mark.png", ancho: 250, alto: 245 };
   const rootRef = useRef(null);
   const logoRef = useRef(null);
   const wordRefs = useRef([]);
@@ -694,11 +699,11 @@ function Hero() {
           >
             {ready ? (
               <motion.img
-                src="/logo-mark.png"
+                src={logo.src}
                 alt=""
                 aria-hidden="true"
-                width={250}
-                height={245}
+                width={logo.ancho}
+                height={logo.alto}
                 className="w-full h-auto select-none"
                 style={{ mixBlendMode: "multiply" }}
                 initial={{ x: fx.logo.x, y: fx.logo.y, scale: big * 0.6, opacity: 0, rotate: -16 }}
@@ -714,11 +719,11 @@ function Hero() {
             ) : (
               <img
                 ref={logoRef}
-                src="/logo-mark.png"
+                src={logo.src}
                 alt=""
                 aria-hidden="true"
-                width={250}
-                height={245}
+                width={logo.ancho}
+                height={logo.alto}
                 className="w-full h-auto select-none"
                 style={{ mixBlendMode: "multiply", opacity: isStatic ? 1 : 0 }}
               />
@@ -730,9 +735,9 @@ function Hero() {
           className="font-display font-bold text-slate-900 tracking-tight leading-[0.95] text-[44px] sm:text-7xl lg:text-[88px] max-w-[14ch]"
           style={{ textWrap: "balance" }}
         >
-          {HERO_WORDS.map((word, i) => {
+          {words.map((word, i) => {
             const cls = `inline-block ${word === "historia" ? "brand-text italic font-normal" : ""}`;
-            const space = i < HERO_WORDS.length - 1 ? " " : "";
+            const space = i < words.length - 1 ? " " : "";
             if (!ready) {
               return (
                 <span key={word}>
@@ -1217,6 +1222,7 @@ function CategoryNav({ tabs, childrenOf, parentOf, treeCounts, ownCounts, catego
 }
 
 export default function CatalogoV2() {
+  const { temporada } = useSeason();
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -1491,7 +1497,7 @@ export default function CatalogoV2() {
     <BrandContext.Provider value={{ brandMap, activeBrand }}>
     <div className="relative w-full min-w-0" style={themeVars}>
 
-      <Hero />
+      <Hero key={temporada ?? "base"} />
 
       <div className={`${WRAP} pb-24`}>
 
@@ -1524,7 +1530,7 @@ export default function CatalogoV2() {
 
       {/* ── Ofertas: dos paneles desplegables, cerrados por defecto ── */}
       {totalOffers > 0 && (
-        <section className="py-6 sm:py-7 border-b border-slate-300">
+        <section id="ofertas" className="py-6 sm:py-7 border-b border-slate-300 scroll-mt-28">
           <OffersPanel
             bundleDeals={bundleDeals}
             discounted={discounted}
